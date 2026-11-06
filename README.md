@@ -83,65 +83,12 @@ PR은 `develop`을 대상으로 작업 범위별로 나눕니다.
 - 이슈가 남아 있으면 번호만 연결하고, 이슈 전체를 완료한 PR에서만 `Closes #번호`를 사용합니다.
 - 실제 기기 확인 결과, 타입·린트 결과, 미검증 범위를 구분해 기록합니다.
 
----
 
-## 초기 Expo 템플릿 참고 문서
+## 현재 구현 범위
 
-아래는 프로젝트 생성 시 포함된 문서입니다. 일상 개발의 실행·검사·협업 기준은 위 내용을 우선합니다.
+- `/`: 웹 디자인 기준 시작 화면과 로그인 방법 선택 시트. 소셜 버튼은 실제 인증 연결 전까지 디자인을 유지한 채 비활성 상태입니다. 임시 안내 메시지는 표시하지 않습니다.
+- `/home`: 개발 빌드에서만 열리는 홈 빈 상태 미리보기. 시작 화면의 QuoteMe 로고를 길게 눌러 진입하며 실제 로그인 상태나 계정 데이터가 아닙니다.
+- Pretendard Variable(본문·버튼), 코펍바탕 Medium(로고·명언·요일), 봄바람 Bold(월·일)를 `assets/fonts/`에서 런타임 로드합니다. 폰트 로딩 후 화면을 표시하며, 로딩 오류가 나도 스플래시가 계속 남지 않도록 처리합니다. 기존 개발 앱에서 확인할 수 있으며 이번 폰트 추가로 APK 재빌드가 필요하지 않습니다.
+- 실제 OAuth·토큰 저장·세션 복원·홈 API는 후속 작업입니다. 기본 Expo 예제와 초기화 스크립트는 제거했습니다. 앱 아이콘·네이티브 스플래시는 기존 설정을 유지합니다.
 
-# Welcome to your Expo app 👋
-
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
-
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
-
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+화면 경로를 추가한 뒤 경로 타입이 오래된 상태라면 `npx expo start --dev-client` 실행으로 Expo Router 타입을 갱신하고 타입 검사를 실행합니다.
