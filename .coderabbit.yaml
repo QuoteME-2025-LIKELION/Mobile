@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://storage.googleapis.com/coderabbit_public_assets/schema.v2.json
+language: ko-KR
+
+reviews:
+  profile: assertive
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "^main$"
+      - "^develop$"
+
+  path_filters:
+    - "!package-lock.json"
+    - "!.expo/**"
+    - "!dist/**"
+    - "!coverage/**"
+    - "!node_modules/**"
+
+  path_instructions:
+    - path: "src/**"
+      instructions: |
+        - 프로젝트 AGENTS.md와 설치된 Expo SDK 버전을 기준으로 검토한다. 다른 SDK 버전의 API를 가정하지 않는다.
+        - Expo Router 화면은 src/app에 두고, 공용 컴포넌트·훅·유틸리티는 라우트 디렉터리 밖에 둔다.
+        - 컴포넌트에 UI 렌더링·데이터 패칭·라우팅 책임이 과도하게 섞이거나 API 호출이 중복되는지 확인한다.
+        - API 응답은 TypeScript 타입으로 정의하고 불필요한 any와 타입 단언을 피한다.
+        - 인증 정보 접근은 공통 저장소 또는 인증 계층을 통해 처리하고, 토큰·쿠키 등 인증 정보를 로그에 남기지 않는다.
+        - Safe Area, 키보드, Android 뒤로 가기, 접근성 및 플랫폼별 동작 차이를 확인한다.
+        - 웹 전용 DOM·브라우저 API가 네이티브 경로에서 실행되지 않는지 확인한다. 플랫폼 전용 파일은 해당 플랫폼을 기준으로 검토한다.
+        - 목데이터 기반 화면과 실제 인증·API 연동을 구분하고, 미확정 정책을 확정된 요구사항으로 가정하지 않는다.
+
+chat:
+  auto_reply: true
