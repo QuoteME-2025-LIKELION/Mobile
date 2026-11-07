@@ -1,7 +1,7 @@
 import { Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors } from '@/constants/theme';
+import { colors, overlays } from '@/constants/theme';
 import { SocialButtons, type AuthMode, type SocialProvider } from './SocialButtons';
 
 type Props = {
@@ -33,8 +33,8 @@ export function LoginSheet({ visible, onClose, onSelect }: Props) {
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(12,31,49,0.28)' },
-  sheet: { backgroundColor: colors.background, borderTopLeftRadius: 10, borderTopRightRadius: 10, overflow: 'hidden' },
+  overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: overlays.loginBackdrop },
+  sheet: { backgroundColor: colors.secondary, borderTopLeftRadius: 10, borderTopRightRadius: 10, overflow: 'hidden' },
   // ScrollView의 기본 flexGrow로 시트가 늘어나거나 내용이 잘리지 않도록 제한한다.
   scroll: { flexGrow: 0, flexShrink: 1 },
   content: { paddingHorizontal: 24, paddingTop: 36 },

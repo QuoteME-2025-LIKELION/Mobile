@@ -1,9 +1,10 @@
 import { Image, type ImageSource } from 'expo-image';
+import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
-import { colors, fonts } from '@/constants/theme';
+import { colors, fonts, withOpacity } from '@/constants/theme';
 
 // API 결과가 아닌 화면 개발용 빈 상태. 계정·인증·서버 데이터를 만들지 않는다.
 export function HomePreview() {
@@ -25,7 +26,7 @@ export function HomePreview() {
           <AppText style={styles.month}>{month}</AppText>
           <AppText style={styles.weekday}>{weekday}</AppText>
           <Pressable accessibilityRole="button" accessibilityLabel="오늘의 명언 작성"
-            disabled accessibilityState={{ disabled: true }} style={styles.quoteRow}>
+            onPress={() => router.push('/write')} style={styles.quoteRow}>
             <AppText style={styles.day}>{today.getDate()}</AppText>
             <View style={styles.quoteLines}>
               <AppText style={styles.quoteLine}>오늘 있었던 일을 바탕으로</AppText>
@@ -65,22 +66,22 @@ const styles = StyleSheet.create({
   headerActions: { flexDirection: 'row' },
   headerButton: { minWidth: 40, minHeight: 48, justifyContent: 'center', alignItems: 'center' },
   headerIcon: { width: 20, height: 22 },
-  scroll: { flex: 1, backgroundColor: colors.background },
+  scroll: { flex: 1, backgroundColor: colors.secondary },
   scrollContent: { flexGrow: 1 },
   quoteCard: { backgroundColor: colors.primary, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 20 },
   month: { fontFamily: fonts.date, color: colors.white, fontSize: 36, lineHeight: 36, letterSpacing: -0.72, textAlign: 'center' },
-  weekday: { fontFamily: fonts.quote, color: 'rgba(255,255,255,0.6)', fontSize: 12, lineHeight: 12, letterSpacing: -0.24, textAlign: 'center', marginTop: 8, marginBottom: 14 },
+  weekday: { fontFamily: fonts.quote, color: withOpacity(colors.white, 0.6), fontSize: 12, lineHeight: 12, letterSpacing: -0.24, textAlign: 'center', marginTop: 8, marginBottom: 14 },
   quoteRow: { flexDirection: 'row', gap: 18, alignItems: 'flex-start' },
   day: { fontFamily: fonts.date, color: colors.white, fontSize: 75, lineHeight: 72, width: 66, letterSpacing: -1.5, transform: [{ translateY: -7 }], textAlign: 'center' },
   quoteLines: { flex: 1 },
-  quoteLine: { fontFamily: fonts.quote, color: 'rgba(255,255,255,0.7)', textAlign: 'center', borderTopWidth: 1, borderColor: colors.white, paddingVertical: 9, paddingHorizontal: 12, minHeight: 40, fontSize: 14, lineHeight: 21 },
+  quoteLine: { fontFamily: fonts.quote, color: withOpacity(colors.white, 0.7), textAlign: 'center', borderTopWidth: 1, borderColor: colors.white, paddingVertical: 9, paddingHorizontal: 12, minHeight: 40, fontSize: 14, lineHeight: 21 },
   rule: { borderTopWidth: 1, borderColor: colors.white, minHeight: 36 },
   feed: { flex: 1, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40, gap: 20 },
   filterRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   filterIcon: { width: 16, height: 16 },
   filter: { color: colors.black, fontSize: 13, lineHeight: 18, fontWeight: '500' },
   empty: { marginTop: 176, alignItems: 'center', gap: 12 },
-  emptyText: { fontFamily: fonts.quote, color: '#959595', textAlign: 'center', fontSize: 16, lineHeight: 28.8, letterSpacing: -0.28 },
+  emptyText: { fontFamily: fonts.quote, color: colors.territory, textAlign: 'center', fontSize: 16, lineHeight: 28.8, letterSpacing: -0.28 },
   addFriend: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 12 },
   addFriendText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
 });

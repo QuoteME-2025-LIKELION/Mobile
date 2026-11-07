@@ -28,6 +28,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
   },
   label: { fontSize: 14, lineHeight: 21, letterSpacing: -0.28, fontWeight: '500', textAlign: 'center' },
-  bordered: { borderWidth: 1, borderColor: colors.border },
+  bordered: { borderWidth: 1, borderColor: colors['grey-200'] },
   pressed: { opacity: 0.7 },
 });
