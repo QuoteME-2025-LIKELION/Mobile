@@ -17,7 +17,7 @@ export default function StartScreen() {
         <View style={styles.brand}>
           <AppText accessibilityRole="header" style={styles.logo}
             onLongPress={__DEV__ ? () => router.push('/home') : undefined}>QuoteMe</AppText>
-          <AppText style={styles.tagline}>소소한 생각도 쿼트미로 소중하게 모아보세요.</AppText>
+          <AppText style={styles.tagline} onLongPress={__DEV__ ? () => router.push('/profile') : undefined}>소소한 생각도 쿼트미로 소중하게 모아보세요.</AppText>
         </View>
         <View style={styles.actions}>
           <SocialButtons mode="signup" />
