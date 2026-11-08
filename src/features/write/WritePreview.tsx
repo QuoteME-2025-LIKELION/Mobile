@@ -8,8 +8,9 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { AppText } from '@/components/AppText';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { colors, fonts, withOpacity } from '@/constants/theme';
-
 import { EmptyInputCaret } from './EmptyInputCaret';
+import { RecommendPreview } from './RecommendPreview';
+import { previewRecommendations, type RecommendationScenario, type RecommendationStatus } from './recommendationPreview';
 import { countCodePoints, getQuoteInputError, limitQuoteInput } from './quoteInput';
 import { TagPreview } from './TagPreview';
 import { WriteAction } from './WriteAction';
@@ -17,9 +18,17 @@ import { WriteAction } from './WriteAction';
 const LINE_HEIGHT = 40;
 const INPUT_HEIGHT = LINE_HEIGHT * 2;
 
-export function WritePreview() {
+export function WritePreview({ recommendationScenario = 'success' }: { recommendationScenario?: RecommendationScenario } = {}) {
   const [text, setText] = useState('');
-  const [step, setStep] = useState<'write' | 'tag'>('write');
+  const [step, setStep] = useState<'write' | 'recommend' | 'tag'>('write');
+  const [source, setSource] = useState<'direct' | 'ai'>('direct');
+  const [recommendationStatus, setRecommendationStatus] = useState<RecommendationStatus>('idle');
+  const [recommendationIndex, setRecommendationIndex] = useState<number | null>(null);
+  const [recommendationRound, setRecommendationRound] = useState(0);
+  const recommendations = previewRecommendations[recommendationRound % previewRecommendations.length];
+  const resultText = step === 'tag' && source === 'ai' && recommendationIndex !== null
+    ? recommendations[recommendationIndex] : text.trim();
+  const displayedText = step === 'tag' ? resultText : text;
   const [selected, setSelected] = useState<number[]>([]);
   const [showInfo, setShowInfo] = useState(false);
   const [message, setMessage] = useState('');
@@ -35,10 +44,10 @@ export function WritePreview() {
   const acceptedText = useRef('');
   const insets = useSafeAreaInsets();
   const hasDraft = text.trim().length > 0;
-  const disablePrevention = usePreventRemove(!allowExit && (hasDraft || step === 'tag'), ({ repeat }) => {
+  const disablePrevention = usePreventRemove(!allowExit && (hasDraft || step !== 'write'), ({ repeat }) => {
     Keyboard.dismiss();
-    if (step === 'tag') {
-      setStep('write');
+    if (step !== 'write') {
+      setStep(step === 'tag' && source === 'ai' ? 'recommend' : 'write');
       return;
     }
     exitAction.current = repeat;
@@ -46,6 +55,7 @@ export function WritePreview() {
   });
   const today = new Date();
   const length = countCodePoints(text);
+  const displayedLength = countCodePoints(displayedText);
   const trimmedLength = countCodePoints(text.trim());
   const canGoNext = trimmedLength > 0 && trimmedLength <= 30;
   const useEmptyCaret = Platform.OS === 'android' && step === 'write' && text.length === 0;
@@ -56,6 +66,12 @@ export function WritePreview() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [step]);
+
+  useEffect(() => {
+    if (step !== 'recommend' || recommendationStatus !== 'loading') return;
+    const timer = setTimeout(() => setRecommendationStatus(recommendationScenario), 600);
+    return () => clearTimeout(timer);
+  }, [step, recommendationStatus, recommendationScenario]);
 
   useEffect(() => {
     if (!message) return;
@@ -76,6 +92,17 @@ export function WritePreview() {
     exitAction.current = () => { disablePrevention(); goHome(); };
     setExitOpen(true);
   };
+  const recommend = () => {
+    const error = getQuoteInputError(text, 'ai');
+    if (error) { setMessage(error); return; }
+    Keyboard.dismiss();
+    setShowInfo(false);
+    setMessage('');
+    setRecommendationIndex(null);
+    setRecommendationStatus('loading');
+    setStep('recommend');
+  };
+  const backFromTag = () => { Keyboard.dismiss(); setStep(source === 'ai' ? 'recommend' : 'write'); };
   const next = () => {
     const error = getQuoteInputError(text, 'quote');
     if (error) {
@@ -85,6 +112,7 @@ export function WritePreview() {
     Keyboard.dismiss();
     setShowInfo(false);
     setMessage('');
+    setSource('direct');
     setStep('tag');
   };
 
@@ -116,17 +144,17 @@ export function WritePreview() {
                   textBreakStrategy="simple" lineBreakStrategyIOS="none"
                   style={[styles.input, styles.measurement]}
                   onTextLayout={(event) => {
-                    if (text !== acceptedText.current) return;
+                    if (step === 'write' && text !== acceptedText.current) return;
                     const lineCount = event.nativeEvent.lines.length;
                     if (lineCount > 0) setInputHeight(Math.max(2, lineCount) * LINE_HEIGHT);
-                  }}>{(step === 'tag' ? text.trim() : text) || ' '}</AppText>
+                  }}>{displayedText || ' '}</AppText>
                 <View pointerEvents="none" style={styles.lines}>
                   {Array.from({ length: inputHeight / LINE_HEIGHT + 1 }, (_, index) => (
                     <View key={index} style={[styles.line, { top: Math.min(index * LINE_HEIGHT, inputHeight - 1) }]} />
                   ))}
                 </View>
               <TextInput accessibilityLabel="명언 내용" accessibilityHint="최대 50자 입력, 직접 게시할 명언은 30자 이하"
-                multiline scrollEnabled={false} editable={step === 'write'} value={step === 'tag' ? text.trim() : text}
+                multiline scrollEnabled={false} editable={step === 'write'} value={displayedText}
                 onChangeText={(value) => {
                   const limited = limitQuoteInput(value);
                   acceptedText.current = limited;
@@ -157,7 +185,7 @@ export function WritePreview() {
               {useEmptyCaret && inputFocused && <EmptyInputCaret />}
               </View>
             </ScrollView>
-            <AppText style={styles.count}>{length}자/50자</AppText>
+            <AppText style={styles.count}>{displayedLength}자/50자</AppText>
           </View>
           <View style={[styles.body, { paddingBottom: 39 + insets.bottom }]}>
             {step === 'write' ? <>
@@ -174,14 +202,27 @@ export function WritePreview() {
                 </View>}
               </View>
               <View style={styles.actions}>
-                <WriteAction title="AI 추천 받기" />
+                <WriteAction title="AI 추천 받기" onPress={recommend} disabled={trimmedLength === 0} />
                 <WriteAction title="다음으로" onPress={next} disabled={!canGoNext} />
               </View>
-            </> : <>
+            </> : step === 'recommend' ? <RecommendPreview
+              status={recommendationStatus} recommendations={recommendations} selectedIndex={recommendationIndex}
+              onSelect={setRecommendationIndex}
+              onRefresh={() => {
+                setRecommendationIndex(null);
+                setRecommendationRound((round) => round + 1);
+                setRecommendationStatus('loading');
+              }}
+              onBack={() => setStep('write')}
+              onNext={() => {
+                if (recommendationStatus !== 'success' || recommendationIndex === null) return;
+                setSource('ai');
+                setStep('tag');
+              }} /> : <>
               <TagPreview selected={selected} onToggle={(id) => setSelected((current) => current.includes(id)
                 ? current.filter((value) => value !== id) : [...current, id])} />
               <View style={styles.tagActions}>
-                <WriteAction title="뒤로가기" onPress={() => { Keyboard.dismiss(); setStep('write'); }} />
+                <WriteAction title="뒤로가기" onPress={backFromTag} />
                 <WriteAction title="게시하기" />
               </View>
             </>}

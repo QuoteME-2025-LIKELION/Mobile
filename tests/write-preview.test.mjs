@@ -10,6 +10,7 @@ const compile = source => ts.transpileModule(source, {
 const read = file => readFile(new URL(`../src/${file}`, import.meta.url), 'utf8');
 const inputUrl = url(compile(await read('features/write/quoteInput.ts')));
 const input = await import(inputUrl);
+const recommendationsUrl = url(compile(await read('features/write/recommendationPreview.ts')));
 const themeUrl = url(compile(await read('constants/theme.ts')).replace(/require\('[^']+'\)/g, '1'));
 
 test('code point limits preserve emoji and Korean, while matching current web quote validation', () => {
@@ -28,7 +29,7 @@ test('code point limits preserve emoji and Korean, while matching current web qu
 });
 
 const reactUrl = url(`
-export const useEffect=()=>{};
+export const useEffect=callback=>{globalThis.__writeHarness.effects.push(callback);};
 export const useState=initial=>{
  const state=globalThis.__writeHarness; const index=state.next++;
  if (!(index in state.values)) state.values[index]=typeof initial==='function'?initial():initial;
@@ -57,6 +58,8 @@ for (const [from,to] of Object.entries({
   '@/components/ConfirmDialog':url("export const ConfirmDialog='ConfirmDialog';"),
   '@/constants/theme':themeUrl,
   './quoteInput':inputUrl,
+  './recommendationPreview':recommendationsUrl,
+  './RecommendPreview':url("export const RecommendPreview='RecommendPreview';"),
   './TagPreview':url("export const TagPreview='TagPreview';"),
   './WriteAction':url("export const WriteAction='WriteAction';"),
   './EmptyInputCaret':url("export const EmptyInputCaret='EmptyInputCaret';"),
@@ -66,8 +69,8 @@ const {WritePreview}=await import(url(code));
 const nodes=tree=>!tree||typeof tree!=='object'?[]:[tree,...[tree.props?.children].flat(Infinity).flatMap(nodes)];
 const find=(tree,check)=>nodes(tree).find(check);
 function harness(Component=WritePreview,props={}){
- const state={next:0,values:[],backs:0,disables:0};
- return {state,render:()=>{state.next=0;globalThis.__writeHarness=state;return Component(props);}};
+ const state={next:0,values:[],effects:[],backs:0,disables:0};
+ return {state,render:()=>{state.next=0;state.effects=[];globalThis.__writeHarness=state;return Component(props);}};
 }
 const field=tree=>find(tree,node=>node.type==='TextInput');
 const measure=tree=>find(tree,node=>typeof node.props?.onTextLayout==='function');
@@ -250,4 +253,84 @@ test('late line-layout events for an old draft cannot change current guide heigh
  assert.equal(Object.assign({},...field(tree).props.style).height,80);
  measure(tree).props.onTextLayout({nativeEvent:{lines:Array(2).fill({})}});tree=render();
  assert.equal(Object.assign({},...field(tree).props.style).height,80);
+});
+
+const recommendation=tree=>find(tree,node=>node.type==='RecommendPreview');
+async function finishRecommendation(state) {
+ const cleanups=state.effects.map(effect=>effect());
+ await new Promise(resolve=>setTimeout(resolve,650));
+ cleanups.forEach(cleanup=>cleanup?.());
+}
+
+test('AI validates original input, preserves original/selected result/tags through back navigation and resets selection on refresh',async()=>{
+ const {render,state}=harness();let tree=render();
+ field(tree).props.onChangeText('짧은 글');tree=render();action(tree,'AI 추천 받기').props.onPress();tree=render();
+ assert.equal(recommendation(tree),undefined);
+ const original='오늘은 힘들었지만 작은 용기를 내어 한 걸음 나아갔다';
+ field(tree).props.onChangeText(original);tree=render();action(tree,'AI 추천 받기').props.onPress();tree=render();
+ assert.equal(field(tree).props.editable,false);
+ assert.equal(recommendation(tree).props.status,'loading');
+ recommendation(tree).props.onNext();tree=render();assert.ok(recommendation(tree));
+ await finishRecommendation(state);tree=render();
+ assert.equal(recommendation(tree).props.status,'success');
+ recommendation(tree).props.onSelect(1);tree=render();const chosen=recommendation(tree).props.recommendations[1];
+ recommendation(tree).props.onNext();tree=render();
+ assert.equal(field(tree).props.value,chosen);assert.equal(field(tree).props.editable,false);
+ assert.equal(action(tree,'게시하기').props.onPress,undefined);
+ find(tree,node=>node.type==='TagPreview').props.onToggle(3);tree=render();
+ state.prevented({repeat:()=>state.backs++});tree=render();
+ assert.equal(recommendation(tree).props.selectedIndex,1);assert.equal(field(tree).props.value,original);
+ recommendation(tree).props.onNext();tree=render();
+ assert.deepEqual(find(tree,node=>node.type==='TagPreview').props.selected,[3]);
+ action(tree,'뒤로가기').props.onPress();tree=render();
+ recommendation(tree).props.onRefresh();tree=render();
+ assert.equal(recommendation(tree).props.selectedIndex,null);assert.equal(recommendation(tree).props.status,'loading');
+ await finishRecommendation(state);tree=render();
+ assert.notEqual(recommendation(tree).props.recommendations[1],chosen);
+ recommendation(tree).props.onBack();tree=render();
+ assert.equal(field(tree).props.value,original);assert.equal(field(tree).props.editable,true);
+ assert.equal(state.backs,0);
+});
+
+test('AI preview exposes empty, error and exhausted states without pretending that posting succeeded',async()=>{
+ for (const scenario of ['empty','error','exhausted']) {
+  const {render,state}=harness(WritePreview,{recommendationScenario:scenario});let tree=render();
+  field(tree).props.onChangeText('나만의 속도로 오늘도 천천히 앞으로 나아가고 있다');tree=render();
+  action(tree,'AI 추천 받기').props.onPress();tree=render();await finishRecommendation(state);tree=render();
+  assert.equal(recommendation(tree).props.status,scenario);
+  recommendation(tree).props.onNext();tree=render();assert.ok(recommendation(tree));
+  recommendation(tree).props.onBack();tree=render();assert.equal(field(tree).props.editable,true);
+ }
+});
+
+let recommendCode=compile(await read('features/write/RecommendPreview.tsx'));
+for (const [from,to] of Object.entries({
+ 'react/jsx-runtime':import.meta.resolve('react/jsx-runtime'),
+ 'expo-image':url("export const Image='Image';"),
+ 'react-native':url(`export {Pressable,StyleSheet,View} from ${JSON.stringify(nativeUrl)};export const ActivityIndicator='ActivityIndicator';`),
+ '@/components/AppText':url("export const AppText='AppText';"),'@/constants/theme':themeUrl,
+ './WriteAction':url("export const WriteAction='WriteAction';"),
+})) recommendCode=recommendCode.replaceAll(JSON.stringify(from),JSON.stringify(to)).replaceAll(`'${from}'`,JSON.stringify(to));
+recommendCode=recommendCode.replace(/require\('(@\/assets\/[^']+)'\)/g,(_,path)=>JSON.stringify(path));
+const {RecommendPreview}=await import(url(recommendCode));
+
+test('recommendation panel only enables next for a current result and disables refresh while loading or exhausted',()=>{
+ for(const status of ['loading','success','empty','error','exhausted']){
+  let nexts=0;const selected=[];
+  const props={status,recommendations:['선택할 명언'],selectedIndex:null,onSelect:index=>selected.push(index),onRefresh:()=>{},onBack:()=>{},onNext:()=>nexts++};
+  let tree=RecommendPreview(props);
+  assert.equal(action(tree,'다음으로').props.disabled,true);
+  action(tree,'다음으로').props.onPress();assert.equal(nexts,0);
+  const refresh=find(tree,node=>node.type==='Pressable'&&node.props.accessibilityLabel?.includes('AI 추천'));
+  assert.equal(refresh.props.disabled,status==='loading'||status==='exhausted');
+  const cards=nodes(tree).filter(node=>node.props?.accessibilityLabel==='선택할 명언');
+  assert.equal(cards.length,status==='success'?1:0);
+  if(status==='success'){
+   cards[0].props.onPress();assert.deepEqual(selected,[0]);
+   tree=RecommendPreview({...props,selectedIndex:0});
+   assert.equal(action(tree,'다음으로').props.disabled,false);
+   action(tree,'다음으로').props.onPress();assert.equal(nexts,1);
+   tree=RecommendPreview({...props,selectedIndex:9});assert.equal(action(tree,'다음으로').props.disabled,true);
+  }
+ }
 });
