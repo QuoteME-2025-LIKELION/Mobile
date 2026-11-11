@@ -1,4 +1,5 @@
 import { Image, type ImageSource } from 'expo-image';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -39,7 +40,7 @@ export function HomePreview() {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.header} onTouchStart={closeMenus}>
-        <HeaderButton label="아카이브" source={require('@/assets/images/home/archive.svg')} />
+        <HeaderButton label="아카이브" source={require('@/assets/images/home/archive.svg')} onPress={() => { closeMenus(); router.push('/archive'); }} />
         <View style={styles.headerActions}>
           <HeaderButton label="알림" source={require('@/assets/images/home/notification.svg')} />
           <HeaderButton label="메뉴" source={require('@/assets/images/home/menu.svg')} onPress={() => { closeMenus(); setDrawerOpen(true); }} />

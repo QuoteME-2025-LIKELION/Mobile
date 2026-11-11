@@ -31,6 +31,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.primary } }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="home" />
+        <Stack.Screen name="archive" />
         <Stack.Screen name="write" />
         <Stack.Screen name="profile" />
       </Stack>

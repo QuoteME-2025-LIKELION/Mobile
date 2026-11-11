@@ -2,13 +2,15 @@ import { Image, type ImageSource } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
-import { colors, fonts } from '@/constants/theme';
+import { QuoteText } from '@/components/QuoteText';
+import { colors } from '@/constants/theme';
 
 import type { PreviewFeedItem } from './homePreviewData';
 
 // 서버 쓰기/공유/신고·차단은 후속 연동. 외형을 유지하고 미연동 버튼을 비활성화한다.
 export function FeedCard({ item }: { item: PreviewFeedItem }) {
   const silenced = item.content === null;
+  const content = item.content ?? '때로는 침묵이 가장 큰 지혜다';
   return (
     <View style={styles.card}>
       <View style={styles.profile}>
@@ -22,11 +24,7 @@ export function FeedCard({ item }: { item: PreviewFeedItem }) {
           <AppText style={styles.more}>⋮</AppText>
         </Pressable>
       </View>
-      <View style={styles.quoteRow}>
-        <AppText style={[styles.quotation, silenced && styles.muted]}>“</AppText>
-        <AppText style={[styles.quote, silenced && styles.muted]}>{item.content ?? '때로는 침묵이 가장 큰 지혜다'}</AppText>
-        <AppText style={[styles.quotation, silenced && styles.muted]}>”</AppText>
-      </View>
+      <QuoteText key={content} content={content} variant="feed" muted={silenced} />
       <View style={styles.bottom}>
         <View style={styles.tags}>
           <Image source={silenced ? require('@/assets/images/feed/nudge-outline.svg') : item.tags.length ? require('@/assets/images/feed/user-active.svg') : require('@/assets/images/feed/user-disabled.svg')}
@@ -66,10 +64,6 @@ const styles = StyleSheet.create({
   bio: { color: colors.territory, fontSize: 11, lineHeight: 13.2, fontWeight: '500', letterSpacing: -0.28 },
   time: { color: colors.territory, fontSize: 11, fontWeight: '500' },
   more: { color: colors.territory, fontSize: 20 },
-  quoteRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  quotation: { fontFamily: fonts.quote, color: colors.black, fontSize: 40, lineHeight: 42, transform: [{ translateY: 10 }] },
-  quote: { flexShrink: 1, fontFamily: fonts.quote, color: colors.black, fontSize: 16, lineHeight: 24 },
-  muted: { color: colors.territory },
   bottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.territory, paddingVertical: 6, minHeight: 32 },
   tags: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 5 },
   names: { flexShrink: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 5 },

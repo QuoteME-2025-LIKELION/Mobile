@@ -17,6 +17,7 @@ const replacements = {
   'expo-image': url("export const Image='Image';"),
   'expo-router': url("export const router={push:p=>globalThis.__homeRoute=p};"),
   '@/components/AppText': url("export const AppText='AppText';"),
+  '@/components/QuoteText': url("export const QuoteText=({content,...props})=>({type:'QuoteText',props:{...props,children:content}});"),
   '@/constants/theme': themeUrl,
   './homePreviewData': dataUrl,
 };
@@ -195,4 +196,12 @@ test('home menu opens drawer and dismisses filter; closing drawer preserves the 
   drawer=nodes(tree).find(n=>n.type==='HomeDrawer');
   assert.equal(drawer.props.visible,false);
   assert.equal(nodes(tree).filter(n=>n.type==='FeedCard').length,3);
+});
+
+test('home archive button opens the archive route',()=>{
+  const h={next:0,values:[],cleanups:[],back:null};globalThis.__homeHarness=h;
+  const tree=HomePreview();
+  const button=nodes(tree).find(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='아카이브');
+  assert.equal(button.props.disabled,false);button.props.onPress();assert.equal(globalThis.__homeRoute,'/archive');
+  h.cleanups.forEach(fn=>fn());
 });

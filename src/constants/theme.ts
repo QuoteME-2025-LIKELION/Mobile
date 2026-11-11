@@ -53,6 +53,9 @@ export const brandColors = {
   google: '#F2F2F2',
   kakao: '#FEE500',
 } as const;
+// 웹 달력의 일요일/오늘 강조색(기본 팔레트 밖).
+export const archiveColors = { calendarAccent: '#2b6da6' } as const;
+
 export const overlays = {
   loginBackdrop: 'rgba(12,31,49,0.28)',
 } as const;
