@@ -13,7 +13,7 @@ const { splitHomeQuote, previewFeed } = await import(dataUrl);
 const themeUrl = url(compile(await read('constants/theme.ts')).replace(/require\('[^']+'\)/g, '1'));
 const replacements = {
   'react/jsx-runtime': import.meta.resolve('react/jsx-runtime'),
-  'react-native': url("export const Pressable='Pressable',View='View',StyleSheet={create:x=>x,absoluteFill:{position:'absolute'}};"),
+  'react-native': url("export const Pressable='Pressable',View='View',ScrollView='ScrollView',StyleSheet={create:x=>x,absoluteFill:{position:'absolute'}};"),
   'expo-image': url("export const Image='Image';"),
   'expo-router': url("export const router={push:p=>globalThis.__homeRoute=p};"),
   '@/components/AppText': url("export const AppText='AppText';"),
@@ -99,4 +99,82 @@ test('own posted card opens/closes tag list without pretending to edit or post',
   assert.equal(open, false);
   nodes(card).find(n => n.props.onLongPress).props.onLongPress();
   assert.equal(scenarios, 1);
+});
+
+const { previewGroups, filterPreviewFeed } = await import(dataUrl);
+const { GroupFilter } = await load('features/home/GroupFilter.tsx');
+test('group membership filters written and unwritten cards without changing source data', () => {
+  assert.deepEqual(filterPreviewFeed(previewFeed, previewGroups, null).map(x => x.id), [1, 2, 3]);
+  assert.deepEqual(filterPreviewFeed(previewFeed, previewGroups, 1).map(x => x.id), [1, 3]);
+  assert.deepEqual(filterPreviewFeed(previewFeed, previewGroups, 2).map(x => x.id), [2]);
+  assert.deepEqual(filterPreviewFeed(previewFeed, previewGroups, 3), []);
+  assert.deepEqual(filterPreviewFeed(previewFeed, previewGroups, 999), []);
+  assert.equal(previewFeed.length, 3);
+});
+
+test('group menu shows one selected option and no-group create action stays disconnected', () => {
+  let selected;
+  const props = { groups: previewGroups, selectedId: 1, open: true, onToggle() {}, onSelect: id => selected = id };
+  let tree = GroupFilter(props);
+  const options = nodes(tree).filter(n => n.type === 'Pressable' && n.props.accessibilityState?.selected !== undefined);
+  assert.equal(options.filter(n => n.props.accessibilityState.selected).length, 1);
+  options.find(n => text(n) === '오늘의 지혜').props.onPress();
+  assert.equal(selected, 2);
+  options.find(n => text(n) === '전체보기').props.onPress();
+  assert.equal(selected, null);
+  tree = GroupFilter({ ...props, groups: [], selectedId: null });
+  const create = nodes(tree).find(n => n.type === 'Pressable' && text(n) === '그룹 만들기');
+  assert.ok(create.props.disabled);
+  assert.equal(create.props.onPress, undefined);
+  assert.equal(nodes(GroupFilter({ ...props, open: false })).filter(n => n.type === 'Pressable').length, 1);
+});
+
+const reactHome = url(`
+export const useState=initial=>{
+ const h=globalThis.__homeHarness; const i=h.next++;
+ if(!(i in h.values)) h.values[i]=initial;
+ return [h.values[i],value=>{h.values[i]=typeof value==='function'?value(h.values[i]):value;}];
+};
+export const useEffect=callback=>{const cleanup=callback();if(cleanup)globalThis.__homeHarness.cleanups.push(cleanup);};`);
+let groupCode = compile(await read('features/home/GroupFilter.tsx')).replace(/require\('[^']+'\)/g, '1');
+for (const [from,to] of Object.entries(replacements)) groupCode=groupCode.replaceAll(`from '${from}'`,`from '${to}'`).replaceAll(`from "${from}"`,`from "${to}"`);
+const { HomePreview } = await load('features/home/HomePreview.tsx', {
+  react: reactHome,
+  'react-native': url("export const View='View',Pressable='Pressable',ScrollView='ScrollView',StyleSheet={create:x=>x,absoluteFill:{position:'absolute'}},BackHandler={addEventListener:(_,cb)=>{globalThis.__homeHarness.back=cb;return {remove(){globalThis.__homeHarness.back=null;}};}};"),
+  'react-native-safe-area-context': url("export const SafeAreaView='SafeAreaView';"),
+  './FeedCard': url("export const FeedCard=props=>({type:'FeedCard',props});"),
+  './TodayQuote': url("export const TodayQuote=props=>({type:'TodayQuote',props});"),
+  './GroupFilter': url(groupCode),
+});
+
+test('home selection closes menu, outside/scroll/back dismiss it, and scenarios reset the group', () => {
+  const h = { next: 0, values: [], cleanups: [], back: null };
+  function render() {
+    for(const cleanup of h.cleanups) cleanup();
+    h.cleanups=[];h.next=0;globalThis.__homeHarness=h;
+    return HomePreview();
+  }
+  const find = (tree, label) => nodes(tree).find(n => n.props.accessibilityLabel === label);
+  const option = (tree, name) => nodes(tree).find(n => n.type === 'Pressable' && text(n) === name);
+  let tree=render();
+  find(tree,'피드 그룹 필터').props.onPress();tree=render();
+  option(tree,'매일 한 문장').props.onPress();tree=render();
+  assert.equal(find(tree,'피드 그룹 필터').props.accessibilityState.expanded,false);
+  assert.deepEqual(nodes(tree).filter(n=>n.type==='FeedCard').map(n=>n.props.item.id),[1,3]);
+  find(tree,'피드 그룹 필터').props.onPress();tree=render();
+  assert.equal(h.back(),true);tree=render();
+  assert.equal(h.back,null);
+  find(tree,'피드 그룹 필터').props.onPress();tree=render();
+  find(tree,'그룹 필터 닫기').props.onPress();tree=render();
+  assert.equal(find(tree,'피드 그룹 필터').props.accessibilityState.expanded,false);
+  find(tree,'피드 그룹 필터').props.onPress();tree=render();
+  nodes(tree).find(n=>n.type==='ScrollView'&&n.props.onScrollBeginDrag).props.onScrollBeginDrag();tree=render();
+  assert.equal(find(tree,'피드 그룹 필터').props.accessibilityState.expanded,false);
+  nodes(tree).find(n=>n.type==='TodayQuote').props.onNextScenario();tree=render();
+  assert.equal(text(find(tree,'피드 그룹 필터')),'전체보기');
+  nodes(tree).find(n=>n.type==='TodayQuote').props.onNextScenario();tree=render();
+  find(tree,'피드 그룹 필터').props.onPress();tree=render();
+  assert.ok(option(tree,'그룹 만들기').props.disabled);
+  assert.equal(nodes(tree).filter(n=>n.type==='FeedCard').length,0);
+  for(const cleanup of h.cleanups) cleanup();
 });

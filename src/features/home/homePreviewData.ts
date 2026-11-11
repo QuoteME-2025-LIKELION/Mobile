@@ -15,6 +15,19 @@ export const previewFeed: PreviewFeedItem[] = [
   { id: 3, nickname: '어푸', introduction: '작심삼일의 권위자', content: null, tags: [] },
 ];
 
+export type PreviewGroup = { id: number; name: string; memberIds: number[] };
+export const previewGroups: PreviewGroup[] = [
+  { id: 1, name: '매일 한 문장', memberIds: [1, 3] },
+  { id: 2, name: '오늘의 지혜', memberIds: [2] },
+  { id: 3, name: '나의 첫 그룹', memberIds: [] },
+];
+
+export function filterPreviewFeed(items: PreviewFeedItem[], groups: PreviewGroup[], selectedId: number | null): PreviewFeedItem[] {
+  if (selectedId === null) return items;
+  const members = groups.find(group => group.id === selectedId)?.memberIds ?? [];
+  return items.filter(item => members.includes(item.id));
+}
+
 export const previewMyQuote = {
   content: '작은 시작이 내일의 나를 만든다', nickname: '듀가나다', birthYear: 2000, tags: ['듀랄라', '라라진'],
 };

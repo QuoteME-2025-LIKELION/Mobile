@@ -1,42 +1,64 @@
 import { Image, type ImageSource } from 'expo-image';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { BackHandler, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
 import { colors, fonts } from '@/constants/theme';
 
 import { FeedCard } from './FeedCard';
-import { previewFeed } from './homePreviewData';
+import { filterPreviewFeed, previewFeed, previewGroups } from './homePreviewData';
+import { GroupFilter } from './GroupFilter';
 import { TodayQuote } from './TodayQuote';
 
 // /home은 개발 빌드 전용. 월 길게 누르기: 작성 전 → 작성 후 → 친구 없음.
 export function HomePreview() {
   const [scenario, setScenario] = useState(0);
   const [tagMenuOpen, setTagMenuOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+  const groups = scenario === 2 ? [] : previewGroups;
+  const items = filterPreviewFeed(scenario === 2 ? [] : previewFeed, groups, selectedGroupId);
+  const closeMenus = () => { setFilterOpen(false); setTagMenuOpen(false); };
+  const nextScenario = () => {
+    closeMenus();
+    setSelectedGroupId(null);
+    setScenario(value => (value + 1) % 3);
+  };
+  useEffect(() => {
+    if (!filterOpen) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setFilterOpen(false);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [filterOpen]);
 
   return (
     <SafeAreaView style={styles.screen}>
-      <View style={styles.header}>
+      <View style={styles.header} onTouchStart={closeMenus}>
         <HeaderButton label="아카이브" source={require('@/assets/images/home/archive.svg')} />
         <View style={styles.headerActions}>
           <HeaderButton label="알림" source={require('@/assets/images/home/notification.svg')} />
           <HeaderButton label="메뉴" source={require('@/assets/images/home/menu.svg')} />
         </View>
       </View>
-      <ScrollView onScrollBeginDrag={() => setTagMenuOpen(false)} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <TodayQuote tagMenuOpen={tagMenuOpen} onTagMenuChange={setTagMenuOpen} posted={scenario === 1} onNextScenario={() => setScenario(value => (value + 1) % 3)} />
+      <ScrollView onScrollBeginDrag={closeMenus} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        <View style={{ zIndex: tagMenuOpen ? 4 : 0 }} onTouchStart={() => setFilterOpen(false)}>
+          <TodayQuote tagMenuOpen={tagMenuOpen} onTagMenuChange={setTagMenuOpen}
+            posted={scenario === 1} onNextScenario={nextScenario} />
+        </View>
         <View style={styles.feed} onTouchStart={() => setTagMenuOpen(false)}>
-          <View style={styles.filterRow}>
-            <Image source={require('@/assets/images/home/funnel.svg')} style={styles.filterIcon} contentFit="contain" accessible={false} />
-            <AppText style={styles.filter}>전체보기</AppText>
-          </View>
-          {scenario === 2 ? <View style={styles.empty}>
-            <AppText style={styles.emptyText}>친구를 추가하면 매일 피드에서{'\n'}명언을 확인할 수 있어요</AppText>
-            <Pressable accessibilityRole="button" disabled accessibilityState={{ disabled: true }} style={styles.addFriend}>
+          {filterOpen && <Pressable accessibilityRole="button" accessibilityLabel="그룹 필터 닫기" style={styles.dismissFilter} onPress={() => setFilterOpen(false)} />}
+          <GroupFilter groups={groups} selectedId={selectedGroupId} open={filterOpen}
+            onToggle={() => { setTagMenuOpen(false); setFilterOpen(value => !value); }}
+            onSelect={id => { setSelectedGroupId(id); setFilterOpen(false); }} />
+          {items.length === 0 ? <View style={styles.empty}>
+            <AppText style={styles.emptyText}>{selectedGroupId === null ? '친구를 추가하면 매일 피드에서\n명언을 확인할 수 있어요' : '아직 함께 볼 그룹 멤버가 없어요.'}</AppText>
+            {selectedGroupId === null ? <Pressable accessibilityRole="button" disabled accessibilityState={{ disabled: true }} style={styles.addFriend}>
               <AppText style={styles.addFriendText}>친구 추가</AppText>
-            </Pressable>
-          </View> : previewFeed.map(item => <FeedCard key={item.id} item={item} />)}
+            </Pressable> : <AppText style={styles.emptySubText}>다른 멤버가 참여하면 서로의 명언을 이곳에서 볼 수 있어요.</AppText>}
+          </View> : items.map(item => <FeedCard key={item.id} item={item} />)}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -59,10 +81,9 @@ const styles = StyleSheet.create({
   headerIcon: { width: 20, height: 22 },
   scroll: { flex: 1, backgroundColor: colors.secondary },
   scrollContent: { flexGrow: 1 },
-  feed: { flex: 1, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40, gap: 20 },
-  filterRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  filterIcon: { width: 16, height: 16 },
-  filter: { color: colors.black, fontSize: 13, lineHeight: 18, fontWeight: '500' },
+  feed: { zIndex: 3, flex: 1, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40, gap: 20 },
+  dismissFilter: { ...StyleSheet.absoluteFill, zIndex: 1 },
+  emptySubText: { color: colors['grey-400'], fontSize: 14, lineHeight: 21, textAlign: 'center', letterSpacing: -0.28 },
   empty: { marginTop: 176, alignItems: 'center', gap: 12 },
   emptyText: { fontFamily: fonts.quote, color: colors.territory, textAlign: 'center', fontSize: 16, lineHeight: 28.8, letterSpacing: -0.28 },
   addFriend: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 12 },
