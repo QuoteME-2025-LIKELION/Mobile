@@ -20,6 +20,7 @@ type Props = { visible: boolean; onClose: () => void };
 const MENU_ROUTES = {
   "계정 관리": "/account-setting",
   "알림 설정": "/notification-setting",
+  공지사항: "/notice",
 } as const;
 const MENU_ITEMS = ["친구 및 그룹", "계정 관리", "알림 설정", "공지사항"];
 

@@ -87,7 +87,7 @@ test("drawer keeps profile, menu order and footer while leaving unfinished desti
         (n) =>
           !["내 메뉴 닫기", "프로필 관리"].includes(
             n.props.accessibilityLabel
-          ) && !["계정 관리", "알림 설정"].includes(text(n))
+          ) && !["계정 관리", "알림 설정", "공지사항"].includes(text(n))
       )
       .every((n) => n.props.disabled && !n.props.onPress)
   );
@@ -172,4 +172,15 @@ test("notification menu opens its screen after drawer dismissal", () => {
   assert.equal(h.route, undefined);
   h.animations[1].callback({ finished: true });
   assert.equal(h.route, "/notification-setting");
+});
+test("notice menu opens its screen after drawer dismissal", () => {
+  const { h, tree } = render();
+  const button = nodes(tree).find(
+    (n) => n.type === "Pressable" && text(n) === "공지사항"
+  );
+  assert.equal(button.props.disabled, false);
+  button.props.onPress();
+  assert.equal(h.route, undefined);
+  h.animations[1].callback({ finished: true });
+  assert.equal(h.route, "/notice");
 });

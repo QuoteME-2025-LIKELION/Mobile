@@ -5,10 +5,12 @@ export function ScreenHeader({
   onBack,
   title,
   light = false,
+  onTitleLongPress,
 }: {
   onBack: () => void;
   title: string;
   light?: boolean;
+  onTitleLongPress?: () => void;
 }) {
   return (
     <View style={styles.header}>
@@ -23,6 +25,7 @@ export function ScreenHeader({
       </Pressable>
       <AppText
         accessibilityRole="header"
+        onLongPress={onTitleLongPress}
         style={[styles.title, light && styles.lightTitle]}
       >
         {title}
