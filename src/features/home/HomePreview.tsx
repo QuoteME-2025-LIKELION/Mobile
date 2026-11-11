@@ -1,16 +1,19 @@
 import { Image, type ImageSource } from 'expo-image';
-import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
-import { colors, fonts, withOpacity } from '@/constants/theme';
+import { colors, fonts } from '@/constants/theme';
 
-// API 결과가 아닌 화면 개발용 빈 상태. 계정·인증·서버 데이터를 만들지 않는다.
+import { FeedCard } from './FeedCard';
+import { previewFeed } from './homePreviewData';
+import { TodayQuote } from './TodayQuote';
+
+// /home은 개발 빌드 전용. 월 길게 누르기: 작성 전 → 작성 후 → 친구 없음.
 export function HomePreview() {
-  const today = new Date();
-  const month = today.toLocaleDateString('en-US', { month: 'short' }).toLowerCase();
-  const weekday = today.toLocaleDateString('ko-KR', { weekday: 'long' });
+  const [scenario, setScenario] = useState(0);
+  const [tagMenuOpen, setTagMenuOpen] = useState(false);
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -21,31 +24,19 @@ export function HomePreview() {
           <HeaderButton label="메뉴" source={require('@/assets/images/home/menu.svg')} />
         </View>
       </View>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.quoteCard}>
-          <AppText style={styles.month}>{month}</AppText>
-          <AppText style={styles.weekday}>{weekday}</AppText>
-          <Pressable accessibilityRole="button" accessibilityLabel="오늘의 명언 작성"
-            onPress={() => router.push('/write')} style={styles.quoteRow}>
-            <AppText style={styles.day}>{today.getDate()}</AppText>
-            <View style={styles.quoteLines}>
-              <AppText style={styles.quoteLine}>오늘 있었던 일을 바탕으로</AppText>
-              <AppText style={styles.quoteLine}>나만의 명언을 남겨보세요.</AppText>
-            </View>
-          </Pressable>
-          <View style={styles.rule} />
-        </View>
-        <View style={styles.feed}>
+      <ScrollView onScrollBeginDrag={() => setTagMenuOpen(false)} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        <TodayQuote tagMenuOpen={tagMenuOpen} onTagMenuChange={setTagMenuOpen} posted={scenario === 1} onNextScenario={() => setScenario(value => (value + 1) % 3)} />
+        <View style={styles.feed} onTouchStart={() => setTagMenuOpen(false)}>
           <View style={styles.filterRow}>
             <Image source={require('@/assets/images/home/funnel.svg')} style={styles.filterIcon} contentFit="contain" accessible={false} />
             <AppText style={styles.filter}>전체보기</AppText>
           </View>
-          <View style={styles.empty}>
+          {scenario === 2 ? <View style={styles.empty}>
             <AppText style={styles.emptyText}>친구를 추가하면 매일 피드에서{'\n'}명언을 확인할 수 있어요</AppText>
             <Pressable accessibilityRole="button" disabled accessibilityState={{ disabled: true }} style={styles.addFriend}>
               <AppText style={styles.addFriendText}>친구 추가</AppText>
             </Pressable>
-          </View>
+          </View> : previewFeed.map(item => <FeedCard key={item.id} item={item} />)}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -68,14 +59,6 @@ const styles = StyleSheet.create({
   headerIcon: { width: 20, height: 22 },
   scroll: { flex: 1, backgroundColor: colors.secondary },
   scrollContent: { flexGrow: 1 },
-  quoteCard: { backgroundColor: colors.primary, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 20 },
-  month: { fontFamily: fonts.date, color: colors.white, fontSize: 36, lineHeight: 36, letterSpacing: -0.72, textAlign: 'center' },
-  weekday: { fontFamily: fonts.quote, color: withOpacity(colors.white, 0.6), fontSize: 12, lineHeight: 12, letterSpacing: -0.24, textAlign: 'center', marginTop: 8, marginBottom: 14 },
-  quoteRow: { flexDirection: 'row', gap: 18, alignItems: 'flex-start' },
-  day: { fontFamily: fonts.date, color: colors.white, fontSize: 75, lineHeight: 72, width: 66, letterSpacing: -1.5, transform: [{ translateY: -7 }], textAlign: 'center' },
-  quoteLines: { flex: 1 },
-  quoteLine: { fontFamily: fonts.quote, color: withOpacity(colors.white, 0.7), textAlign: 'center', borderTopWidth: 1, borderColor: colors.white, paddingVertical: 9, paddingHorizontal: 12, minHeight: 40, fontSize: 14, lineHeight: 21 },
-  rule: { borderTopWidth: 1, borderColor: colors.white, minHeight: 36 },
   feed: { flex: 1, paddingHorizontal: 24, paddingTop: 24, paddingBottom: 40, gap: 20 },
   filterRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   filterIcon: { width: 16, height: 16 },

@@ -48,7 +48,7 @@ for (const [from, to] of Object.entries({
   '@/components/AppText': url("export const AppText='AppText';"), '@/constants/theme': themeUrl,
   './profileInput': inputUrl, './pickProfileImage': url('export const pickProfileImage=async()=>null;'),
 })) code = code.replaceAll(JSON.stringify(from), JSON.stringify(to)).replaceAll(`'${from}'`, JSON.stringify(to));
-code = code.replace(/require\('(@\/assets\/[^']+)'\)/g, (_, path) => JSON.stringify(path));
+code = code.replace(/require\((['"])(@\/assets\/[^'"]+)\1\)/g, (_, _quote, path) => JSON.stringify(path));
 const { ProfileSetupPreview } = await import(url(code));
 const nodes = tree => !tree || typeof tree !== 'object' ? [] : [tree, ...[tree.props?.children].flat(Infinity).flatMap(nodes)];
 const find = (tree, check) => nodes(tree).find(check);
