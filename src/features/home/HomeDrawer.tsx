@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,15 +29,17 @@ export function HomeDrawer({ visible, onClose }: Props) {
     return () => progress.stopAnimation();
   }, [progress, visible]);
 
-  const close = () => {
+  const dismiss = (action: () => void) => {
     if (closing.current) return;
     closing.current = true;
     Animated.timing(progress, { toValue: 0, duration: 300, easing: Easing.out(Easing.ease), useNativeDriver: true })
       .start(({ finished }) => {
         closing.current = false;
-        if (finished) onClose();
+        if (finished) action();
       });
   };
+
+  const close = () => dismiss(onClose);
 
   return <Modal visible={visible} transparent animationType="none" onRequestClose={close}
     statusBarTranslucent navigationBarTranslucent>
@@ -49,7 +52,7 @@ export function HomeDrawer({ visible, onClose }: Props) {
           <View style={styles.profile}>
             <View style={styles.avatarBox}>
               <Image source={require('@/assets/images/profile/default-profile.png')} style={styles.avatar} accessible={false} />
-              <Pressable disabled accessibilityRole="button" accessibilityLabel="프로필 관리" accessibilityState={{ disabled: true }} style={styles.settings}>
+              <Pressable accessibilityRole="button" accessibilityLabel="프로필 관리" onPress={() => dismiss(() => { onClose(); router.push('/profile-center'); })} style={styles.settings}>
                 <Image source={require('@/assets/images/home/settings.svg')} style={styles.settingsIcon} accessible={false} />
               </Pressable>
             </View>

@@ -14,6 +14,7 @@ for (const [from,to] of Object.entries({
   'react/jsx-runtime': import.meta.resolve('react/jsx-runtime'),
   react: url("export const useState=x=>[typeof x==='function'?x():x,()=>{}];export const useRef=x=>({current:x});export const useEffect=fn=>{globalThis.__drawer.cleanups.push(fn());};"),
   'expo-image': url("export const Image='Image';"),
+  'expo-router': url("export const router={push:path=>globalThis.__drawer.route=path};"),
   'react-native-safe-area-context': url("export const useSafeAreaInsets=()=>({top:24,bottom:16});"),
   'react-native': url(`export const View='View',Pressable='Pressable',ScrollView='ScrollView',Modal='Modal',StyleSheet={create:x=>x,absoluteFill:{position:'absolute'}},Easing={ease:'ease',out:x=>x};
     export const Animated={View:'AnimatedView',Value:class{setValue(v){this.value=v;}interpolate(v){return v;}stopAnimation(){globalThis.__drawer.stops++;}},timing:(value,config)=>({start:callback=>{globalThis.__drawer.animations.push({config,callback});}})};`),
@@ -47,7 +48,7 @@ test('drawer keeps profile, menu order and footer while leaving unfinished desti
   assert.match(text(tree),/이용약관 및 개인정보 처리/);
   assert.match(text(tree),/abc123456@gmail.com/);
   assert.match(text(tree),/버전 1.0.0/);
-  assert.ok(buttons.filter(n=>n.props.accessibilityLabel!=='내 메뉴 닫기').every(n=>n.props.disabled&&!n.props.onPress));
+  assert.ok(buttons.filter(n=>!['내 메뉴 닫기','프로필 관리'].includes(n.props.accessibilityLabel)).every(n=>n.props.disabled&&!n.props.onPress));
   assert.equal(h.animations[0].config.toValue,1);
   assert.equal(h.animations[0].config.useNativeDriver,true);
   const scroll=nodes(tree).find(n=>n.type==='ScrollView');
@@ -78,4 +79,14 @@ test('hidden drawer does not animate open and interrupted close does not dismiss
   tree.props.onRequestClose();
   h.animations[1].callback({finished:false});
   assert.equal(h.closed,0);
+});
+
+
+test('profile gear opens profile management only after the drawer closing animation',()=>{
+  const {h,tree}=render();
+  const gear=nodes(tree).find(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='프로필 관리');
+  assert.ok(!gear.props.disabled);gear.props.onPress();gear.props.onPress();
+  assert.equal(h.route,undefined);assert.equal(h.closed,0);assert.equal(h.animations.length,2);
+  h.animations[1].callback({finished:true});
+  assert.equal(h.closed,1);assert.equal(h.route,'/profile-center');
 });

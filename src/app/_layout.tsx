@@ -34,6 +34,7 @@ export default function RootLayout() {
         <Stack.Screen name="archive" />
         <Stack.Screen name="write" />
         <Stack.Screen name="profile" />
+        <Stack.Screen name="profile-center" />
       </Stack>
     </ThemeProvider>
   );

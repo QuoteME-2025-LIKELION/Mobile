@@ -5,9 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from '@/components/AppText';
 import { colors, fonts, withOpacity } from '@/constants/theme';
 
-type Props = { visible: boolean; onClose: () => void; onConfirm: () => void };
+type Props = { visible: boolean; onClose: () => void; onConfirm: () => void; title?: string; description?: string; dismissLabel?: string };
 
-export function ConfirmDialog({ visible, onClose, onConfirm }: Props) {
+export function ConfirmDialog({ visible, onClose, onConfirm, title = '저장하지 않고 나가시겠어요?', description = '작성한 글은 저장되지 않습니다.', dismissLabel = '계속 작성하기' }: Props) {
   const insets = useSafeAreaInsets();
   const [progress] = useState(() => new Animated.Value(0));
   const closing = useRef(false);
@@ -34,12 +34,12 @@ export function ConfirmDialog({ visible, onClose, onConfirm }: Props) {
     <Modal transparent visible={visible} animationType="none" onRequestClose={() => dismiss(onClose)}
       statusBarTranslucent navigationBarTranslucent>
       <View style={[styles.overlay, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}>
-        <Pressable accessibilityRole="button" accessibilityLabel="계속 작성하기" onPress={() => dismiss(onClose)} style={StyleSheet.absoluteFill} />
+        <Pressable accessibilityRole="button" accessibilityLabel={dismissLabel} onPress={() => dismiss(onClose)} style={StyleSheet.absoluteFill} />
         <Animated.View accessibilityViewIsModal onAccessibilityEscape={() => dismiss(onClose)}
           style={[styles.card, { opacity: progress, transform: [{ translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]}>
           <ScrollView contentContainerStyle={styles.content} bounces={false}>
-            <AppText accessibilityRole="header" style={styles.title}>저장하지 않고 나가시겠어요?</AppText>
-            <AppText style={styles.description}>작성한 글은 저장되지 않습니다.</AppText>
+            <AppText accessibilityRole="header" style={styles.title}>{title}</AppText>
+            <AppText style={styles.description}>{description}</AppText>
             <View style={styles.actions}>
               <Pressable accessibilityRole="button" onPress={() => dismiss(onClose)} style={styles.button}>
                 <AppText>돌아가기</AppText>
