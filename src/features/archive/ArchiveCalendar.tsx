@@ -20,16 +20,7 @@ export function ArchiveCalendar({ month, selectedDate, onMoveMonth, onSelectDate
   const selectedKey = archiveDateKey(selectedDate);
   const todayKey = archiveDateKey(today);
   return <View style={styles.calendar}>
-    <View style={styles.monthBar}>
-      <ArchiveArrow label="이전 달" onPress={() => onMoveMonth(-1)} />
-      <Pressable accessibilityRole="button" accessibilityLabel="연월 선택" onPress={onOpenPicker} hitSlop={8}>
-        <AppText style={styles.monthText}>{month.getFullYear()}.{String(month.getMonth() + 1).padStart(2, '0')}</AppText>
-      </Pressable>
-      <ArchiveArrow label="다음 달" next disabled={isFutureArchiveMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1), today)} onPress={() => onMoveMonth(1)} />
-      <Pressable accessibilityRole="button" accessibilityLabel="월 선택" onPress={onOpenPicker} style={styles.iconButton} hitSlop={8}>
-        <Image source={require('@/assets/images/archive/calendar.svg')} style={styles.icon} accessible={false} />
-      </Pressable>
-    </View>
+    <ArchiveMonthBar month={month} onMoveMonth={onMoveMonth} onOpenPicker={onOpenPicker} />
     <View style={styles.grid}>
       {['일', '월', '화', '수', '목', '금', '토'].map((day, index) => <View key={day} style={styles.column}>
         <AppText style={[styles.weekday, index === 0 && styles.accent]}>{day}</AppText>
@@ -52,6 +43,22 @@ export function ArchiveCalendar({ month, selectedDate, onMoveMonth, onSelectDate
       })}
     </View>
   </View>;
+}
+
+export function ArchiveMonthBar({ month, onMoveMonth, onOpenPicker }: Pick<Props, 'month' | 'onMoveMonth' | 'onOpenPicker'>) {
+  const today = new Date();
+  return (
+    <View style={styles.monthBar}>
+      <ArchiveArrow label="이전 달" onPress={() => onMoveMonth(-1)} />
+      <Pressable accessibilityRole="button" accessibilityLabel="연월 선택" onPress={onOpenPicker} hitSlop={8}>
+        <AppText style={styles.monthText}>{month.getFullYear()}.{String(month.getMonth() + 1).padStart(2, '0')}</AppText>
+      </Pressable>
+      <ArchiveArrow label="다음 달" next disabled={isFutureArchiveMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1), today)} onPress={() => onMoveMonth(1)} />
+      <Pressable accessibilityRole="button" accessibilityLabel="월 선택" onPress={onOpenPicker} style={styles.iconButton} hitSlop={8}>
+        <Image source={require('@/assets/images/archive/calendar.svg')} style={styles.icon} accessible={false} />
+      </Pressable>
+    </View>
+  );
 }
 
 export function ArchiveArrow({ label, onPress, next = false, disabled = false }: { label: string; onPress: () => void; next?: boolean; disabled?: boolean }) {
@@ -95,7 +102,7 @@ export function ArchiveMonthPicker({ visible, month, onClose, onMoveYear, onSele
 
 const styles = StyleSheet.create({
   calendar: { backgroundColor: colors.secondary },
-  monthBar: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 20, paddingHorizontal: 24, paddingTop: 12, paddingBottom: 20 },
+  monthBar: { backgroundColor: colors.secondary, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 20, paddingHorizontal: 24, paddingTop: 12, paddingBottom: 20 },
   iconButton: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
   icon: { width: 24, height: 24 },
   rotate: { transform: [{ rotate: '180deg' }] },

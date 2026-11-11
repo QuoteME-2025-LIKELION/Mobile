@@ -10,7 +10,7 @@ const dateUrl=url(compile(await read('features/archive/archiveDate.ts')));
 const dates=await import(dateUrl);
 const themeUrl=url(compile(await read('constants/theme.ts')).replace(/require\('[^']+'\)/g,'1'));
 const nativeUrl=url("export const Pressable='Pressable',View='View',ScrollView='ScrollView',Modal='Modal',StyleSheet={create:x=>x,absoluteFill:{position:'absolute'}};");
-const reactUrl=url(`export const useState=initial=>{const h=globalThis.__archive;const i=h.next++;if(!(i in h.values))h.values[i]=typeof initial==='function'?initial():initial;return [h.values[i],v=>h.values[i]=typeof v==='function'?v(h.values[i]):v];};`);
+const reactUrl=url(`export const useRef=initial=>({current:initial});export const useState=initial=>{const h=globalThis.__archive;const i=h.next++;if(!(i in h.values))h.values[i]=typeof initial==='function'?initial():initial;return [h.values[i],v=>h.values[i]=typeof v==='function'?v(h.values[i]):v];};`);
 const quoteLayoutUrl=url(compile(await read('components/quoteLayout.ts')));
 const {getQuoteMarkPositions}=await import(quoteLayoutUrl);
 const base={
@@ -34,10 +34,10 @@ async function moduleUrl(file,extra={}) {
 }
 const dataUrl=await moduleUrl('features/archive/archivePreviewData.ts');
 const cardUrl=await moduleUrl('features/archive/ArchiveQuoteCard.tsx');
-const {getPreviewArchives}=await import(dataUrl);
+const {getPreviewArchives,getPreviewMonthlyArchives}=await import(dataUrl);
 const {ArchiveQuoteCard}=await import(cardUrl);
 const {ArchiveCalendar,ArchiveMonthPicker}=await import(await moduleUrl('features/archive/ArchiveCalendar.tsx'));
-const controlsUrl=url("export const ArchiveCalendar='ArchiveCalendar',ArchiveMonthPicker='ArchiveMonthPicker',ArchiveArrow='ArchiveArrow';");
+const controlsUrl=url("export const ArchiveCalendar='ArchiveCalendar',ArchiveMonthPicker='ArchiveMonthPicker',ArchiveMonthBar='ArchiveMonthBar',ArchiveArrow='ArchiveArrow';");
 const {ArchivePreview}=await import(await moduleUrl('features/archive/ArchivePreview.tsx',{'./ArchiveCalendar':controlsUrl,'./archivePreviewData':dataUrl,'./ArchiveQuoteCard':cardUrl}));
 const nodes=tree=>!tree||typeof tree!=='object'?[]:typeof tree.type==='function'?nodes(tree.type(tree.props)):[tree,...[tree.props?.children].flat(Infinity).flatMap(nodes)];
 const text=tree=>typeof tree==='string'||typeof tree==='number'?String(tree):!tree?'':Array.isArray(tree)?tree.map(text).join(''):typeof tree.type==='function'?text(tree.type(tree.props)):text(tree.props?.children);
@@ -112,7 +112,7 @@ test('archive screen coordinates date/month/year selection, empty states and bac
   control(tree,'ArchiveMonthPicker').props.onSelectMonth(1);tree=render();assert.equal(control(tree,'ArchiveCalendar').props.month.getMonth(),1);assert.equal(control(tree,'ArchiveMonthPicker').props.visible,false);
   control(tree,'ArchiveArrow').props.onPress();assert.equal(h.back,1);
   h.canGoBack=false;control(tree,'ArchiveArrow').props.onPress();assert.equal(h.replaced,'/home');
-  const tabs=nodes(tree).filter(n=>n.props.accessibilityRole==='tab');assert.equal(tabs.length,3);assert.ok(tabs.slice(1).every(n=>n.props.disabled));
+  const tabs=nodes(tree).filter(n=>n.props.accessibilityRole==='tab');assert.equal(tabs.length,3);assert.ok(tabs.every(n=>!n.props.disabled));assert.ok(tabs[0].props.accessibilityState.selected);
 }));
 
 test('archive fixture and cards keep tag/author data while bookmark/share remain disconnected',()=>{
@@ -166,3 +166,53 @@ test('quote positions follow measured text inside maximum body width for center 
   assert.deepEqual(getQuoteMarkPositions(345,400,'feed'),{left:0,right:329});
   assert.deepEqual(getQuoteMarkPositions(300,400,'archive'),{left:0,right:289});
 });
+
+
+test('monthly preview lists filter by month, sort newest first, and keep current-day records in range',()=>{
+  for(const tab of ['mine','bookmarks']) {
+    const current=getPreviewMonthlyArchives(new Date(2026,10,1),tab,today);
+    assert.equal(current.length,2);
+    assert.ok(current.every(q=>q.createdAt.startsWith('2026-11-')&&q.createdAt<='2026-11-11'));
+    assert.ok(current[0].createdAt>=current[1].createdAt);
+    assert.ok(getPreviewMonthlyArchives(new Date(2026,9,1),tab,today).every(q=>q.createdAt.startsWith('2026-10-')));
+    assert.deepEqual(getPreviewMonthlyArchives(new Date(2026,8,1),tab,today),[]);
+    assert.deepEqual(getPreviewMonthlyArchives(new Date(2026,11,1),tab,today),[]);
+  }
+  assert.equal(getPreviewMonthlyArchives(new Date(2026,10,1),'mine',new Date(2026,10,1)).length,1);
+  const previousYear=getPreviewMonthlyArchives(new Date(2025,11,1),'mine',new Date(2026,0,2));
+  assert.equal(previousYear.length,2);assert.ok(previousYear.every(q=>q.createdAt.startsWith('2025-12-')));
+  assert.ok(getPreviewMonthlyArchives(new Date(2026,10,1),'mine',today).every(q=>q.nickname==='듀가나다'));
+  assert.ok(getPreviewMonthlyArchives(new Date(2026,10,1),'bookmarks',today).every(q=>q.isBookmarked));
+});
+
+test('AI original appears only in my-quotes presentation and non-AI cards do not show it',()=>{
+  const ai=getPreviewMonthlyArchives(new Date(2026,10,1),'mine',today)[0];
+  assert.match(text(ArchiveQuoteCard({quote:ai,showOriginalContent:true})),new RegExp(ai.originalContent));
+  assert.ok(!text(ArchiveQuoteCard({quote:ai})).includes(ai.originalContent));
+  assert.ok(!text(ArchiveQuoteCard({quote:{...ai,isAiGenerated:false},showOriginalContent:true})).includes(ai.originalContent));
+  const bookmarked=nodes(ArchiveQuoteCard({quote:ai})).find(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='북마크 취소');
+  assert.ok(bookmarked.props.disabled);assert.ok(bookmarked.props.accessibilityState.selected);assert.equal(bookmarked.props.onPress,undefined);
+});
+
+test('my quotes and bookmarks hide the date grid, share month navigation and show distinct empty messages',()=>frozen(()=>{
+  const h={next:0,values:[],canGoBack:true,back:0};globalThis.__archive=h;
+  const render=()=>{h.next=0;return ArchivePreview();};
+  const find=(tree,type)=>nodes(tree).find(n=>n.type===type);
+  const switchTab=(tree,label)=>nodes(tree).find(n=>n.props.accessibilityRole==='tab'&&text(n)===label).props.onPress();
+  let tree=render();assert.ok(find(tree,'ArchiveCalendar'));
+  switchTab(tree,'나의 명언');tree=render();
+  assert.equal(find(tree,'ArchiveCalendar'),undefined);assert.ok(find(tree,'ArchiveMonthBar'));
+  assert.match(text(tree),/오늘은 미루던 일을 조금 시작했어/);
+  assert.equal(nodes(tree).filter(n=>n.type==='Pressable'&&['북마크','북마크 취소'].includes(n.props.accessibilityLabel)).length,2);
+  find(tree,'ArchiveMonthBar').props.onMoveMonth(1);tree=render();assert.equal(find(tree,'ArchiveMonthBar').props.month.getMonth(),10);
+  find(tree,'ArchiveMonthBar').props.onOpenPicker();tree=render();assert.equal(find(tree,'ArchiveMonthPicker').props.visible,true);
+  find(tree,'ArchiveMonthPicker').props.onSelectMonth(9);tree=render();assert.equal(find(tree,'ArchiveMonthPicker').props.visible,false);
+  switchTab(tree,'북마크');tree=render();
+  assert.equal(find(tree,'ArchiveMonthBar').props.month.getMonth(),9);
+  assert.ok(!text(tree).includes('오늘은 미루던 일을 조금 시작했어'));
+  assert.match(text(tree),/라라진/);
+  find(tree,'ArchiveMonthBar').props.onMoveMonth(-1);tree=render();assert.match(text(tree),/마음에 드는 명언은 북마크를 통해 모아보세요/);
+  switchTab(tree,'나의 명언');tree=render();assert.match(text(tree),/작성된 명언이 없어요/);
+  switchTab(tree,'전체보기');tree=render();assert.ok(find(tree,'ArchiveCalendar'));assert.equal(find(tree,'ArchiveMonthBar'),undefined);
+  assert.equal(find(tree,'ArchiveCalendar').props.month.getMonth(),8);
+}));

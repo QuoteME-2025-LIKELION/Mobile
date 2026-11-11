@@ -1,16 +1,21 @@
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import type { ComponentRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
 import { colors, fonts, withOpacity } from '@/constants/theme';
 
-import { ArchiveArrow, ArchiveCalendar, ArchiveMonthPicker } from './ArchiveCalendar';
+import { ArchiveArrow, ArchiveCalendar, ArchiveMonthBar, ArchiveMonthPicker } from './ArchiveCalendar';
 import { getArchiveDateInMonth, getArchiveMonthInYear, isFutureArchiveDate, isFutureArchiveMonth } from './archiveDate';
-import { getPreviewArchives } from './archivePreviewData';
+import { getPreviewArchives, getPreviewMonthlyArchives, type ArchiveTab } from './archivePreviewData';
 import { ArchiveQuoteCard } from './ArchiveQuoteCard';
+
+const TABS: { id: ArchiveTab; label: string }[] = [
+  { id: 'all', label: '전체보기' }, { id: 'mine', label: '나의 명언' }, { id: 'bookmarks', label: '북마크' },
+];
 
 export function ArchivePreview() {
   const insets = useSafeAreaInsets();
@@ -19,7 +24,11 @@ export function ArchivePreview() {
     return { month: new Date(today.getFullYear(), today.getMonth(), 1), date: today };
   });
   const [pickerOpen, setPickerOpen] = useState(false);
-  const quotes = getPreviewArchives(selection.date);
+  const [tab, setTab] = useState<ArchiveTab>('all');
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const quotes = tab === 'all' ? getPreviewArchives(selection.date) : getPreviewMonthlyArchives(selection.month, tab);
+  const emptyMessage = tab === 'all' ? '이날 작성된 명언이 없어요'
+    : tab === 'mine' ? '작성된 명언이 없어요' : '마음에 드는 명언은 북마크를 통해 모아보세요';
 
   const moveMonth = (amount: number) => setSelection(prev => {
     const month = new Date(prev.month.getFullYear(), prev.month.getMonth() + amount, 1);
@@ -49,18 +58,23 @@ export function ArchivePreview() {
       <AppText accessibilityRole="header" style={styles.title}>아카이브</AppText>
       <View style={styles.headerSpacer} />
     </View>
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-      <ArchiveCalendar month={selection.month} selectedDate={selection.date} onMoveMonth={moveMonth} onSelectDate={selectDate} onOpenPicker={() => setPickerOpen(true)} />
+    <ScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      {tab === 'all'
+        ? <ArchiveCalendar month={selection.month} selectedDate={selection.date} onMoveMonth={moveMonth} onSelectDate={selectDate} onOpenPicker={() => setPickerOpen(true)} />
+        : <ArchiveMonthBar month={selection.month} onMoveMonth={moveMonth} onOpenPicker={() => setPickerOpen(true)} />}
       <View style={[styles.content, { paddingBottom: 40 + insets.bottom }]}>
         <View style={styles.tabs}>
-          {['전체보기', '나의 명언', '북마크'].map((label, index) => <Pressable key={label} accessibilityRole="tab"
-            accessibilityState={{ selected: index === 0, disabled: index !== 0 }} disabled={index !== 0}
-            style={[styles.tab, index === 0 && styles.activeTab]}>
-            <AppText style={[styles.tabText, index === 0 && styles.activeText]}>{label}</AppText>
+          {TABS.map(({ id, label }) => <Pressable key={id} accessibilityRole="tab"
+            accessibilityState={{ selected: tab === id }} onPress={() => {
+              setTab(id);
+              scrollRef.current?.scrollTo({ y: 0, animated: false });
+            }}
+            style={[styles.tab, tab === id && styles.activeTab]}>
+            <AppText style={[styles.tabText, tab === id && styles.activeText]}>{label}</AppText>
           </Pressable>)}
         </View>
-        {quotes.length ? quotes.map(quote => <ArchiveQuoteCard key={quote.id} quote={quote} />)
-          : <AppText style={styles.empty}>이날 작성된 명언이 없어요</AppText>}
+        {quotes.length ? quotes.map(quote => <ArchiveQuoteCard key={quote.id} quote={quote} showOriginalContent={tab === 'mine'} />)
+          : <AppText style={styles.empty}>{emptyMessage}</AppText>}
       </View>
     </ScrollView>
     <ArchiveMonthPicker visible={pickerOpen} month={selection.month} onClose={() => setPickerOpen(false)} onMoveYear={moveYear} onSelectMonth={selectMonth} />

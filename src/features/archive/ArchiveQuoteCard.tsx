@@ -7,10 +7,11 @@ import { colors, fonts, withOpacity } from '@/constants/theme';
 
 import type { PreviewArchiveQuote } from './archivePreviewData';
 
-export function ArchiveQuoteCard({ quote }: { quote: PreviewArchiveQuote }) {
+export function ArchiveQuoteCard({ quote, showOriginalContent = false }: { quote: PreviewArchiveQuote; showOriginalContent?: boolean }) {
   return <View style={styles.card}>
     <AppText style={styles.author}>{quote.nickname} ({quote.birthYear}~)</AppText>
     <QuoteText key={quote.content} content={quote.content} />
+    {showOriginalContent && quote.isAiGenerated && quote.originalContent ? <AppText style={styles.original}>{quote.originalContent}</AppText> : null}
     <View style={styles.actions}>
       <View style={styles.tags}>
         <Image source={require('@/assets/images/feed/own-user.svg')} style={styles.icon} accessible={false} />
@@ -20,8 +21,8 @@ export function ArchiveQuoteCard({ quote }: { quote: PreviewArchiveQuote }) {
         </View>
       </View>
       <View style={styles.buttons}>
-        <Pressable disabled accessibilityRole="button" accessibilityLabel="북마크" accessibilityState={{ disabled: true }} hitSlop={8}>
-          <Image source={require('@/assets/images/feed/own-bookmark-outline.svg')} style={styles.icon} accessible={false} />
+        <Pressable disabled accessibilityRole="button" accessibilityLabel={quote.isBookmarked ? "북마크 취소" : "북마크"} accessibilityState={{ disabled: true, selected: Boolean(quote.isBookmarked) }} hitSlop={8}>
+          <Image source={quote.isBookmarked ? require('@/assets/images/archive/bookmark-filled.svg') : require('@/assets/images/feed/own-bookmark-outline.svg')} style={styles.icon} accessible={false} />
         </Pressable>
         <Pressable disabled accessibilityRole="button" accessibilityLabel="공유하기" accessibilityState={{ disabled: true }} hitSlop={8}>
           <Image source={require('@/assets/images/feed/own-share.svg')} style={styles.icon} accessible={false} />
@@ -34,6 +35,7 @@ export function ArchiveQuoteCard({ quote }: { quote: PreviewArchiveQuote }) {
 const styles = StyleSheet.create({
   card: { width: '100%', paddingTop: 18, gap: 16 },
   author: { paddingHorizontal: 4, fontFamily: fonts.quote, color: colors.white, fontSize: 14, lineHeight: 20, fontWeight: '500', letterSpacing: -0.28 },
+  original: { alignSelf: 'stretch', paddingHorizontal: 4, color: colors.white, fontSize: 13, lineHeight: 20.15, fontWeight: '500', letterSpacing: -0.26, textAlign: 'center' },
   actions: { flexDirection: 'row', minHeight: 36, alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, paddingHorizontal: 8, gap: 12, borderTopWidth: 1, borderBottomWidth: 1, borderColor: withOpacity(colors.white, 0.62) },
   tags: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 },
   names: { flexShrink: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
