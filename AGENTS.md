@@ -47,3 +47,12 @@ Docs: https://docs.expo.dev/eas/index.md
 - Use this Mobile repository's issue numbers, not Frontend issue numbers. Do not invent issue numbers or claim a documented branch already exists without checking Git.
 - Use `.github/ISSUE_TEMPLATE/issue_template.md` and `.github/pull_request_template.md` when drafting issues or PRs.
 - Distinguish type/lint results, actual device verification, and unverified platforms. Link an ongoing issue without closing it; use `Closes` only when the whole issue is complete.
+
+## Source organization
+
+- Follow `ARCHITECTURE.md` for this project's organization; these are local choices, not mandatory React Native conventions.
+- Keep routes in `src/app` thin. Put feature screens, components, hooks, fixtures and utilities under their respective feature folders.
+- Use role-based screen names without `Preview`. Keep development data explicitly in `fixtures`; renaming a screen does not remove development guards or authorize real API integration.
+- Put fixed styles next to the component in `ComponentName.styles.ts`. Import shared theme values from `@/styles/theme`.
+- Move complex screen state/effects/actions to feature hooks. Keep small component-local UI state local rather than adding unnecessary abstractions.
+- Structural changes must preserve the existing quote layout, style values and interactions. Keep automatic checks and actual device verification separate.

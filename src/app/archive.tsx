@@ -1,8 +1,8 @@
 import { Redirect } from 'expo-router';
 
-import { ArchivePreview } from '@/features/archive/ArchivePreview';
+import { ArchiveScreen } from '@/features/archive/screens/ArchiveScreen';
 
-export default function ArchiveScreen() {
+export default function ArchiveRoute() {
   if (!__DEV__) return <Redirect href="/" />;
-  return <ArchivePreview />;
+  return <ArchiveScreen />;
 }

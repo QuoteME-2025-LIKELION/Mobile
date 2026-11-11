@@ -1,8 +1,8 @@
 import { Redirect } from 'expo-router';
 
-import { WritePreview } from '@/features/write/WritePreview';
+import { WriteScreen } from '@/features/write/screens/WriteScreen';
 
-export default function WriteScreen() {
+export default function WriteRoute() {
   if (!__DEV__) return <Redirect href="/" />;
-  return <WritePreview />;
+  return <WriteScreen />;
 }

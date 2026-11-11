@@ -1,8 +1,8 @@
 import { Redirect } from 'expo-router';
 
-import { ProfileSetupPreview } from '@/features/profile/ProfileSetupPreview';
+import { ProfileSetupScreen } from '@/features/profile/screens/ProfileSetupScreen';
 
-export default function ProfileScreen() {
+export default function ProfileRoute() {
   if (!__DEV__) return <Redirect href="/" />;
-  return <ProfileSetupPreview />;
+  return <ProfileSetupScreen />;
 }

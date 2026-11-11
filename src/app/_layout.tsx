@@ -4,13 +4,17 @@ import { useEffect } from 'react';
 import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
-import { colors, fontSources } from '@/constants/theme';
+import { colors, fontSources } from '@/styles/theme';
 
 SplashScreen.preventAutoHideAsync();
 
 const navigationTheme = {
   ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, background: colors.primary, primary: colors.primary },
+  colors: {
+    ...DefaultTheme.colors,
+    background: colors.primary,
+    primary: colors.primary,
+  },
 };
 
 export default function RootLayout() {
@@ -28,7 +32,12 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={navigationTheme}>
       <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.primary } }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.primary },
+        }}
+      >
         <Stack.Screen name="index" />
         <Stack.Screen name="home" />
         <Stack.Screen name="archive" />
