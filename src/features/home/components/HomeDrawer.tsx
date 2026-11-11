@@ -17,6 +17,10 @@ import { userFixture } from "@/fixtures/userFixture";
 import { styles } from "./HomeDrawer.styles";
 type Props = { visible: boolean; onClose: () => void };
 
+const MENU_ROUTES = {
+  "계정 관리": "/account-setting",
+  "알림 설정": "/notification-setting",
+} as const;
 const MENU_ITEMS = ["친구 및 그룹", "계정 관리", "알림 설정", "공지사항"];
 
 // 웹 시안의 임시 주소. 실제 문의 주소 확정/복사 연결은 후속 작업.
@@ -136,18 +140,20 @@ export function HomeDrawer({ visible, onClose }: Props) {
               {MENU_ITEMS.map((label, index) => (
                 <Pressable
                   key={label}
-                  disabled={label !== "계정 관리"}
+                  disabled={!(label in MENU_ROUTES)}
                   onPress={
-                    label === "계정 관리"
+                    label in MENU_ROUTES
                       ? () =>
                           dismiss(() => {
                             onClose();
-                            router.push("/account-setting");
+                            router.push(
+                              MENU_ROUTES[label as keyof typeof MENU_ROUTES]
+                            );
                           })
                       : undefined
                   }
                   accessibilityRole="button"
-                  accessibilityState={{ disabled: label !== "계정 관리" }}
+                  accessibilityState={{ disabled: !(label in MENU_ROUTES) }}
                   style={[
                     styles.menuItem,
                     index === MENU_ITEMS.length - 1 && styles.lastItem,
