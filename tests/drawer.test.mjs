@@ -84,7 +84,9 @@ test('drawer keeps profile, menu order and footer while leaving unfinished desti
     buttons
       .filter(
         (n) =>
-          !['내 메뉴 닫기', '프로필 관리'].includes(n.props.accessibilityLabel),
+          !['내 메뉴 닫기', '프로필 관리'].includes(
+            n.props.accessibilityLabel,
+          ) && text(n) !== '계정 관리',
       )
       .every((n) => n.props.disabled && !n.props.onPress),
   );
@@ -142,4 +144,19 @@ test('profile gear opens profile management only after the drawer closing animat
   h.animations[1].callback({ finished: true });
   assert.equal(h.closed, 1);
   assert.equal(h.route, '/profile-center');
+});
+
+test('account menu opens only after closing the drawer; unfinished menus stay disabled', () => {
+  const { h, tree } = render();
+  const button = nodes(tree).find(
+    (n) => n.type === 'Pressable' && text(n) === '계정 관리',
+  );
+  assert.equal(button.props.disabled, false);
+  button.props.onPress();
+  button.props.onPress();
+  assert.equal(h.route, undefined);
+  assert.equal(h.animations.length, 2);
+  h.animations[1].callback({ finished: true });
+  assert.equal(h.closed, 1);
+  assert.equal(h.route, '/account-setting');
 });

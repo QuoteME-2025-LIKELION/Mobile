@@ -646,3 +646,32 @@ test('recommendation panel only enables next for a current result and disables r
     }
   }
 });
+
+test('confirmation can show a custom label while disabling unconnected server actions', () => {
+  globalThis.__dialogAnimations = [];
+  const { render } = harness(ConfirmDialog, {
+    visible: true,
+    title: '로그아웃할까요?',
+    description: '',
+    confirmLabel: '로그아웃',
+    confirmDisabled: true,
+    onClose: () => {},
+    onConfirm: () => assert.fail('unconnected action must not run'),
+  });
+  const tree = render();
+  const confirm = find(
+    tree,
+    (node) =>
+      node.type === 'Pressable' &&
+      nodes(node).some((child) => child.props?.children === '로그아웃'),
+  );
+  assert.equal(confirm.props.disabled, true);
+  assert.equal(confirm.props.accessibilityState.disabled, true);
+  assert.equal(confirm.props.onPress, undefined);
+  assert.equal(
+    nodes(tree).filter(
+      (node) => node.type === 'AppText' && node.props.children === '',
+    ).length,
+    0,
+  );
+});

@@ -17,6 +17,8 @@ type Props = {
   title?: string;
   description?: string;
   dismissLabel?: string;
+  confirmLabel?: string;
+  confirmDisabled?: boolean;
 };
 
 export function ConfirmDialog({
@@ -26,6 +28,8 @@ export function ConfirmDialog({
   title = '저장하지 않고 나가시겠어요?',
   description = '작성한 글은 저장되지 않습니다.',
   dismissLabel = '계속 작성하기',
+  confirmLabel = '나가기',
+  confirmDisabled = false,
 }: Props) {
   const insets = useSafeAreaInsets();
   const [progress] = useState(() => new Animated.Value(0));
@@ -101,7 +105,9 @@ export function ConfirmDialog({
             <AppText accessibilityRole="header" style={styles.title}>
               {title}
             </AppText>
-            <AppText style={styles.description}>{description}</AppText>
+            {description ? (
+              <AppText style={styles.description}>{description}</AppText>
+            ) : null}
             <View style={styles.actions}>
               <Pressable
                 accessibilityRole="button"
@@ -112,10 +118,16 @@ export function ConfirmDialog({
               </Pressable>
               <Pressable
                 accessibilityRole="button"
-                onPress={() => dismiss(onConfirm)}
+                disabled={confirmDisabled}
+                accessibilityState={{ disabled: confirmDisabled }}
+                onPress={confirmDisabled ? undefined : () => dismiss(onConfirm)}
                 style={styles.button}
               >
-                <AppText style={styles.confirm}>나가기</AppText>
+                <AppText
+                  style={[styles.confirm, confirmDisabled && styles.disabled]}
+                >
+                  {confirmLabel}
+                </AppText>
               </Pressable>
             </View>
           </ScrollView>

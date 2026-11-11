@@ -136,9 +136,18 @@ export function HomeDrawer({ visible, onClose }: Props) {
               {MENU_ITEMS.map((label, index) => (
                 <Pressable
                   key={label}
-                  disabled
+                  disabled={label !== '계정 관리'}
+                  onPress={
+                    label === '계정 관리'
+                      ? () =>
+                          dismiss(() => {
+                            onClose();
+                            router.push('/account-setting');
+                          })
+                      : undefined
+                  }
                   accessibilityRole="button"
-                  accessibilityState={{ disabled: true }}
+                  accessibilityState={{ disabled: label !== '계정 관리' }}
                   style={[
                     styles.menuItem,
                     index === MENU_ITEMS.length - 1 && styles.lastItem,

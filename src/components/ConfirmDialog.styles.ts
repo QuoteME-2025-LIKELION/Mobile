@@ -39,4 +39,5 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   confirm: { color: colors.red },
+  disabled: { color: colors['grey-200'] },
 });

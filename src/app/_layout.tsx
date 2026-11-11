@@ -44,6 +44,9 @@ export default function RootLayout() {
         <Stack.Screen name="write" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="profile-center" />
+        <Stack.Screen name="account-setting" />
+        <Stack.Screen name="account-delete" />
+        <Stack.Screen name="account-delete-complete" />
       </Stack>
     </ThemeProvider>
   );
