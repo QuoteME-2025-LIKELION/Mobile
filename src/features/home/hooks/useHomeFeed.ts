@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { useModerationState } from "@/features/moderation/stores/moderationStore";
+import { useNotificationItems } from "@/features/notifications/stores/notificationStore";
 import { BackHandler } from "react-native";
 import {
   filterFeedFixtures,
@@ -15,6 +16,9 @@ export function useHomeFeed() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const groups = scenario === 2 ? [] : groupFixtures;
+  const hasUnreadNotifications = useNotificationItems().some(
+    (item) => !item.isRead
+  );
   const moderation = useModerationState();
   const removedNames = feedFixtures
     .filter((item) => moderation.formerFriendIds.includes(item.memberId))
@@ -58,6 +62,13 @@ export function useHomeFeed() {
     closeMenus();
     router.push("/archive");
   };
+  const openNotifications = () => {
+    closeMenus();
+    router.push({
+      pathname: "/notification",
+      params: { written: scenario === 1 ? "1" : "0" },
+    });
+  };
   const openDrawer = () => {
     closeMenus();
     setDrawerOpen(true);
@@ -74,6 +85,8 @@ export function useHomeFeed() {
     setFilterOpen(false);
   };
   return {
+    hasUnreadNotifications,
+    openNotifications,
     removedNames,
     scenario,
     drawerOpen,

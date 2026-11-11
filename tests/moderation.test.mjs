@@ -27,6 +27,9 @@ async function environment() {
     react,
     "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
     "@/styles/theme": theme,
+    "@/features/notifications/stores/notificationStore": url(
+      "export const useNotificationItems=()=>[];"
+    ),
     "@/components/AppText": url("export const AppText='AppText';"),
     "@/components/ScreenHeader": url(
       "export const ScreenHeader='ScreenHeader';"

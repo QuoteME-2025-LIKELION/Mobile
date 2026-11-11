@@ -40,6 +40,9 @@ const replacements = {
     "export const QuoteText=({content,...props})=>({type:'QuoteText',props:{...props,children:content}});"
   ),
   "@/styles/theme": themeUrl,
+  "@/features/notifications/stores/notificationStore": url(
+    "export const useNotificationItems=()=>[];"
+  ),
   "@/features/home/fixtures/homeFixtures": dataUrl,
 };
 async function load(file, extra = {}) {
@@ -405,4 +408,40 @@ test("feed more measures the trigger and opens the menu without changing quote l
   more.props.onPress();
   assert.equal(selected.target, item);
   assert.deepEqual(selected.anchor, { x: 280, y: 120, width: 20, height: 24 });
+});
+
+test("home notification button opens the list with the current writing preview status", () => {
+  const h = { next: 0, values: [], cleanups: [], back: null };
+  const render = () => {
+    h.cleanups.forEach((fn) => fn());
+    h.cleanups = [];
+    h.next = 0;
+    globalThis.__homeHarness = h;
+    return HomeScreen();
+  };
+  let tree = render();
+  nodes(tree)
+    .find(
+      (node) =>
+        node.type === "Pressable" && node.props.accessibilityLabel === "알림"
+    )
+    .props.onPress();
+  assert.deepEqual(globalThis.__homeRoute, {
+    pathname: "/notification",
+    params: { written: "0" },
+  });
+  nodes(tree)
+    .find((node) => node.type === "TodayQuote")
+    .props.onNextScenario();
+  tree = render();
+  nodes(tree)
+    .find(
+      (node) =>
+        node.type === "Pressable" && node.props.accessibilityLabel === "알림"
+    )
+    .props.onPress();
+  assert.deepEqual(globalThis.__homeRoute, {
+    pathname: "/notification",
+    params: { written: "1" },
+  });
 });

@@ -46,6 +46,7 @@ export default function RootLayout() {
         <Stack.Screen name="profile-center" />
         <Stack.Screen name="notice/index" />
         <Stack.Screen name="notification-setting" />
+        <Stack.Screen name="notification" />
         <Stack.Screen name="blocked-members" />
         <Stack.Screen name="account-setting" />
         <Stack.Screen name="account-delete" />

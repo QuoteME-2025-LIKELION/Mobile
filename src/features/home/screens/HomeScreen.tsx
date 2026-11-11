@@ -18,6 +18,8 @@ import { useHomeFeed } from "../hooks/useHomeFeed";
 export function HomeScreen() {
   const moderation = useFeedModeration();
   const {
+    hasUnreadNotifications,
+    openNotifications,
     removedNames,
     scenario,
     drawerOpen,
@@ -47,8 +49,15 @@ export function HomeScreen() {
         />
         <View style={styles.headerActions}>
           <HeaderButton
-            label="알림"
-            source={require("@/assets/images/home/notification.svg")}
+            label={
+              hasUnreadNotifications ? "알림, 읽지 않은 알림 있음" : "알림"
+            }
+            source={
+              hasUnreadNotifications
+                ? require("@/assets/images/home/notification-unread.svg")
+                : require("@/assets/images/home/notification.svg")
+            }
+            onPress={openNotifications}
           />
           <HeaderButton
             label="메뉴"
