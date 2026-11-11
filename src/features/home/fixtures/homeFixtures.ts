@@ -3,16 +3,20 @@ import { userFixture } from "@/fixtures/userFixture";
 // 개발 화면 비교 전용. 서버 데이터/인증 상태/게시 결과로 사용하지 않는다.
 export type FeedItem = {
   id: number;
+  memberId: number;
   nickname: string;
   introduction?: string;
   content: string | null;
   tags: string[];
   timeAgo?: string;
+  isAiGenerated?: boolean;
 };
 
 export const feedFixtures: FeedItem[] = [
   {
     id: 1,
+    memberId: 1,
+    isAiGenerated: true,
     nickname: "듀랄라",
     introduction: "Positive Thinking",
     content: "작은 시작이 내일의 나를 만든다",
@@ -21,6 +25,8 @@ export const feedFixtures: FeedItem[] = [
   },
   {
     id: 2,
+    memberId: 2,
+    isAiGenerated: false,
     nickname: "라라진",
     introduction: "Seize the day",
     content: "오늘의 나를 믿고 한 걸음 더",
@@ -30,6 +36,7 @@ export const feedFixtures: FeedItem[] = [
   // 미작성 introduction은 시안 확인용. 현재 서버 응답에 이 필드가 있다는 뜻은 아니다.
   {
     id: 3,
+    memberId: 3,
     nickname: "어푸",
     introduction: "작심삼일의 권위자",
     content: null,
@@ -52,7 +59,7 @@ export function filterFeedFixtures(
   if (selectedId === null) return items;
   const members =
     groups.find((group) => group.id === selectedId)?.memberIds ?? [];
-  return items.filter((item) => members.includes(item.id));
+  return items.filter((item) => members.includes(item.memberId));
 }
 
 export const myQuoteFixture = {

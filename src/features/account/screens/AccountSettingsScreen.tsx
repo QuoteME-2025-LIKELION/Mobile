@@ -46,17 +46,14 @@ export function AccountSettingsScreen() {
             <AppText style={styles.value}>{account.birthYear}년</AppText>
           </Pressable>
           <Pressable
-            disabled
+            onPress={account.openBlocked}
             accessibilityRole="button"
-            accessibilityLabel={`차단 목록 ${accountFixture.blockedCount}명`}
-            accessibilityState={{ disabled: true }}
+            accessibilityLabel={`차단 목록 ${account.blockedCount}명`}
             style={styles.infoRow}
           >
             <AppText style={styles.label}>차단 목록</AppText>
             <View style={styles.blockedValue}>
-              <AppText style={styles.value}>
-                {accountFixture.blockedCount}명
-              </AppText>
+              <AppText style={styles.value}>{account.blockedCount}명</AppText>
               <View style={styles.chevron} />
             </View>
           </Pressable>

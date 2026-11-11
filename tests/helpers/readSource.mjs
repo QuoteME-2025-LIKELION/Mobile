@@ -46,6 +46,8 @@ export async function readSource(relativeFile) {
         body.push(statement.getFullText(ast));
         continue;
       }
+      // Type-only dependencies need no runtime module in the transpiled harness.
+      if (statement.importClause?.isTypeOnly) continue;
       const original = statement.moduleSpecifier.text;
       const resolved = await resolveInternal(original, file);
       if (resolved && shouldInline(resolved.file)) {

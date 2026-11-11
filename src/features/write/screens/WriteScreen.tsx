@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppText } from "@/components/AppText";
+import { ToastMessage } from "@/components/ToastMessage";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { colors, withOpacity } from "@/styles/theme";
 import { EmptyInputCaret } from "../components/EmptyInputCaret";
@@ -33,6 +34,7 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
     showInfo,
     setShowInfo,
     message,
+    clearMessage,
     exitOpen,
     inputFocused,
     setInputFocused,
@@ -266,14 +268,7 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
             )}
           </View>
         </ScrollView>
-        {message !== "" && (
-          <View
-            accessibilityLiveRegion="polite"
-            style={[styles.toast, { bottom: insets.bottom + 16 }]}
-          >
-            <AppText style={styles.toastText}>{message}</AppText>
-          </View>
-        )}
+        <ToastMessage message={message} onClose={clearMessage} />
       </KeyboardAvoidingView>
       <ConfirmDialog
         visible={exitOpen}

@@ -1,11 +1,20 @@
 import { Image, type ImageSource } from "expo-image";
+import { useRef, type ComponentRef } from "react";
 import { Pressable, View } from "react-native";
 import { AppText } from "@/components/AppText";
 import { QuoteText } from "@/components/QuoteText";
 import type { FeedItem } from "../fixtures/homeFixtures";
 import { styles } from "./FeedCard.styles";
-// 서버 쓰기/공유/신고·차단은 후속 연동. 외형을 유지하고 미연동 버튼을 비활성화한다.
-export function FeedCard({ item }: { item: FeedItem }) {
+import type { MenuAnchor } from "@/features/moderation/hooks/useFeedModeration";
+// 공유·서버 쓰기는 미연동. 더보기는 개발용 신고/차단 흐름만 연다.
+export function FeedCard({
+  item,
+  onMore,
+}: {
+  item: FeedItem;
+  onMore?: (item: FeedItem, anchor: MenuAnchor) => void;
+}) {
+  const moreRef = useRef<ComponentRef<typeof View>>(null);
   const silenced = item.content === null;
   const content = item.content ?? "때로는 침묵이 가장 큰 지혜다";
   return (
@@ -28,10 +37,19 @@ export function FeedCard({ item }: { item: FeedItem }) {
           <AppText style={styles.time}>{item.timeAgo}</AppText>
         ) : null}
         <Pressable
-          disabled
+          ref={moreRef}
+          disabled={!onMore}
+          onPress={
+            onMore
+              ? () =>
+                  moreRef.current?.measureInWindow((x, y, width, height) =>
+                    onMore(item, { x, y, width, height })
+                  )
+              : undefined
+          }
           accessibilityRole="button"
           accessibilityLabel={`${item.nickname} 더보기`}
-          accessibilityState={{ disabled: true }}
+          accessibilityState={{ disabled: !onMore }}
           hitSlop={8}
         >
           <AppText style={styles.more}>⋮</AppText>

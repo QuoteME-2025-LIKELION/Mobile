@@ -126,16 +126,4 @@ export const styles = StyleSheet.create({
   infoText: { fontSize: 12, lineHeight: 18, color: colors.white },
   actions: { flexDirection: "row", gap: 12 },
   tagActions: { flexDirection: "row", gap: 12, marginTop: 24 },
-  toast: {
-    position: "absolute",
-    left: 24,
-    right: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 4,
-    backgroundColor: colors.secondary,
-    elevation: 5,
-    boxShadow: `0 2px 10px ${withOpacity(colors.black, 0.12)}`,
-  },
-  toastText: { fontSize: 14, lineHeight: 21 },
 });

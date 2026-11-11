@@ -85,11 +85,6 @@ export function useWrite({
     );
     return () => clearTimeout(timer);
   }, [step, recommendationStatus, recommendationScenario]);
-  useEffect(() => {
-    if (!message) return;
-    const timer = setTimeout(() => setMessage(""), 2500);
-    return () => clearTimeout(timer);
-  }, [message]);
   const goHome = () => {
     if (router.canGoBack()) router.back();
     else router.replace("/home");
@@ -199,6 +194,7 @@ export function useWrite({
     showInfo,
     setShowInfo,
     message,
+    clearMessage: () => setMessage(""),
     exitOpen,
     inputFocused,
     setInputFocused,

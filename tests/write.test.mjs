@@ -75,6 +75,9 @@ for (const [from, to] of Object.entries({
     "export const SafeAreaView='SafeAreaView';export const useSafeAreaInsets=()=>({top:0,bottom:24});"
   ),
   "@/components/AppText": url("export const AppText='AppText';"),
+  "@/components/ToastMessage": url(
+    "export const ToastMessage=({message,...props})=>({type:'ToastMessage',props:{...props,children:message}});"
+  ),
   "@/components/ConfirmDialog": url(
     "export const ConfirmDialog='ConfirmDialog';"
   ),

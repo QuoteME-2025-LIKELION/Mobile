@@ -5,5 +5,4 @@ export const accountFixture = {
   gender: "FEMALE" as Gender,
   birthYear: userFixture.birthYear,
   linkedProviders: ["GOOGLE"] as readonly string[],
-  blockedCount: 0,
 };

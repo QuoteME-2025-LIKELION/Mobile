@@ -19,6 +19,9 @@ const theme = url(
   )
 );
 const imports = {
+  "@/features/moderation/stores/moderationStore": url(
+    "export const useModerationState=()=>({blocked:[],formerFriendIds:[]});"
+  ),
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: url(
     `export const useState=initial=>{const h=globalThis.__account;const i=h.next++;if(!(i in h.values))h.values[i]=typeof initial==='function'?initial():initial;return [h.values[i],value=>h.values[i]=typeof value==='function'?value(h.values[i]):value];};export const useRef=initial=>{const h=globalThis.__account;const i=h.next++;return h.values[i]??=( {current:initial} );};`
@@ -156,7 +159,7 @@ test("account navigation returns safely and logout dialog does not claim a sessi
   assert.equal(h.logoutOpen, false);
   assert.equal(state.routes.length, 3);
 });
-test("account screen uses fixtures and leaves server actions and blocked-list destination disabled", () => {
+test("account screen opens blocked-list destination and leaves server actions disabled", () => {
   const { render } = harness(AccountSettingsScreen);
   let tree = render();
   assert.match(text(tree), /계정 정보/);
@@ -166,7 +169,7 @@ test("account screen uses fixtures and leaves server actions and blocked-list de
   assert.equal(
     buttons.find((n) => n.props.accessibilityLabel === "차단 목록 0명").props
       .disabled,
-    true
+    undefined
   );
   assert.equal(
     buttons.find((n) => n.props.accessibilityLabel === "카카오 계정 연동하기")

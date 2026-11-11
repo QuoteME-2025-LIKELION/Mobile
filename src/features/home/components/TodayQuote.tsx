@@ -7,6 +7,7 @@ import { myQuoteFixture, splitHomeQuote } from "../fixtures/homeFixtures";
 import { styles } from "./TodayQuote.styles";
 type Props = {
   posted: boolean;
+  removedNames?: string[];
   onNextScenario: () => void;
   tagMenuOpen: boolean;
   onTagMenuChange: (open: boolean) => void;
@@ -14,10 +15,14 @@ type Props = {
 
 export function TodayQuote({
   posted,
+  removedNames = [],
   onNextScenario,
   tagMenuOpen,
   onTagMenuChange,
 }: Props) {
+  const tags = myQuoteFixture.tags.filter(
+    (name) => !removedNames.includes(name)
+  );
   const today = new Date();
   const lines = posted
     ? splitHomeQuote(myQuoteFixture.content)
@@ -74,7 +79,7 @@ export function TodayQuote({
             <View style={styles.tagAnchor}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`태그된 친구 ${myQuoteFixture.tags.length}명`}
+                accessibilityLabel={`태그된 친구 ${tags.length}명`}
                 accessibilityState={{ expanded: tagMenuOpen }}
                 onPress={() => onTagMenuChange(!tagMenuOpen)}
                 style={styles.tagButton}
@@ -85,13 +90,11 @@ export function TodayQuote({
                   style={styles.userIcon}
                   accessible={false}
                 />
-                <AppText style={styles.tagCount}>
-                  {myQuoteFixture.tags.length}
-                </AppText>
+                <AppText style={styles.tagCount}>{tags.length}</AppText>
               </Pressable>
               {tagMenuOpen && (
                 <View style={styles.tagMenu}>
-                  {myQuoteFixture.tags.map((name) => (
+                  {tags.map((name) => (
                     <View key={name} style={styles.tagName}>
                       <AppText style={styles.tagNameText}>{name}</AppText>
                     </View>

@@ -25,6 +25,10 @@ const themeUrl = url(
   )
 );
 const replacements = {
+  react: url("export const useRef=initial=>({current:initial});"),
+  "@/features/moderation/stores/moderationStore": url(
+    "export const useModerationState=()=>({blocked:[],formerFriendIds:[]});export const blockFixtureMember=()=>true;"
+  ),
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   "react-native": url(
     "export const Pressable='Pressable',View='View',ScrollView='ScrollView',StyleSheet={create:x=>x,absoluteFill:{position:'absolute'}};"
@@ -253,6 +257,18 @@ const { HomeScreen } = await load("features/home/screens/HomeScreen.tsx", {
     "export const TodayQuote=props=>({type:'TodayQuote',props});"
   ),
   "@/features/home/components/GroupFilter": url(groupCode),
+  "@/components/ConfirmDialog": url(
+    "export const ConfirmDialog=props=>({type:'ConfirmDialog',props});"
+  ),
+  "@/components/ToastMessage": url(
+    "export const ToastMessage=props=>({type:'ToastMessage',props});"
+  ),
+  "@/features/moderation/components/FeedActionsMenu": url(
+    "export const FeedActionsMenu=props=>({type:'FeedActionsMenu',props});"
+  ),
+  "@/features/moderation/components/ReportDialog": url(
+    "export const ReportDialog=props=>({type:'ReportDialog',props});"
+  ),
   "@/features/home/components/HomeDrawer": url(
     "export const HomeDrawer=props=>({type:'HomeDrawer',props});"
   ),
@@ -370,4 +386,23 @@ test("home archive button opens the archive route", () => {
   button.props.onPress();
   assert.equal(globalThis.__homeRoute, "/archive");
   h.cleanups.forEach((fn) => fn());
+});
+
+test("feed more measures the trigger and opens the menu without changing quote layout", () => {
+  let selected;
+  const item = feedFixtures[0];
+  const card = FeedCard({
+    item,
+    onMore: (target, anchor) => (selected = { target, anchor }),
+  });
+  const more = nodes(card).find(
+    (n) => n.props.accessibilityLabel === `${item.nickname} 더보기`
+  );
+  assert.equal(more.props.disabled, false);
+  more.props.ref.current = {
+    measureInWindow: (callback) => callback(280, 120, 20, 24),
+  };
+  more.props.onPress();
+  assert.equal(selected.target, item);
+  assert.deepEqual(selected.anchor, { x: 280, y: 120, width: 20, height: 24 });
 });

@@ -1,3 +1,4 @@
+import { useModerationState } from "@/features/moderation/stores/moderationStore";
 import { useState } from "react";
 import { router } from "expo-router";
 import { accountFixture } from "../fixtures/accountFixture";
@@ -11,6 +12,7 @@ export function useAccountSettings() {
   const [draftGender, setDraftGender] = useState<Gender>(gender);
   const [draftBirthYear, setDraftBirthYear] = useState(birthYear);
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const { blocked } = useModerationState();
   const years = getBirthYears();
   const openSheet = (next: Exclude<Sheet, null>) => {
     setDraftGender(gender);
@@ -24,6 +26,8 @@ export function useAccountSettings() {
     setSheet(null);
   };
   return {
+    blockedCount: blocked.length,
+    openBlocked: () => router.push("/blocked-members"),
     gender,
     birthYear,
     sheet,

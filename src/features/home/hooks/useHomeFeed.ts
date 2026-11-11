@@ -1,5 +1,6 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
+import { useModerationState } from "@/features/moderation/stores/moderationStore";
 import { BackHandler } from "react-native";
 import {
   filterFeedFixtures,
@@ -14,11 +15,25 @@ export function useHomeFeed() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const groups = scenario === 2 ? [] : groupFixtures;
+  const moderation = useModerationState();
+  const removedNames = feedFixtures
+    .filter((item) => moderation.formerFriendIds.includes(item.memberId))
+    .map((item) => item.nickname);
   const items = filterFeedFixtures(
-    scenario === 2 ? [] : feedFixtures,
+    scenario === 2
+      ? []
+      : feedFixtures.filter(
+          (item) =>
+            !moderation.blocked.some((member) => member.id === item.memberId) &&
+            (selectedGroupId !== null ||
+              !moderation.formerFriendIds.includes(item.memberId))
+        ),
     groups,
     selectedGroupId
-  );
+  ).map((item) => ({
+    ...item,
+    tags: item.tags.filter((name) => !removedNames.includes(name)),
+  }));
   const closeMenus = () => {
     setFilterOpen(false);
     setTagMenuOpen(false);
@@ -59,6 +74,7 @@ export function useHomeFeed() {
     setFilterOpen(false);
   };
   return {
+    removedNames,
     scenario,
     drawerOpen,
     tagMenuOpen,
