@@ -7,6 +7,7 @@ import { AppText } from '@/components/AppText';
 import { colors, fonts } from '@/constants/theme';
 
 import { FeedCard } from './FeedCard';
+import { HomeDrawer } from './HomeDrawer';
 import { filterPreviewFeed, previewFeed, previewGroups } from './homePreviewData';
 import { GroupFilter } from './GroupFilter';
 import { TodayQuote } from './TodayQuote';
@@ -14,6 +15,7 @@ import { TodayQuote } from './TodayQuote';
 // /home은 개발 빌드 전용. 월 길게 누르기: 작성 전 → 작성 후 → 친구 없음.
 export function HomePreview() {
   const [scenario, setScenario] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [tagMenuOpen, setTagMenuOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
@@ -40,7 +42,7 @@ export function HomePreview() {
         <HeaderButton label="아카이브" source={require('@/assets/images/home/archive.svg')} />
         <View style={styles.headerActions}>
           <HeaderButton label="알림" source={require('@/assets/images/home/notification.svg')} />
-          <HeaderButton label="메뉴" source={require('@/assets/images/home/menu.svg')} />
+          <HeaderButton label="메뉴" source={require('@/assets/images/home/menu.svg')} onPress={() => { closeMenus(); setDrawerOpen(true); }} />
         </View>
       </View>
       <ScrollView onScrollBeginDrag={closeMenus} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
@@ -61,13 +63,14 @@ export function HomePreview() {
           </View> : items.map(item => <FeedCard key={item.id} item={item} />)}
         </View>
       </ScrollView>
+      <HomeDrawer visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </SafeAreaView>
   );
 }
 
-function HeaderButton({ label, source }: { label: string; source: ImageSource }) {
+function HeaderButton({ label, source, onPress }: { label: string; source: ImageSource; onPress?: () => void }) {
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} disabled accessibilityState={{ disabled: true }} style={styles.headerButton}>
+    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} disabled={!onPress} accessibilityState={{ disabled: !onPress }} style={styles.headerButton}>
       <Image source={source} style={styles.headerIcon} contentFit="contain" accessible={false} />
     </Pressable>
   );

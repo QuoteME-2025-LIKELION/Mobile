@@ -145,6 +145,7 @@ const { HomePreview } = await load('features/home/HomePreview.tsx', {
   './FeedCard': url("export const FeedCard=props=>({type:'FeedCard',props});"),
   './TodayQuote': url("export const TodayQuote=props=>({type:'TodayQuote',props});"),
   './GroupFilter': url(groupCode),
+  './HomeDrawer': url("export const HomeDrawer=props=>({type:'HomeDrawer',props});"),
 });
 
 test('home selection closes menu, outside/scroll/back dismiss it, and scenarios reset the group', () => {
@@ -177,4 +178,21 @@ test('home selection closes menu, outside/scroll/back dismiss it, and scenarios 
   assert.ok(option(tree,'그룹 만들기').props.disabled);
   assert.equal(nodes(tree).filter(n=>n.type==='FeedCard').length,0);
   for(const cleanup of h.cleanups) cleanup();
+});
+
+test('home menu opens drawer and dismisses filter; closing drawer preserves the selected feed', () => {
+  const h={next:0,values:[],cleanups:[],back:null};
+  const render=()=>{h.cleanups.forEach(fn=>fn());h.cleanups=[];h.next=0;globalThis.__homeHarness=h;return HomePreview();};
+  let tree=render();
+  nodes(tree).find(n=>n.props.accessibilityLabel==='피드 그룹 필터').props.onPress();tree=render();
+  const menu=nodes(tree).find(n=>n.type==='Pressable'&&n.props.accessibilityLabel==='메뉴');
+  assert.equal(menu.props.disabled,false);
+  menu.props.onPress();tree=render();
+  let drawer=nodes(tree).find(n=>n.type==='HomeDrawer');
+  assert.equal(drawer.props.visible,true);
+  assert.equal(nodes(tree).find(n=>n.props.accessibilityLabel==='피드 그룹 필터').props.accessibilityState.expanded,false);
+  drawer.props.onClose();tree=render();
+  drawer=nodes(tree).find(n=>n.type==='HomeDrawer');
+  assert.equal(drawer.props.visible,false);
+  assert.equal(nodes(tree).filter(n=>n.type==='FeedCard').length,3);
 });
