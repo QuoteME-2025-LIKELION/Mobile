@@ -1,13 +1,13 @@
-import { StyleSheet } from 'react-native';
-import { colors, fonts, withOpacity } from '@/styles/theme';
+import { StyleSheet } from "react-native";
+import { colors, fonts, withOpacity } from "@/styles/theme";
 export const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
     backgroundColor: withOpacity(colors.black, 0.36),
   },
   sheet: {
-    maxHeight: '100%',
+    maxHeight: "100%",
     backgroundColor: colors.secondary,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
@@ -17,18 +17,18 @@ export const styles = StyleSheet.create({
   genderRow: {
     minHeight: 53,
     paddingHorizontal: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors['grey-100'],
+    borderBottomColor: colors["grey-100"],
   },
   genderLabel: {
     flex: 1,
-    color: colors['grey-950'],
+    color: colors["grey-950"],
     fontSize: 14,
     lineHeight: 18.9,
-    fontWeight: '500',
+    fontWeight: "500",
     letterSpacing: -0.28,
   },
   check: {
@@ -37,30 +37,30 @@ export const styles = StyleSheet.create({
     marginHorizontal: 8,
     borderRightWidth: 1.5,
     borderBottomWidth: 1.5,
-    borderColor: colors['grey-950'],
-    transform: [{ rotate: '45deg' }],
+    borderColor: colors["grey-950"],
+    transform: [{ rotate: "45deg" }],
   },
   yearList: { height: 140, flexGrow: 0 },
   years: { paddingVertical: 48 },
-  yearRow: { height: 44, justifyContent: 'center', alignItems: 'center' },
+  yearRow: { height: 44, justifyContent: "center", alignItems: "center" },
   year: {
-    alignSelf: 'stretch',
+    alignSelf: "stretch",
     paddingHorizontal: 4,
     fontFamily: fonts.quote,
     fontSize: 20,
     lineHeight: 27,
-    fontWeight: '500',
-    color: colors['grey-400'],
+    fontWeight: "500",
+    color: colors["grey-400"],
     letterSpacing: -0.4,
-    textAlign: 'center',
+    textAlign: "center",
   },
-  selectedYear: { color: colors['grey-950'], fontWeight: '700' },
+  selectedYear: { color: colors["grey-950"], fontWeight: "700" },
   done: {
     marginTop: 26,
     minHeight: 44,
     paddingVertical: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: withOpacity(colors.primary, 0.55),
@@ -68,7 +68,7 @@ export const styles = StyleSheet.create({
   doneLabel: {
     fontSize: 14,
     lineHeight: 18.9,
-    fontWeight: '500',
-    color: colors['grey-950'],
+    fontWeight: "500",
+    color: colors["grey-950"],
   },
 });

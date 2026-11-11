@@ -1,5 +1,5 @@
-import { StyleSheet } from 'react-native';
-import { colors, fonts } from '@/styles/theme';
+import { StyleSheet } from "react-native";
+import { colors, fonts } from "@/styles/theme";
 
 export const styles = StyleSheet.create({
   container: { flexGrow: 1, gap: 14 },
@@ -7,29 +7,29 @@ export const styles = StyleSheet.create({
     fontFamily: fonts.quote,
     fontSize: 20,
     lineHeight: 24,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 4,
   },
   refresh: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 6,
     minWidth: 64,
     minHeight: 44,
-    alignSelf: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignSelf: "center",
+    alignItems: "center",
+    justifyContent: "center",
   },
   refreshIcon: { width: 16, height: 16 },
   usage: {
     fontSize: 12,
     lineHeight: 17,
     color: colors.primary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   disabled: { opacity: 0.5 },
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     minHeight: 58,
     paddingHorizontal: 16,
@@ -43,7 +43,7 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  pressedCard: { backgroundColor: colors['grey-100'] },
+  pressedCard: { backgroundColor: colors["grey-100"] },
   quoteIcon: {
     width: 11,
     height: 10,
@@ -55,7 +55,7 @@ export const styles = StyleSheet.create({
     fontFamily: fonts.quote,
     fontSize: 15,
     lineHeight: 21,
-    textAlign: 'center',
+    textAlign: "center",
     color: colors.black,
   },
   selectedText: { color: colors.white },
@@ -63,14 +63,14 @@ export const styles = StyleSheet.create({
     minHeight: 100,
     paddingVertical: 16,
     gap: 12,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   statusText: {
     fontFamily: fonts.quote,
     fontSize: 14,
     lineHeight: 21,
-    textAlign: 'center',
+    textAlign: "center",
     color: colors.territory,
   },
-  actions: { flexDirection: 'row', gap: 12, marginTop: 'auto', paddingTop: 10 },
+  actions: { flexDirection: "row", gap: 12, marginTop: "auto", paddingTop: 10 },
 });

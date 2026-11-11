@@ -1,5 +1,5 @@
-import { Image } from 'expo-image';
-import { StatusBar } from 'expo-status-bar';
+import { Image } from "expo-image";
+import { StatusBar } from "expo-status-bar";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -7,16 +7,16 @@ import {
   ScrollView,
   TextInput,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText } from '@/components/AppText';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { colors } from '@/styles/theme';
-import { styles } from './ProfileCenterScreen.styles';
-import { useProfileCenter } from '../hooks/useProfileCenter';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { AppText } from "@/components/AppText";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { colors } from "@/styles/theme";
+import { styles } from "./ProfileCenterScreen.styles";
+import { useProfileCenter } from "../hooks/useProfileCenter";
 
 export function ProfileCenterScreen(
-  options: Parameters<typeof useProfileCenter>[0] = {},
+  options: Parameters<typeof useProfileCenter>[0] = {}
 ) {
   const {
     insets,
@@ -41,10 +41,10 @@ export function ProfileCenterScreen(
     beginEditing,
   } = useProfileCenter(options);
   return (
-    <SafeAreaView edges={['top']} style={styles.screen}>
+    <SafeAreaView edges={["top"]} style={styles.screen}>
       <StatusBar style="dark" />
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.fill}
       >
         <View style={styles.header}>
@@ -61,8 +61,8 @@ export function ProfileCenterScreen(
             hitSlop={8}
           >
             <Image
-              source={require('@/assets/images/write/close.svg')}
-              tintColor={colors['grey-950']}
+              source={require("@/assets/images/write/close.svg")}
+              tintColor={colors["grey-950"]}
               style={styles.closeIcon}
               accessible={false}
             />
@@ -73,14 +73,14 @@ export function ProfileCenterScreen(
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={
-            Platform.OS === 'ios' ? 'interactive' : 'on-drag'
+            Platform.OS === "ios" ? "interactive" : "on-drag"
           }
         >
           <View style={styles.profile}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={
-                editing ? '프로필 이미지 변경' : '프로필 이미지'
+                editing ? "프로필 이미지 변경" : "프로필 이미지"
               }
               disabled={!editing || picking}
               accessibilityState={{
@@ -94,7 +94,7 @@ export function ProfileCenterScreen(
                 source={
                   image && !imageFailed
                     ? { uri: image.uri }
-                    : require('@/assets/images/profile/default-profile.png')
+                    : require("@/assets/images/profile/default-profile.png")
                 }
                 contentFit="cover"
                 style={styles.avatar}
@@ -109,7 +109,7 @@ export function ProfileCenterScreen(
               accessibilityState={{ disabled: !editing || picking }}
               accessibilityElementsHidden={!editing}
               importantForAccessibility={
-                editing ? 'auto' : 'no-hide-descendants'
+                editing ? "auto" : "no-hide-descendants"
               }
               onPress={chooseImage}
               hitSlop={6}
@@ -139,11 +139,11 @@ export function ProfileCenterScreen(
                 autoCorrect={false}
                 placeholder="닉네임"
                 placeholderTextColor={colors.territory}
-                onFocus={() => setFocused('nickname')}
+                onFocus={() => setFocused("nickname")}
                 onBlur={() => setFocused(null)}
                 style={[
                   styles.input,
-                  focused === 'nickname' && styles.focused,
+                  focused === "nickname" && styles.focused,
                   nicknameEmpty && styles.invalid,
                 ]}
               />
@@ -156,7 +156,7 @@ export function ProfileCenterScreen(
               style={[styles.meta, !editing && styles.hidden]}
               accessibilityElementsHidden={!editing}
               importantForAccessibility={
-                editing ? 'auto' : 'no-hide-descendants'
+                editing ? "auto" : "no-hide-descendants"
               }
             >
               {editing && nicknameEmpty ? (
@@ -178,11 +178,11 @@ export function ProfileCenterScreen(
                 editable={!picking}
                 placeholder="자기소개"
                 placeholderTextColor={colors.territory}
-                onFocus={() => setFocused('introduction')}
+                onFocus={() => setFocused("introduction")}
                 onBlur={() => setFocused(null)}
                 style={[
                   styles.input,
-                  focused === 'introduction' && styles.focused,
+                  focused === "introduction" && styles.focused,
                 ]}
               />
             ) : (
@@ -210,14 +210,14 @@ export function ProfileCenterScreen(
                 (editing || picking) && styles.disabledText,
               ]}
             >
-              {editing ? '저장하기' : '편집하기'}
+              {editing ? "저장하기" : "편집하기"}
             </AppText>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
       <ConfirmDialog
         visible={exitOpen}
-        title={'저장하지 않고\n나가시겠어요?'}
+        title={"저장하지 않고\n나가시겠어요?"}
         description="변경된 정보는 저장되지 않아요."
         dismissLabel="계속 편집하기"
         onClose={cancelExit}

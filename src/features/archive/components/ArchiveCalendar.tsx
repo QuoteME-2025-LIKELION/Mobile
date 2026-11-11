@@ -1,14 +1,14 @@
-import { Image } from 'expo-image';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppText } from '@/components/AppText';
+import { Image } from "expo-image";
+import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppText } from "@/components/AppText";
 import {
   archiveDateKey,
   getCalendarDates,
   isFutureArchiveDate,
   isFutureArchiveMonth,
-} from '../utils/archiveDate';
-import { styles } from './ArchiveCalendar.styles';
+} from "../utils/archiveDate";
+import { styles } from "./ArchiveCalendar.styles";
 type Props = {
   month: Date;
   selectedDate: Date;
@@ -35,7 +35,7 @@ export function ArchiveCalendar({
         onOpenPicker={onOpenPicker}
       />
       <View style={styles.grid}>
-        {['일', '월', '화', '수', '목', '금', '토'].map((day, index) => (
+        {["일", "월", "화", "수", "목", "금", "토"].map((day, index) => (
           <View key={day} style={styles.column}>
             <AppText style={[styles.weekday, index === 0 && styles.accent]}>
               {day}
@@ -52,7 +52,7 @@ export function ArchiveCalendar({
             <View key={key} style={styles.column}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일${isToday ? ', 오늘' : ''}`}
+                accessibilityLabel={`${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일${isToday ? ", 오늘" : ""}`}
                 accessibilityState={{ selected, disabled }}
                 disabled={disabled}
                 onPress={() => {
@@ -91,7 +91,7 @@ export function ArchiveMonthBar({
   month,
   onMoveMonth,
   onOpenPicker,
-}: Pick<Props, 'month' | 'onMoveMonth' | 'onOpenPicker'>) {
+}: Pick<Props, "month" | "onMoveMonth" | "onOpenPicker">) {
   const today = new Date();
   return (
     <View style={styles.monthBar}>
@@ -103,7 +103,7 @@ export function ArchiveMonthBar({
         hitSlop={8}
       >
         <AppText style={styles.monthText}>
-          {month.getFullYear()}.{String(month.getMonth() + 1).padStart(2, '0')}
+          {month.getFullYear()}.{String(month.getMonth() + 1).padStart(2, "0")}
         </AppText>
       </Pressable>
       <ArchiveArrow
@@ -111,7 +111,7 @@ export function ArchiveMonthBar({
         next
         disabled={isFutureArchiveMonth(
           new Date(month.getFullYear(), month.getMonth() + 1, 1),
-          today,
+          today
         )}
         onPress={() => onMoveMonth(1)}
       />
@@ -123,7 +123,7 @@ export function ArchiveMonthBar({
         hitSlop={8}
       >
         <Image
-          source={require('@/assets/images/archive/calendar.svg')}
+          source={require("@/assets/images/archive/calendar.svg")}
           style={styles.icon}
           accessible={false}
         />
@@ -154,7 +154,7 @@ export function ArchiveArrow({
       style={[styles.iconButton, disabled && styles.disabled]}
     >
       <Image
-        source={require('@/assets/images/archive/chevron.svg')}
+        source={require("@/assets/images/archive/chevron.svg")}
         style={[styles.icon, next && styles.rotate]}
         accessible={false}
       />
@@ -229,7 +229,7 @@ export function ArchiveMonthPicker({
               {Array.from({ length: 12 }, (_, index) => index).map((index) => {
                 const disabled = isFutureArchiveMonth(
                   new Date(month.getFullYear(), index, 1),
-                  today,
+                  today
                 );
                 const selected = index === month.getMonth();
                 return (

@@ -53,3 +53,10 @@ src/
 - 기본 확인: `npm run lint`, `npx tsc --noEmit`, `node --test tests/*.test.mjs`.
 - `tests/helpers/readSource.mjs`는 분리된 실제 훅·스타일·fixture·상수를 함께 읽어 기존 RN 대체 요소 하네스로 검사한다. 훅 동작을 복사해 테스트하지 않는다.
 - Node 검사는 실제 RN 글꼴·터치·네이티브 렌더링을 증명하지 않는다. 화면 변경은 폰 확인 결과와 자동 검사를 구분해서 기록한다.
+
+## 포맷 통일
+
+- `npm run format`으로 전체 적용하고 `npm run format:check`로 검사한다. Prettier 3.6.2를 개발 의존성으로 고정했다.
+- `.prettierrc`는 웹과 동일한 큰따옴표·2칸·80자 기준이다. 설정을 찾은 CLI와 VS Code Prettier 확장이 같은 규칙을 사용하도록 한다.
+- Mobile 폴더를 열 때는 Mobile/.vscode/settings.json, QuoteMe 루트를 열 때는 루트 .vscode/settings.json의 저장 시 포맷 설정을 사용한다. VS Code의 Prettier 확장이 설치·활성화되어 있어야 한다.
+- `.prettierignore`로 생성물·네이티브 생성 폴더·의존성·잠금 파일을 제외한다. 화면 동작·스타일 값 변경은 포맷 커밋과 섞지 않는다.

@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { router } from 'expo-router';
-import { accountFixture } from '../fixtures/accountFixture';
-import { getBirthYears, type Gender } from '../constants/accountOptions';
+import { useState } from "react";
+import { router } from "expo-router";
+import { accountFixture } from "../fixtures/accountFixture";
+import { getBirthYears, type Gender } from "../constants/accountOptions";
 
-type Sheet = 'gender' | 'birth' | null;
+type Sheet = "gender" | "birth" | null;
 export function useAccountSettings() {
   const [gender, setGender] = useState<Gender>(accountFixture.gender);
   const [birthYear, setBirthYear] = useState<number>(accountFixture.birthYear);
@@ -19,8 +19,8 @@ export function useAccountSettings() {
   };
   const finishSheet = () => {
     // 화면 내 임시 선택만 변경한다. API 저장이나 성공 알림은 수행하지 않는다.
-    if (sheet === 'gender') setGender(draftGender);
-    if (sheet === 'birth') setBirthYear(draftBirthYear);
+    if (sheet === "gender") setGender(draftGender);
+    if (sheet === "birth") setBirthYear(draftBirthYear);
     setSheet(null);
   };
   return {
@@ -39,7 +39,7 @@ export function useAccountSettings() {
     openLogout: () => setLogoutOpen(true),
     closeLogout: () => setLogoutOpen(false),
     goBack: () =>
-      router.canGoBack() ? router.back() : router.replace('/home'),
-    openDelete: () => router.push('/account-delete'),
+      router.canGoBack() ? router.back() : router.replace("/home"),
+    openDelete: () => router.push("/account-delete"),
   };
 }

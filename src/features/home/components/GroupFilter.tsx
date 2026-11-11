@@ -1,8 +1,8 @@
-import { Image } from 'expo-image';
-import { Pressable, ScrollView, View } from 'react-native';
-import { AppText } from '@/components/AppText';
-import type { FeedGroup } from '../fixtures/homeFixtures';
-import { styles } from './GroupFilter.styles';
+import { Image } from "expo-image";
+import { Pressable, ScrollView, View } from "react-native";
+import { AppText } from "@/components/AppText";
+import type { FeedGroup } from "../fixtures/homeFixtures";
+import { styles } from "./GroupFilter.styles";
 type Props = {
   groups: FeedGroup[];
   selectedId: number | null;
@@ -29,20 +29,20 @@ export function GroupFilter({
         style={styles.trigger}
       >
         <Image
-          source={require('@/assets/images/home/funnel.svg')}
+          source={require("@/assets/images/home/funnel.svg")}
           style={styles.icon}
           accessible={false}
         />
         <AppText numberOfLines={1} style={styles.label}>
-          {groups.find((group) => group.id === selectedId)?.name ?? '전체보기'}
+          {groups.find((group) => group.id === selectedId)?.name ?? "전체보기"}
         </AppText>
       </Pressable>
       {open && (
         <View style={styles.menu}>
           <ScrollView nestedScrollEnabled style={styles.options}>
-            {[{ id: null, name: '전체보기' }, ...groups].map((group, index) => (
+            {[{ id: null, name: "전체보기" }, ...groups].map((group, index) => (
               <Pressable
-                key={group.id ?? 'all'}
+                key={group.id ?? "all"}
                 accessibilityRole="button"
                 accessibilityState={{ selected: selectedId === group.id }}
                 onPress={() => onSelect(group.id)}

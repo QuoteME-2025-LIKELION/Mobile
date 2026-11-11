@@ -1,11 +1,11 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { BackHandler } from 'react-native';
+import { router } from "expo-router";
+import { useEffect, useState } from "react";
+import { BackHandler } from "react-native";
 import {
   filterFeedFixtures,
   feedFixtures,
   groupFixtures,
-} from '../fixtures/homeFixtures';
+} from "../fixtures/homeFixtures";
 
 export function useHomeFeed() {
   const [scenario, setScenario] = useState(0);
@@ -17,7 +17,7 @@ export function useHomeFeed() {
   const items = filterFeedFixtures(
     scenario === 2 ? [] : feedFixtures,
     groups,
-    selectedGroupId,
+    selectedGroupId
   );
   const closeMenus = () => {
     setFilterOpen(false);
@@ -31,17 +31,17 @@ export function useHomeFeed() {
   useEffect(() => {
     if (!filterOpen) return;
     const subscription = BackHandler.addEventListener(
-      'hardwareBackPress',
+      "hardwareBackPress",
       () => {
         setFilterOpen(false);
         return true;
-      },
+      }
     );
     return () => subscription.remove();
   }, [filterOpen]);
   const openArchive = () => {
     closeMenus();
-    router.push('/archive');
+    router.push("/archive");
   };
   const openDrawer = () => {
     closeMenus();

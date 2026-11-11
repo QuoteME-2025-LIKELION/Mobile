@@ -1,10 +1,10 @@
-import { Pressable, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText } from '@/components/AppText';
-import { LoginSheet } from '@/features/auth/components/LoginSheet';
-import { SocialButtons } from '@/features/auth/components/SocialButtons';
-import { styles } from './StartScreen.styles';
-import { useStart } from '../hooks/useStart';
+import { Pressable, ScrollView, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { AppText } from "@/components/AppText";
+import { LoginSheet } from "@/features/auth/components/LoginSheet";
+import { SocialButtons } from "@/features/auth/components/SocialButtons";
+import { styles } from "./StartScreen.styles";
+import { useStart } from "../hooks/useStart";
 
 export function StartScreen() {
   const { loginOpen, openHome, openProfileSetup, openLogin, closeLogin } =

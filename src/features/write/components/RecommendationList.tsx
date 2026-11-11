@@ -1,10 +1,10 @@
-import { Image } from 'expo-image';
-import { ActivityIndicator, Pressable, View } from 'react-native';
-import { AppText } from '@/components/AppText';
-import { colors } from '@/styles/theme';
-import type { RecommendationStatus } from '../fixtures/recommendationFixtures';
-import { WriteAction } from './WriteAction';
-import { styles } from './RecommendationList.styles';
+import { Image } from "expo-image";
+import { ActivityIndicator, Pressable, View } from "react-native";
+import { AppText } from "@/components/AppText";
+import { colors } from "@/styles/theme";
+import type { RecommendationStatus } from "../fixtures/recommendationFixtures";
+import { WriteAction } from "./WriteAction";
+import { styles } from "./RecommendationList.styles";
 type Props = {
   status: RecommendationStatus;
   recommendations: readonly string[];
@@ -16,11 +16,11 @@ type Props = {
 };
 
 const messages: Partial<Record<RecommendationStatus, string>> = {
-  loading: 'AI 추천을 불러오는 중입니다.',
+  loading: "AI 추천을 불러오는 중입니다.",
   empty:
-    '추천 결과가 없어요. 사용 횟수는 차감되지 않았으니 다시 시도해 주세요.',
-  error: 'AI 추천을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.',
-  exhausted: '오늘 AI 추천 횟수를 모두 사용했어요.',
+    "추천 결과가 없어요. 사용 횟수는 차감되지 않았으니 다시 시도해 주세요.",
+  error: "AI 추천을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
+  exhausted: "오늘 AI 추천 횟수를 모두 사용했어요.",
 };
 
 export function RecommendationList({
@@ -32,10 +32,10 @@ export function RecommendationList({
   onBack,
   onNext,
 }: Props) {
-  const busy = status === 'loading';
-  const refreshDisabled = busy || status === 'exhausted';
+  const busy = status === "loading";
+  const refreshDisabled = busy || status === "exhausted";
   const canContinue =
-    status === 'success' &&
+    status === "success" &&
     selectedIndex !== null &&
     recommendations[selectedIndex] !== undefined;
   return (
@@ -46,9 +46,9 @@ export function RecommendationList({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={
-          status === 'exhausted'
-            ? '오늘 AI 추천 횟수 소진'
-            : 'AI 추천 다시 받기'
+          status === "exhausted"
+            ? "오늘 AI 추천 횟수 소진"
+            : "AI 추천 다시 받기"
         }
         accessibilityState={{ disabled: refreshDisabled, busy }}
         disabled={refreshDisabled}
@@ -56,7 +56,7 @@ export function RecommendationList({
         style={[styles.refresh, refreshDisabled && styles.disabled]}
       >
         <Image
-          source={require('@/assets/images/write/refresh.svg')}
+          source={require("@/assets/images/write/refresh.svg")}
           style={styles.refreshIcon}
           accessible={false}
         />
@@ -68,7 +68,7 @@ export function RecommendationList({
           <AppText style={styles.statusText}>{messages[status]}</AppText>
         </View>
       )}
-      {status === 'success' &&
+      {status === "success" &&
         recommendations.map((text, index) => {
           const selected = selectedIndex === index;
           return (
@@ -85,7 +85,7 @@ export function RecommendationList({
               ]}
             >
               <Image
-                source={require('@/assets/images/write/quote-open.svg')}
+                source={require("@/assets/images/write/quote-open.svg")}
                 accessible={false}
                 tintColor={selected ? colors.white : colors.black}
                 style={styles.quoteIcon}
@@ -94,7 +94,7 @@ export function RecommendationList({
                 {text}
               </AppText>
               <Image
-                source={require('@/assets/images/write/quote-close.svg')}
+                source={require("@/assets/images/write/quote-close.svg")}
                 accessible={false}
                 tintColor={selected ? colors.white : colors.black}
                 style={styles.quoteIcon}

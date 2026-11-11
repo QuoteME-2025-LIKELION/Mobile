@@ -1,5 +1,5 @@
-import { Image } from 'expo-image';
-import { StatusBar } from 'expo-status-bar';
+import { Image } from "expo-image";
+import { StatusBar } from "expo-status-bar";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -7,15 +7,15 @@ import {
   ScrollView,
   TextInput,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText } from '@/components/AppText';
-import { colors } from '@/styles/theme';
-import { styles } from './ProfileSetupScreen.styles';
-import { useProfileSetup } from '../hooks/useProfileSetup';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { AppText } from "@/components/AppText";
+import { colors } from "@/styles/theme";
+import { styles } from "./ProfileSetupScreen.styles";
+import { useProfileSetup } from "../hooks/useProfileSetup";
 
 export function ProfileSetupScreen(
-  options: Parameters<typeof useProfileSetup>[0] = {},
+  options: Parameters<typeof useProfileSetup>[0] = {}
 ) {
   const {
     step,
@@ -42,7 +42,7 @@ export function ProfileSetupScreen(
       <StatusBar style="dark" />
       <KeyboardAvoidingView
         style={styles.fill}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
           ref={scrollRef}
@@ -65,7 +65,7 @@ export function ProfileSetupScreen(
                   key={step}
                   ref={inputRef}
                   accessibilityLabel={field.label}
-                  accessibilityHint={`${field.help} ${step === 2 ? '1900년부터 올해까지 숫자 4자리' : `공백 포함 최대 ${field.limit}자`}${error ? `. ${error}` : ''}`}
+                  accessibilityHint={`${field.help} ${step === 2 ? "1900년부터 올해까지 숫자 4자리" : `공백 포함 최대 ${field.limit}자`}${error ? `. ${error}` : ""}`}
                   value={value}
                   placeholder={field.placeholder}
                   placeholderTextColor={colors.territory}
@@ -73,7 +73,7 @@ export function ProfileSetupScreen(
                   onFocus={() => setFocused(true)}
                   onBlur={handleBlur}
                   maxLength={step === 2 ? 4 : field.limit * 2}
-                  inputMode={step === 2 ? 'numeric' : 'text'}
+                  inputMode={step === 2 ? "numeric" : "text"}
                   autoCapitalize="none"
                   autoCorrect={false}
                   returnKeyType="next"
@@ -82,7 +82,7 @@ export function ProfileSetupScreen(
                   style={[styles.input, focused && styles.focused]}
                 />
                 <View style={styles.meta}>
-                  {error !== '' && (
+                  {error !== "" && (
                     <AppText
                       accessibilityLiveRegion="polite"
                       style={styles.error}
@@ -102,7 +102,7 @@ export function ProfileSetupScreen(
                 <View
                   accessibilityRole="image"
                   accessibilityLabel={
-                    image ? '선택한 프로필 이미지' : '기본 프로필 이미지'
+                    image ? "선택한 프로필 이미지" : "기본 프로필 이미지"
                   }
                   style={styles.avatar}
                 >
@@ -110,7 +110,7 @@ export function ProfileSetupScreen(
                     source={
                       image
                         ? { uri: image.uri }
-                        : require('@/assets/images/profile/default-profile.png')
+                        : require("@/assets/images/profile/default-profile.png")
                     }
                     style={styles.avatarImage}
                     contentFit="cover"
@@ -120,7 +120,7 @@ export function ProfileSetupScreen(
                         ? () => {
                             setImage(null);
                             setImageError(
-                              '이미지를 표시하지 못했어요. 다른 이미지를 선택해 주세요.',
+                              "이미지를 표시하지 못했어요. 다른 이미지를 선택해 주세요."
                             );
                           }
                         : undefined
@@ -136,7 +136,7 @@ export function ProfileSetupScreen(
                 >
                   <AppText style={styles.uploadText}>이미지 업로드하기</AppText>
                 </Pressable>
-                {imageError !== '' && (
+                {imageError !== "" && (
                   <AppText
                     accessibilityLiveRegion="polite"
                     style={styles.error}
@@ -165,7 +165,7 @@ export function ProfileSetupScreen(
                   (step === 3 || !valid) && styles.disabledText,
                 ]}
               >
-                {step === 3 ? '쿼트미 시작하기' : '다음으로'}
+                {step === 3 ? "쿼트미 시작하기" : "다음으로"}
               </AppText>
             </Pressable>
           </View>

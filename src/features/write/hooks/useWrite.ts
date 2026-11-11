@@ -1,47 +1,47 @@
-import { router, usePreventRemove } from 'expo-router';
-import { useEffect, useRef, useState, type ComponentRef } from 'react';
+import { router, usePreventRemove } from "expo-router";
+import { useEffect, useRef, useState, type ComponentRef } from "react";
 import {
   Keyboard,
   Platform,
   type ScrollView,
   type TextInputSelectionChangeEvent,
   type TextLayoutEvent,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   recommendationFixtures,
   type RecommendationScenario,
   type RecommendationStatus,
-} from '../fixtures/recommendationFixtures';
+} from "../fixtures/recommendationFixtures";
 import {
   countCodePoints,
   getQuoteInputError,
   limitQuoteInput,
-} from '../utils/quoteInput';
-import { INPUT_HEIGHT, LINE_HEIGHT } from '../constants/writeLayout';
+} from "../utils/quoteInput";
+import { INPUT_HEIGHT, LINE_HEIGHT } from "../constants/writeLayout";
 
 export function useWrite({
-  recommendationScenario = 'success',
+  recommendationScenario = "success",
 }: { recommendationScenario?: RecommendationScenario } = {}) {
-  const [text, setText] = useState('');
-  const [step, setStep] = useState<'write' | 'recommend' | 'tag'>('write');
-  const [source, setSource] = useState<'direct' | 'ai'>('direct');
+  const [text, setText] = useState("");
+  const [step, setStep] = useState<"write" | "recommend" | "tag">("write");
+  const [source, setSource] = useState<"direct" | "ai">("direct");
   const [recommendationStatus, setRecommendationStatus] =
-    useState<RecommendationStatus>('idle');
+    useState<RecommendationStatus>("idle");
   const [recommendationIndex, setRecommendationIndex] = useState<number | null>(
-    null,
+    null
   );
   const [recommendationRound, setRecommendationRound] = useState(0);
   const recommendations =
     recommendationFixtures[recommendationRound % recommendationFixtures.length];
   const resultText =
-    step === 'tag' && source === 'ai' && recommendationIndex !== null
+    step === "tag" && source === "ai" && recommendationIndex !== null
       ? recommendations[recommendationIndex]
       : text.trim();
-  const displayedText = step === 'tag' ? resultText : text;
+  const displayedText = step === "tag" ? resultText : text;
   const [selected, setSelected] = useState<number[]>([]);
   const [showInfo, setShowInfo] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [exitOpen, setExitOpen] = useState(false);
   const [allowExit, setAllowExit] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
@@ -51,20 +51,20 @@ export function useWrite({
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const inputScrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const inputAtEnd = useRef(true);
-  const acceptedText = useRef('');
+  const acceptedText = useRef("");
   const insets = useSafeAreaInsets();
   const hasDraft = text.trim().length > 0;
   const disablePrevention = usePreventRemove(
-    !allowExit && (hasDraft || step !== 'write'),
+    !allowExit && (hasDraft || step !== "write"),
     ({ repeat }) => {
       Keyboard.dismiss();
-      if (step !== 'write') {
-        setStep(step === 'tag' && source === 'ai' ? 'recommend' : 'write');
+      if (step !== "write") {
+        setStep(step === "tag" && source === "ai" ? "recommend" : "write");
         return;
       }
       exitAction.current = repeat;
       setExitOpen(true);
-    },
+    }
   );
   const today = new Date();
   const length = countCodePoints(text);
@@ -72,27 +72,27 @@ export function useWrite({
   const trimmedLength = countCodePoints(text.trim());
   const canGoNext = trimmedLength > 0 && trimmedLength <= 30;
   const useEmptyCaret =
-    Platform.OS === 'android' && step === 'write' && text.length === 0;
+    Platform.OS === "android" && step === "write" && text.length === 0;
   const nativeMaxLength = length === 50 && !hasSelection ? text.length : 100;
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [step]);
   useEffect(() => {
-    if (step !== 'recommend' || recommendationStatus !== 'loading') return;
+    if (step !== "recommend" || recommendationStatus !== "loading") return;
     const timer = setTimeout(
       () => setRecommendationStatus(recommendationScenario),
-      600,
+      600
     );
     return () => clearTimeout(timer);
   }, [step, recommendationStatus, recommendationScenario]);
   useEffect(() => {
     if (!message) return;
-    const timer = setTimeout(() => setMessage(''), 2500);
+    const timer = setTimeout(() => setMessage(""), 2500);
     return () => clearTimeout(timer);
   }, [message]);
   const goHome = () => {
     if (router.canGoBack()) router.back();
-    else router.replace('/home');
+    else router.replace("/home");
   };
   const close = () => {
     Keyboard.dismiss();
@@ -107,33 +107,33 @@ export function useWrite({
     setExitOpen(true);
   };
   const recommend = () => {
-    const error = getQuoteInputError(text, 'ai');
+    const error = getQuoteInputError(text, "ai");
     if (error) {
       setMessage(error);
       return;
     }
     Keyboard.dismiss();
     setShowInfo(false);
-    setMessage('');
+    setMessage("");
     setRecommendationIndex(null);
-    setRecommendationStatus('loading');
-    setStep('recommend');
+    setRecommendationStatus("loading");
+    setStep("recommend");
   };
   const backFromTag = () => {
     Keyboard.dismiss();
-    setStep(source === 'ai' ? 'recommend' : 'write');
+    setStep(source === "ai" ? "recommend" : "write");
   };
   const next = () => {
-    const error = getQuoteInputError(text, 'quote');
+    const error = getQuoteInputError(text, "quote");
     if (error) {
       setMessage(error);
       return;
     }
     Keyboard.dismiss();
     setShowInfo(false);
-    setMessage('');
-    setSource('direct');
-    setStep('tag');
+    setMessage("");
+    setSource("direct");
+    setStep("tag");
   };
   const handleInputContentSizeChange = () => {
     if (inputAtEnd.current)
@@ -143,7 +143,7 @@ export function useWrite({
       });
   };
   const handleTextLayout = (event: TextLayoutEvent) => {
-    if (step === 'write' && text !== acceptedText.current) return;
+    if (step === "write" && text !== acceptedText.current) return;
     const lineCount = event.nativeEvent.lines.length;
     if (lineCount > 0) setInputHeight(Math.max(2, lineCount) * LINE_HEIGHT);
   };
@@ -151,7 +151,7 @@ export function useWrite({
     const limited = limitQuoteInput(value);
     acceptedText.current = limited;
     setText(limited);
-    setMessage('');
+    setMessage("");
   };
   const handleSelectionChange = (event: TextInputSelectionChangeEvent) => {
     const { start, end } = event.nativeEvent.selection;
@@ -172,19 +172,19 @@ export function useWrite({
   const refreshRecommendations = () => {
     setRecommendationIndex(null);
     setRecommendationRound((round) => round + 1);
-    setRecommendationStatus('loading');
+    setRecommendationStatus("loading");
   };
   const acceptRecommendation = () => {
-    if (recommendationStatus !== 'success' || recommendationIndex === null)
+    if (recommendationStatus !== "success" || recommendationIndex === null)
       return;
-    setSource('ai');
-    setStep('tag');
+    setSource("ai");
+    setStep("tag");
   };
   const toggleFriendTag = (id: number) =>
     setSelected((current) =>
       current.includes(id)
         ? current.filter((value) => value !== id)
-        : [...current, id],
+        : [...current, id]
     );
   return {
     text,

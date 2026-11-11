@@ -1,17 +1,17 @@
-import { friendFixtures } from '../fixtures/friendFixtures';
-import { Image } from 'expo-image';
-import { useRef, useState } from 'react';
-import type { ComponentRef } from 'react';
+import { friendFixtures } from "../fixtures/friendFixtures";
+import { Image } from "expo-image";
+import { useRef, useState } from "react";
+import type { ComponentRef } from "react";
 import {
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
-} from 'react-native';
-import { AppText } from '@/components/AppText';
-import { colors } from '@/styles/theme';
-import { styles } from './FriendTagSelector.styles';
+} from "react-native";
+import { AppText } from "@/components/AppText";
+import { colors } from "@/styles/theme";
+import { styles } from "./FriendTagSelector.styles";
 // 웹의 src/data/friends.ts에 있는 개발용 fixture. 실제 로그인 회원의 친구 목록이 아니다.
 
 type Props = { selected: number[]; onToggle: (id: number) => void };
@@ -45,11 +45,11 @@ function Avatar({ uri, size }: { uri?: string; size: number }) {
 }
 
 export function FriendTagSelector({ selected, onToggle }: Props) {
-  const [keyword, setKeyword] = useState('');
+  const [keyword, setKeyword] = useState("");
   const [focused, setFocused] = useState(false);
   const searchRef = useRef<ComponentRef<typeof TextInput>>(null);
   const members = friendFixtures.filter((friend) =>
-    friend.nickname.includes(keyword.trim()),
+    friend.nickname.includes(keyword.trim())
   );
   return (
     <View style={styles.container}>
@@ -61,7 +61,7 @@ export function FriendTagSelector({ selected, onToggle }: Props) {
       </AppText>
       <View style={[styles.searchBox, focused && styles.searchBoxFocused]}>
         <Image
-          source={require('@/assets/images/write/search.svg')}
+          source={require("@/assets/images/write/search.svg")}
           style={styles.searchIcon}
           tintColor={colors.territory}
           accessible={false}
@@ -78,18 +78,18 @@ export function FriendTagSelector({ selected, onToggle }: Props) {
           underlineColorAndroid="transparent"
           style={styles.searchInput}
         />
-        {keyword !== '' && (
+        {keyword !== "" && (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="검색어 지우기"
             onPress={() => {
-              setKeyword('');
+              setKeyword("");
               searchRef.current?.focus();
             }}
             style={styles.clearButton}
           >
             <Image
-              source={require('@/assets/images/write/search-clear.svg')}
+              source={require("@/assets/images/write/search-clear.svg")}
               style={styles.searchIcon}
               tintColor={colors.territory}
               accessible={false}
@@ -140,8 +140,8 @@ export function FriendTagSelector({ selected, onToggle }: Props) {
           <Image
             source={
               selected.includes(friend.id)
-                ? require('@/assets/images/write/tag-checkbox-checked.svg')
-                : require('@/assets/images/write/tag-checkbox-unchecked.svg')
+                ? require("@/assets/images/write/tag-checkbox-checked.svg")
+                : require("@/assets/images/write/tag-checkbox-unchecked.svg")
             }
             style={styles.checkbox}
             accessible={false}

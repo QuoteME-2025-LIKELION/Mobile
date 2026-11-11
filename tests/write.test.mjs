@@ -1,10 +1,10 @@
-import assert from 'node:assert/strict';
-import { readSource } from './helpers/readSource.mjs';
-import test from 'node:test';
-import ts from 'typescript';
+import assert from "node:assert/strict";
+import { readSource } from "./helpers/readSource.mjs";
+import test from "node:test";
+import ts from "typescript";
 
 const url = (code) =>
-  `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`;
+  `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`;
 const compile = (source) =>
   ts.transpileModule(source, {
     compilerOptions: {
@@ -14,31 +14,34 @@ const compile = (source) =>
     },
   }).outputText;
 const read = readSource;
-const inputUrl = url(compile(await read('features/write/utils/quoteInput.ts')));
+const inputUrl = url(compile(await read("features/write/utils/quoteInput.ts")));
 const input = await import(inputUrl);
 const recommendationsUrl = url(
-  compile(await read('features/write/fixtures/recommendationFixtures.ts')),
+  compile(await read("features/write/fixtures/recommendationFixtures.ts"))
 );
 const themeUrl = url(
-  compile(await read('styles/theme.ts')).replace(/require\('[^']+'\)/g, '1'),
+  compile(await read("styles/theme.ts")).replace(
+    /require\(['"][^'"]+['"]\)/g,
+    "1"
+  )
 );
 
-test('code point limits preserve emoji and Korean, while matching current web quote validation', () => {
-  assert.equal(input.countCodePoints('가😀'), 2);
-  assert.equal(input.limitQuoteInput('😀'.repeat(51)), '😀'.repeat(50));
+test("code point limits preserve emoji and Korean, while matching current web quote validation", () => {
+  assert.equal(input.countCodePoints("가😀"), 2);
+  assert.equal(input.limitQuoteInput("😀".repeat(51)), "😀".repeat(50));
   assert.equal(
-    input.limitQuoteInput('가'.repeat(49) + '😀나'),
-    '가'.repeat(49) + '😀',
+    input.limitQuoteInput("가".repeat(49) + "😀나"),
+    "가".repeat(49) + "😀"
   );
-  assert.equal(input.getQuoteInputError('가' + '😀'.repeat(29), 'quote'), null);
-  assert.notEqual(input.getQuoteInputError('가'.repeat(31), 'quote'), null);
-  for (const value of ['', '  ', 'ㅋㅋ123!!😀', 'ㄱㄴㅏ', 'ᄀᄂ', 'ﾡﾢ']) {
-    assert.notEqual(input.getQuoteInputError(value, 'quote'), null);
+  assert.equal(input.getQuoteInputError("가" + "😀".repeat(29), "quote"), null);
+  assert.notEqual(input.getQuoteInputError("가".repeat(31), "quote"), null);
+  for (const value of ["", "  ", "ㅋㅋ123!!😀", "ㄱㄴㅏ", "ᄀᄂ", "ﾡﾢ"]) {
+    assert.notEqual(input.getQuoteInputError(value, "quote"), null);
   }
-  assert.equal(input.getQuoteInputError('  hello😀  ', 'quote'), null);
-  assert.equal(input.getQuoteInputError('가', 'quote'), null);
-  assert.notEqual(input.getQuoteInputError('가'.repeat(15), 'ai'), null);
-  assert.equal(input.getQuoteInputError('가'.repeat(16), 'ai'), null);
+  assert.equal(input.getQuoteInputError("  hello😀  ", "quote"), null);
+  assert.equal(input.getQuoteInputError("가", "quote"), null);
+  assert.notEqual(input.getQuoteInputError("가".repeat(15), "ai"), null);
+  assert.equal(input.getQuoteInputError("가".repeat(16), "ai"), null);
 });
 
 const reactUrl = url(`
@@ -61,43 +64,46 @@ export const usePreventRemove=(enabled,callback)=>{
 const nativeUrl =
   url(`export const Keyboard={dismiss:()=>{}},Platform={OS:'android'},StyleSheet={create:value=>value};
 export const KeyboardAvoidingView='KeyboardAvoidingView',Pressable='Pressable',ScrollView='ScrollView',TextInput='TextInput',View='View';`);
-let code = compile(await read('features/write/screens/WriteScreen.tsx'));
+let code = compile(await read("features/write/screens/WriteScreen.tsx"));
 for (const [from, to] of Object.entries({
-  'react/jsx-runtime': import.meta.resolve('react/jsx-runtime'),
+  "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: reactUrl,
-  'expo-router': routerUrl,
-  'expo-image': url("export const Image='Image';"),
-  'react-native': nativeUrl,
-  'react-native-safe-area-context': url(
-    "export const SafeAreaView='SafeAreaView';export const useSafeAreaInsets=()=>({top:0,bottom:24});",
+  "expo-router": routerUrl,
+  "expo-image": url("export const Image='Image';"),
+  "react-native": nativeUrl,
+  "react-native-safe-area-context": url(
+    "export const SafeAreaView='SafeAreaView';export const useSafeAreaInsets=()=>({top:0,bottom:24});"
   ),
-  '@/components/AppText': url("export const AppText='AppText';"),
-  '@/components/ConfirmDialog': url(
-    "export const ConfirmDialog='ConfirmDialog';",
+  "@/components/AppText": url("export const AppText='AppText';"),
+  "@/components/ConfirmDialog": url(
+    "export const ConfirmDialog='ConfirmDialog';"
   ),
-  '@/styles/theme': themeUrl,
-  '@/features/write/utils/quoteInput': inputUrl,
-  '@/features/write/fixtures/recommendationFixtures': recommendationsUrl,
-  '@/features/write/components/RecommendationList': url(
-    "export const RecommendationList='RecommendationList';",
+  "@/styles/theme": themeUrl,
+  "@/features/write/utils/quoteInput": inputUrl,
+  "@/features/write/fixtures/recommendationFixtures": recommendationsUrl,
+  "@/features/write/components/RecommendationList": url(
+    "export const RecommendationList='RecommendationList';"
   ),
-  '@/features/write/components/FriendTagSelector': url(
-    "export const FriendTagSelector='FriendTagSelector';",
+  "@/features/write/components/FriendTagSelector": url(
+    "export const FriendTagSelector='FriendTagSelector';"
   ),
-  '@/features/write/components/WriteAction': url(
-    "export const WriteAction='WriteAction';",
+  "@/features/write/components/WriteAction": url(
+    "export const WriteAction='WriteAction';"
   ),
-  '@/features/write/components/EmptyInputCaret': url(
-    "export const EmptyInputCaret='EmptyInputCaret';",
+  "@/features/write/components/EmptyInputCaret": url(
+    "export const EmptyInputCaret='EmptyInputCaret';"
   ),
 }))
   code = code
     .replaceAll(JSON.stringify(from), JSON.stringify(to))
     .replaceAll(`'${from}'`, JSON.stringify(to));
-code = code.replaceAll("require('@/assets/images/write/close.svg')", '1');
+code = code.replace(
+  /require\(['"]@\/assets\/images\/write\/close\.svg['"]\)/g,
+  "1"
+);
 const { WriteScreen } = await import(url(code));
 const nodes = (tree) =>
-  !tree || typeof tree !== 'object'
+  !tree || typeof tree !== "object"
     ? []
     : [tree, ...[tree.props?.children].flat(Infinity).flatMap(nodes)];
 const find = (tree, check) => nodes(tree).find(check);
@@ -113,35 +119,35 @@ function harness(Component = WriteScreen, props = {}) {
     },
   };
 }
-const field = (tree) => find(tree, (node) => node.type === 'TextInput');
+const field = (tree) => find(tree, (node) => node.type === "TextInput");
 const measure = (tree) =>
-  find(tree, (node) => typeof node.props?.onTextLayout === 'function');
+  find(tree, (node) => typeof node.props?.onTextLayout === "function");
 const action = (tree, title) =>
   find(
     tree,
-    (node) => node.type === 'WriteAction' && node.props.title === title,
+    (node) => node.type === "WriteAction" && node.props.title === title
   );
-const dialog = (tree) => find(tree, (node) => node.type === 'ConfirmDialog');
+const dialog = (tree) => find(tree, (node) => node.type === "ConfirmDialog");
 
-test('direct draft moves to tag preview and back without losing text or selection; posting stays disconnected', () => {
+test("direct draft moves to tag preview and back without losing text or selection; posting stays disconnected", () => {
   const { render, state } = harness();
   let tree = render();
-  field(tree).props.onChangeText('123');
+  field(tree).props.onChangeText("123");
   tree = render();
-  action(tree, '다음으로').props.onPress();
+  action(tree, "다음으로").props.onPress();
   tree = render();
   assert.equal(
-    find(tree, (node) => node.type === 'FriendTagSelector'),
-    undefined,
+    find(tree, (node) => node.type === "FriendTagSelector"),
+    undefined
   );
-  field(tree).props.onChangeText('오늘도 한 걸음씩 나아가자');
+  field(tree).props.onChangeText("오늘도 한 걸음씩 나아가자");
   tree = render();
-  action(tree, '다음으로').props.onPress();
+  action(tree, "다음으로").props.onPress();
   tree = render();
   assert.equal(field(tree).props.editable, false);
-  find(tree, (node) => node.type === 'FriendTagSelector').props.onToggle(2);
+  find(tree, (node) => node.type === "FriendTagSelector").props.onToggle(2);
   tree = render();
-  assert.equal(action(tree, '게시하기').props.onPress, undefined);
+  assert.equal(action(tree, "게시하기").props.onPress, undefined);
   // Android route removal in tag step returns to writing instead of discarding.
   state.prevented({
     repeat: () => {
@@ -150,32 +156,32 @@ test('direct draft moves to tag preview and back without losing text or selectio
   });
   tree = render();
   assert.equal(field(tree).props.editable, true);
-  assert.equal(field(tree).props.value, '오늘도 한 걸음씩 나아가자');
+  assert.equal(field(tree).props.value, "오늘도 한 걸음씩 나아가자");
   assert.equal(state.backs, 0);
-  action(tree, '다음으로').props.onPress();
+  action(tree, "다음으로").props.onPress();
   tree = render();
   assert.deepEqual(
-    find(tree, (node) => node.type === 'FriendTagSelector').props.selected,
-    [2],
+    find(tree, (node) => node.type === "FriendTagSelector").props.selected,
+    [2]
   );
 });
 
-test('close and route back require confirmation for a draft, cancel preserves it, empty close exits immediately', () => {
+test("close and route back require confirmation for a draft, cancel preserves it, empty close exits immediately", () => {
   const { render, state } = harness();
   let tree = render();
-  field(tree).props.onChangeText('작성 중인 글');
+  field(tree).props.onChangeText("작성 중인 글");
   tree = render();
   assert.equal(state.guard, true);
   find(
     tree,
-    (node) => node.props?.accessibilityLabel === '닫기',
+    (node) => node.props?.accessibilityLabel === "닫기"
   ).props.onPress();
   tree = render();
   assert.equal(dialog(tree).props.visible, true);
   dialog(tree).props.onClose();
   tree = render();
   assert.equal(state.backs, 0);
-  assert.equal(field(tree).props.value, '작성 중인 글');
+  assert.equal(field(tree).props.value, "작성 중인 글");
   state.prevented({
     repeat: () => {
       state.backs++;
@@ -190,49 +196,49 @@ test('close and route back require confirmation for a draft, cancel preserves it
   tree = empty.render();
   find(
     tree,
-    (node) => node.props?.accessibilityLabel === '닫기',
+    (node) => node.props?.accessibilityLabel === "닫기"
   ).props.onPress();
   assert.equal(empty.state.backs, 1);
 });
 
-test('empty Android input shows a full-line caret only while focused and hands typing back to the native caret', () => {
+test("empty Android input shows a full-line caret only while focused and hands typing back to the native caret", () => {
   const { render } = harness();
   let tree = render();
   assert.equal(field(tree).props.caretHidden, true);
   assert.equal(
-    find(tree, (node) => node.type === 'EmptyInputCaret'),
-    undefined,
+    find(tree, (node) => node.type === "EmptyInputCaret"),
+    undefined
   );
   field(tree).props.onFocus();
   tree = render();
-  assert.ok(find(tree, (node) => node.type === 'EmptyInputCaret'));
-  field(tree).props.onChangeText('가');
+  assert.ok(find(tree, (node) => node.type === "EmptyInputCaret"));
+  field(tree).props.onChangeText("가");
   tree = render();
   assert.equal(field(tree).props.caretHidden, false);
   assert.equal(
-    find(tree, (node) => node.type === 'EmptyInputCaret'),
-    undefined,
+    find(tree, (node) => node.type === "EmptyInputCaret"),
+    undefined
   );
   assert.equal(Object.assign({}, ...field(tree).props.style).lineHeight, 40);
-  field(tree).props.onChangeText('');
+  field(tree).props.onChangeText("");
   tree = render();
-  assert.ok(find(tree, (node) => node.type === 'EmptyInputCaret'));
-  assert.equal(field(tree).props.value, '');
+  assert.ok(find(tree, (node) => node.type === "EmptyInputCaret"));
+  assert.equal(field(tree).props.value, "");
   field(tree).props.onBlur();
   tree = render();
   assert.equal(
-    find(tree, (node) => node.type === 'EmptyInputCaret'),
-    undefined,
+    find(tree, (node) => node.type === "EmptyInputCaret"),
+    undefined
   );
 });
 
-test('direct next is enabled at 30, disabled at 31 and 50, while long content scrolls with the 40px guide grid', () => {
+test("direct next is enabled at 30, disabled at 31 and 50, while long content scrolls with the 40px guide grid", () => {
   const { render } = harness();
   let tree = render();
   for (const length of [30, 31, 50]) {
-    field(tree).props.onChangeText('가'.repeat(length));
+    field(tree).props.onChangeText("가".repeat(length));
     tree = render();
-    assert.equal(action(tree, '다음으로').props.disabled, length > 30);
+    assert.equal(action(tree, "다음으로").props.disabled, length > 30);
   }
   measure(tree).props.onTextLayout({
     nativeEvent: { lines: Array(3).fill({}) },
@@ -249,19 +255,19 @@ test('direct next is enabled at 30, disabled at 31 and 50, while long content sc
       .filter(
         (node) =>
           Array.isArray(node.props?.style) &&
-          node.props.style[0]?.position === 'absolute',
+          node.props.style[0]?.position === "absolute"
       )
       .map((node) => node.props.style[1].top),
-    [0, 40, 80, 119],
+    [0, 40, 80, 119]
   );
 });
 
-test('writing tooltip closes on outside touch but its own touch does not propagate', () => {
+test("writing tooltip closes on outside touch but its own touch does not propagate", () => {
   const { render } = harness();
   let tree = render();
   find(
     tree,
-    (node) => node.props?.accessibilityLabel === '명언 작성 안내',
+    (node) => node.props?.accessibilityLabel === "명언 작성 안내"
   ).props.onPress();
   tree = render();
   const bubble = () =>
@@ -269,12 +275,12 @@ test('writing tooltip closes on outside touch but its own touch does not propaga
       tree,
       (node) =>
         node.props?.children ===
-        '30자가 넘어가는 글은 AI 추천 받기를 사용해야 등록할 수 있습니다.',
+        "30자가 넘어가는 글은 AI 추천 받기를 사용해야 등록할 수 있습니다."
     );
   assert.ok(bubble());
   const wrap = find(
     tree,
-    (node) => node.props?.onTouchStart && node.type === 'View',
+    (node) => node.props?.onTouchStart && node.type === "View"
   );
   let stopped = false;
   wrap.props.onTouchStart({
@@ -289,25 +295,26 @@ test('writing tooltip closes on outside touch but its own touch does not propaga
 });
 
 let tagCode = compile(
-  await read('features/write/components/FriendTagSelector.tsx'),
+  await read("features/write/components/FriendTagSelector.tsx")
 );
 for (const [from, to] of Object.entries({
-  'react/jsx-runtime': import.meta.resolve('react/jsx-runtime'),
+  "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: reactUrl,
-  'expo-image': url("export const Image='Image';"),
-  'react-native': nativeUrl,
-  '@/components/AppText': url("export const AppText='AppText';"),
-  '@/styles/theme': themeUrl,
+  "expo-image": url("export const Image='Image';"),
+  "react-native": nativeUrl,
+  "@/components/AppText": url("export const AppText='AppText';"),
+  "@/styles/theme": themeUrl,
 }))
   tagCode = tagCode
     .replaceAll(JSON.stringify(from), JSON.stringify(to))
     .replaceAll(`'${from}'`, JSON.stringify(to));
-tagCode = tagCode.replace(/require\('(@\/assets\/[^']+)'\)/g, (_, path) =>
-  JSON.stringify(path),
+tagCode = tagCode.replace(
+  /require\(['"](@\/assets\/[^'"]+)['"]\)/g,
+  (_, path) => JSON.stringify(path)
 );
 const { FriendTagSelector } = await import(url(tagCode));
 
-test('tag UI uses image sources with Q fallback and web search with clear/refocus', () => {
+test("tag UI uses image sources with Q fallback and web search with clear/refocus", () => {
   const toggled = [];
   const { render } = harness(FriendTagSelector, {
     selected: [2],
@@ -315,30 +322,30 @@ test('tag UI uses image sources with Q fallback and web search with clear/refocu
   });
   let tree = render();
   assert.equal(
-    nodes(tree).filter((node) => node.props?.accessibilityRole === 'checkbox')
+    nodes(tree).filter((node) => node.props?.accessibilityRole === "checkbox")
       .length,
-    5,
+    5
   );
   const avatar = find(
     tree,
-    (node) => typeof node.type === 'function' && node.type.name === 'Avatar',
+    (node) => typeof node.type === "function" && node.type.name === "Avatar"
   );
   assert.match(avatar.props.uri, /avatars\.githubusercontent\.com/);
   const imageTree = harness(avatar.type, avatar.props).render();
   assert.equal(
-    find(imageTree, (node) => node.type === 'Image').props.source.uri,
-    avatar.props.uri,
+    find(imageTree, (node) => node.type === "Image").props.source.uri,
+    avatar.props.uri
   );
   const emptyAvatar = harness(avatar.type, { size: 45 }).render();
-  assert.ok(find(emptyAvatar, (node) => node.props?.children === 'Q'));
+  assert.ok(find(emptyAvatar, (node) => node.props?.children === "Q"));
   const search = () =>
-    find(tree, (node) => node.props?.accessibilityLabel === '태그할 친구 검색');
-  search().props.onChangeText('라라진');
+    find(tree, (node) => node.props?.accessibilityLabel === "태그할 친구 검색");
+  search().props.onChangeText("라라진");
   tree = render();
   assert.equal(
-    nodes(tree).filter((node) => node.props?.accessibilityRole === 'checkbox')
+    nodes(tree).filter((node) => node.props?.accessibilityRole === "checkbox")
       .length,
-    1,
+    1
   );
   let focused = 0;
   search().props.ref.current = {
@@ -348,14 +355,14 @@ test('tag UI uses image sources with Q fallback and web search with clear/refocu
   };
   find(
     tree,
-    (node) => node.props?.accessibilityLabel === '검색어 지우기',
+    (node) => node.props?.accessibilityLabel === "검색어 지우기"
   ).props.onPress();
   tree = render();
-  assert.equal(search().props.value, '');
+  assert.equal(search().props.value, "");
   assert.equal(focused, 1);
   find(
     tree,
-    (node) => node.props?.accessibilityLabel === '어푸 태그 제거',
+    (node) => node.props?.accessibilityLabel === "어푸 태그 제거"
   ).props.onPress();
   assert.deepEqual(toggled, [2]);
 });
@@ -365,23 +372,23 @@ const modalNative =
 export const Modal='Modal';export const Animated={View:'Animated.View',
  Value:class {interpolate(config){return config.outputRange;}stopAnimation(){}setValue(){}},
  timing:(value,config)=>({start:callback=>{globalThis.__dialogAnimations.push({config,finish:()=>callback?.({finished:true})});}})};`);
-let dialogCode = compile(await read('components/ConfirmDialog.tsx'));
+let dialogCode = compile(await read("components/ConfirmDialog.tsx"));
 for (const [from, to] of Object.entries({
-  'react/jsx-runtime': import.meta.resolve('react/jsx-runtime'),
+  "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: reactUrl,
-  'react-native': modalNative,
-  'react-native-safe-area-context': url(
-    'export const useSafeAreaInsets=()=>({top:0,bottom:24});',
+  "react-native": modalNative,
+  "react-native-safe-area-context": url(
+    "export const useSafeAreaInsets=()=>({top:0,bottom:24});"
   ),
-  '@/components/AppText': url("export const AppText='AppText';"),
-  '@/styles/theme': themeUrl,
+  "@/components/AppText": url("export const AppText='AppText';"),
+  "@/styles/theme": themeUrl,
 }))
   dialogCode = dialogCode
     .replaceAll(JSON.stringify(from), JSON.stringify(to))
     .replaceAll(`'${from}'`, JSON.stringify(to));
 const { ConfirmDialog } = await import(url(dialogCode));
 
-test('exit modal uses rising card transform and waits for its closing animation, ignoring double confirm', () => {
+test("exit modal uses rising card transform and waits for its closing animation, ignoring double confirm", () => {
   globalThis.__dialogAnimations = [];
   let confirmed = 0;
   const { render } = harness(ConfirmDialog, {
@@ -390,14 +397,14 @@ test('exit modal uses rising card transform and waits for its closing animation,
     onConfirm: () => confirmed++,
   });
   const tree = render();
-  assert.equal(tree.props.animationType, 'none');
-  const card = find(tree, (node) => node.type === 'Animated.View');
+  assert.equal(tree.props.animationType, "none");
+  const card = find(tree, (node) => node.type === "Animated.View");
   assert.deepEqual(card.props.style[1].transform[0].translateY, [20, 0]);
   const confirm = find(
     tree,
     (node) =>
-      node.type === 'Pressable' &&
-      nodes(node).some((child) => child.props?.children === '나가기'),
+      node.type === "Pressable" &&
+      nodes(node).some((child) => child.props?.children === "나가기")
   );
   confirm.props.onPress();
   confirm.props.onPress();
@@ -408,7 +415,7 @@ test('exit modal uses rising card transform and waits for its closing animation,
   assert.equal(confirmed, 1);
 });
 
-test('accepted text stays still for two lines and scrolls by one row only when a third measured line exists', () => {
+test("accepted text stays still for two lines and scrolls by one row only when a third measured line exists", () => {
   const { render } = harness();
   let tree = render();
   const positions = [];
@@ -429,28 +436,28 @@ test('accepted text stays still for two lines and scrolls by one row only when a
     tree = render();
     assert.equal(
       Object.assign({}, ...field(tree).props.style).height,
-      expectedHeight,
+      expectedHeight
     );
     viewport().props.onContentSizeChange();
     assert.equal(positions.at(-1), expectedScroll);
   }
 });
 
-test('50-character rejection cannot resize the guide from transient native content; emoji paste and replacement remain supported', () => {
+test("50-character rejection cannot resize the guide from transient native content; emoji paste and replacement remain supported", () => {
   const { render } = harness();
   let tree = render();
   assert.equal(field(tree).props.maxLength, 100);
-  field(tree).props.onChangeText('가'.repeat(50));
+  field(tree).props.onChangeText("가".repeat(50));
   tree = render();
   assert.equal(field(tree).props.maxLength, 50);
   measure(tree).props.onTextLayout({
     nativeEvent: { lines: Array(3).fill({}) },
   });
   tree = render();
-  field(tree).props.onChangeText('가'.repeat(51));
+  field(tree).props.onChangeText("가".repeat(51));
   tree = render();
-  assert.equal(field(tree).props.value, '가'.repeat(50));
-  assert.equal(measure(tree).props.children, '가'.repeat(50));
+  assert.equal(field(tree).props.value, "가".repeat(50));
+  assert.equal(measure(tree).props.children, "가".repeat(50));
   assert.equal(field(tree).props.onContentSizeChange, undefined);
   assert.equal(Object.assign({}, ...field(tree).props.style).height, 120);
   field(tree).props.onSelectionChange({
@@ -458,27 +465,27 @@ test('50-character rejection cannot resize the guide from transient native conte
   });
   tree = render();
   assert.equal(field(tree).props.maxLength, 100);
-  field(tree).props.onChangeText('😀'.repeat(50));
+  field(tree).props.onChangeText("😀".repeat(50));
   tree = render();
-  assert.equal(field(tree).props.value, '😀'.repeat(50));
+  assert.equal(field(tree).props.value, "😀".repeat(50));
   field(tree).props.onSelectionChange({
     nativeEvent: { selection: { start: 100, end: 100 } },
   });
   tree = render();
   assert.equal(field(tree).props.maxLength, 100);
-  field(tree).props.onChangeText('😀'.repeat(49));
+  field(tree).props.onChangeText("😀".repeat(49));
   tree = render();
   assert.equal(input.countCodePoints(field(tree).props.value), 49);
   assert.equal(field(tree).props.maxLength, 100);
 });
 
-test('late line-layout events for an old draft cannot change current guide height', () => {
+test("late line-layout events for an old draft cannot change current guide height", () => {
   const { render } = harness();
   let tree = render();
-  field(tree).props.onChangeText('이전 글');
+  field(tree).props.onChangeText("이전 글");
   tree = render();
   const oldMeasure = measure(tree).props.onTextLayout;
-  field(tree).props.onChangeText('새 글');
+  field(tree).props.onChangeText("새 글");
   tree = render();
   oldMeasure({ nativeEvent: { lines: Array(5).fill({}) } });
   tree = render();
@@ -491,34 +498,34 @@ test('late line-layout events for an old draft cannot change current guide heigh
 });
 
 const recommendation = (tree) =>
-  find(tree, (node) => node.type === 'RecommendationList');
+  find(tree, (node) => node.type === "RecommendationList");
 async function finishRecommendation(state) {
   const cleanups = state.effects.map((effect) => effect());
   await new Promise((resolve) => setTimeout(resolve, 650));
   cleanups.forEach((cleanup) => cleanup?.());
 }
 
-test('AI validates original input, preserves original/selected result/tags through back navigation and resets selection on refresh', async () => {
+test("AI validates original input, preserves original/selected result/tags through back navigation and resets selection on refresh", async () => {
   const { render, state } = harness();
   let tree = render();
-  field(tree).props.onChangeText('짧은 글');
+  field(tree).props.onChangeText("짧은 글");
   tree = render();
-  action(tree, 'AI 추천 받기').props.onPress();
+  action(tree, "AI 추천 받기").props.onPress();
   tree = render();
   assert.equal(recommendation(tree), undefined);
-  const original = '오늘은 힘들었지만 작은 용기를 내어 한 걸음 나아갔다';
+  const original = "오늘은 힘들었지만 작은 용기를 내어 한 걸음 나아갔다";
   field(tree).props.onChangeText(original);
   tree = render();
-  action(tree, 'AI 추천 받기').props.onPress();
+  action(tree, "AI 추천 받기").props.onPress();
   tree = render();
   assert.equal(field(tree).props.editable, false);
-  assert.equal(recommendation(tree).props.status, 'loading');
+  assert.equal(recommendation(tree).props.status, "loading");
   recommendation(tree).props.onNext();
   tree = render();
   assert.ok(recommendation(tree));
   await finishRecommendation(state);
   tree = render();
-  assert.equal(recommendation(tree).props.status, 'success');
+  assert.equal(recommendation(tree).props.status, "success");
   recommendation(tree).props.onSelect(1);
   tree = render();
   const chosen = recommendation(tree).props.recommendations[1];
@@ -526,8 +533,8 @@ test('AI validates original input, preserves original/selected result/tags throu
   tree = render();
   assert.equal(field(tree).props.value, chosen);
   assert.equal(field(tree).props.editable, false);
-  assert.equal(action(tree, '게시하기').props.onPress, undefined);
-  find(tree, (node) => node.type === 'FriendTagSelector').props.onToggle(3);
+  assert.equal(action(tree, "게시하기").props.onPress, undefined);
+  find(tree, (node) => node.type === "FriendTagSelector").props.onToggle(3);
   tree = render();
   state.prevented({ repeat: () => state.backs++ });
   tree = render();
@@ -536,15 +543,15 @@ test('AI validates original input, preserves original/selected result/tags throu
   recommendation(tree).props.onNext();
   tree = render();
   assert.deepEqual(
-    find(tree, (node) => node.type === 'FriendTagSelector').props.selected,
-    [3],
+    find(tree, (node) => node.type === "FriendTagSelector").props.selected,
+    [3]
   );
-  action(tree, '뒤로가기').props.onPress();
+  action(tree, "뒤로가기").props.onPress();
   tree = render();
   recommendation(tree).props.onRefresh();
   tree = render();
   assert.equal(recommendation(tree).props.selectedIndex, null);
-  assert.equal(recommendation(tree).props.status, 'loading');
+  assert.equal(recommendation(tree).props.status, "loading");
   await finishRecommendation(state);
   tree = render();
   assert.notEqual(recommendation(tree).props.recommendations[1], chosen);
@@ -555,17 +562,17 @@ test('AI validates original input, preserves original/selected result/tags throu
   assert.equal(state.backs, 0);
 });
 
-test('AI preview exposes empty, error and exhausted states without pretending that posting succeeded', async () => {
-  for (const scenario of ['empty', 'error', 'exhausted']) {
+test("AI preview exposes empty, error and exhausted states without pretending that posting succeeded", async () => {
+  for (const scenario of ["empty", "error", "exhausted"]) {
     const { render, state } = harness(WriteScreen, {
       recommendationScenario: scenario,
     });
     let tree = render();
     field(tree).props.onChangeText(
-      '나만의 속도로 오늘도 천천히 앞으로 나아가고 있다',
+      "나만의 속도로 오늘도 천천히 앞으로 나아가고 있다"
     );
     tree = render();
-    action(tree, 'AI 추천 받기').props.onPress();
+    action(tree, "AI 추천 받기").props.onPress();
     tree = render();
     await finishRecommendation(state);
     tree = render();
@@ -580,36 +587,36 @@ test('AI preview exposes empty, error and exhausted states without pretending th
 });
 
 let recommendCode = compile(
-  await read('features/write/components/RecommendationList.tsx'),
+  await read("features/write/components/RecommendationList.tsx")
 );
 for (const [from, to] of Object.entries({
-  'react/jsx-runtime': import.meta.resolve('react/jsx-runtime'),
-  'expo-image': url("export const Image='Image';"),
-  'react-native': url(
-    `export {Pressable,StyleSheet,View} from ${JSON.stringify(nativeUrl)};export const ActivityIndicator='ActivityIndicator';`,
+  "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
+  "expo-image": url("export const Image='Image';"),
+  "react-native": url(
+    `export {Pressable,StyleSheet,View} from ${JSON.stringify(nativeUrl)};export const ActivityIndicator='ActivityIndicator';`
   ),
-  '@/components/AppText': url("export const AppText='AppText';"),
-  '@/styles/theme': themeUrl,
-  '@/features/write/components/WriteAction': url(
-    "export const WriteAction='WriteAction';",
+  "@/components/AppText": url("export const AppText='AppText';"),
+  "@/styles/theme": themeUrl,
+  "@/features/write/components/WriteAction": url(
+    "export const WriteAction='WriteAction';"
   ),
 }))
   recommendCode = recommendCode
     .replaceAll(JSON.stringify(from), JSON.stringify(to))
     .replaceAll(`'${from}'`, JSON.stringify(to));
 recommendCode = recommendCode.replace(
-  /require\('(@\/assets\/[^']+)'\)/g,
-  (_, path) => JSON.stringify(path),
+  /require\(['"](@\/assets\/[^'"]+)['"]\)/g,
+  (_, path) => JSON.stringify(path)
 );
 const { RecommendationList } = await import(url(recommendCode));
 
-test('recommendation panel only enables next for a current result and disables refresh while loading or exhausted', () => {
-  for (const status of ['loading', 'success', 'empty', 'error', 'exhausted']) {
+test("recommendation panel only enables next for a current result and disables refresh while loading or exhausted", () => {
+  for (const status of ["loading", "success", "empty", "error", "exhausted"]) {
     let nexts = 0;
     const selected = [];
     const props = {
       status,
-      recommendations: ['선택할 명언'],
+      recommendations: ["선택할 명언"],
       selectedIndex: null,
       onSelect: (index) => selected.push(index),
       onRefresh: () => {},
@@ -617,61 +624,61 @@ test('recommendation panel only enables next for a current result and disables r
       onNext: () => nexts++,
     };
     let tree = RecommendationList(props);
-    assert.equal(action(tree, '다음으로').props.disabled, true);
-    action(tree, '다음으로').props.onPress();
+    assert.equal(action(tree, "다음으로").props.disabled, true);
+    action(tree, "다음으로").props.onPress();
     assert.equal(nexts, 0);
     const refresh = find(
       tree,
       (node) =>
-        node.type === 'Pressable' &&
-        node.props.accessibilityLabel?.includes('AI 추천'),
+        node.type === "Pressable" &&
+        node.props.accessibilityLabel?.includes("AI 추천")
     );
     assert.equal(
       refresh.props.disabled,
-      status === 'loading' || status === 'exhausted',
+      status === "loading" || status === "exhausted"
     );
     const cards = nodes(tree).filter(
-      (node) => node.props?.accessibilityLabel === '선택할 명언',
+      (node) => node.props?.accessibilityLabel === "선택할 명언"
     );
-    assert.equal(cards.length, status === 'success' ? 1 : 0);
-    if (status === 'success') {
+    assert.equal(cards.length, status === "success" ? 1 : 0);
+    if (status === "success") {
       cards[0].props.onPress();
       assert.deepEqual(selected, [0]);
       tree = RecommendationList({ ...props, selectedIndex: 0 });
-      assert.equal(action(tree, '다음으로').props.disabled, false);
-      action(tree, '다음으로').props.onPress();
+      assert.equal(action(tree, "다음으로").props.disabled, false);
+      action(tree, "다음으로").props.onPress();
       assert.equal(nexts, 1);
       tree = RecommendationList({ ...props, selectedIndex: 9 });
-      assert.equal(action(tree, '다음으로').props.disabled, true);
+      assert.equal(action(tree, "다음으로").props.disabled, true);
     }
   }
 });
 
-test('confirmation can show a custom label while disabling unconnected server actions', () => {
+test("confirmation can show a custom label while disabling unconnected server actions", () => {
   globalThis.__dialogAnimations = [];
   const { render } = harness(ConfirmDialog, {
     visible: true,
-    title: '로그아웃할까요?',
-    description: '',
-    confirmLabel: '로그아웃',
+    title: "로그아웃할까요?",
+    description: "",
+    confirmLabel: "로그아웃",
     confirmDisabled: true,
     onClose: () => {},
-    onConfirm: () => assert.fail('unconnected action must not run'),
+    onConfirm: () => assert.fail("unconnected action must not run"),
   });
   const tree = render();
   const confirm = find(
     tree,
     (node) =>
-      node.type === 'Pressable' &&
-      nodes(node).some((child) => child.props?.children === '로그아웃'),
+      node.type === "Pressable" &&
+      nodes(node).some((child) => child.props?.children === "로그아웃")
   );
   assert.equal(confirm.props.disabled, true);
   assert.equal(confirm.props.accessibilityState.disabled, true);
   assert.equal(confirm.props.onPress, undefined);
   assert.equal(
     nodes(tree).filter(
-      (node) => node.type === 'AppText' && node.props.children === '',
+      (node) => node.type === "AppText" && node.props.children === ""
     ).length,
-    0,
+    0
   );
 });

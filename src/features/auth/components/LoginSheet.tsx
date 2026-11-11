@@ -5,14 +5,14 @@ import {
   StyleSheet,
   useWindowDimensions,
   View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   SocialButtons,
   type AuthMode,
   type SocialProvider,
-} from './SocialButtons';
-import { styles } from './LoginSheet.styles';
+} from "./SocialButtons";
+import { styles } from "./LoginSheet.styles";
 type Props = {
   visible: boolean;
   onClose: () => void;

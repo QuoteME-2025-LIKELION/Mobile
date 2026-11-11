@@ -1,9 +1,9 @@
-import { Image } from 'expo-image';
-import { Pressable, View } from 'react-native';
-import { AppText } from '@/components/AppText';
-import { QuoteText } from '@/components/QuoteText';
-import type { ArchiveQuote } from '../fixtures/archiveFixtures';
-import { styles } from './ArchiveQuoteCard.styles';
+import { Image } from "expo-image";
+import { Pressable, View } from "react-native";
+import { AppText } from "@/components/AppText";
+import { QuoteText } from "@/components/QuoteText";
+import type { ArchiveQuote } from "../fixtures/archiveFixtures";
+import { styles } from "./ArchiveQuoteCard.styles";
 
 export function ArchiveQuoteCard({
   quote,
@@ -24,7 +24,7 @@ export function ArchiveQuoteCard({
       <View style={styles.actions}>
         <View style={styles.tags}>
           <Image
-            source={require('@/assets/images/feed/own-user.svg')}
+            source={require("@/assets/images/feed/own-user.svg")}
             style={styles.icon}
             accessible={false}
           />
@@ -41,7 +41,7 @@ export function ArchiveQuoteCard({
           <Pressable
             disabled
             accessibilityRole="button"
-            accessibilityLabel={quote.isBookmarked ? '북마크 취소' : '북마크'}
+            accessibilityLabel={quote.isBookmarked ? "북마크 취소" : "북마크"}
             accessibilityState={{
               disabled: true,
               selected: Boolean(quote.isBookmarked),
@@ -51,8 +51,8 @@ export function ArchiveQuoteCard({
             <Image
               source={
                 quote.isBookmarked
-                  ? require('@/assets/images/archive/bookmark-filled.svg')
-                  : require('@/assets/images/feed/own-bookmark-outline.svg')
+                  ? require("@/assets/images/archive/bookmark-filled.svg")
+                  : require("@/assets/images/feed/own-bookmark-outline.svg")
               }
               style={styles.icon}
               accessible={false}
@@ -66,7 +66,7 @@ export function ArchiveQuoteCard({
             hitSlop={8}
           >
             <Image
-              source={require('@/assets/images/feed/own-share.svg')}
+              source={require("@/assets/images/feed/own-share.svg")}
               style={styles.icon}
               accessible={false}
             />

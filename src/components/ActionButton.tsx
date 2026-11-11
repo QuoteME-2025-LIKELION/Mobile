@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react';
-import { Pressable, View } from 'react-native';
-import { AppText } from '@/components/AppText';
-import { colors } from '@/styles/theme';
-import { styles } from './ActionButton.styles';
+import type { ReactNode } from "react";
+import { Pressable, View } from "react-native";
+import { AppText } from "@/components/AppText";
+import { colors } from "@/styles/theme";
+import { styles } from "./ActionButton.styles";
 type Props = {
   title: string;
   onPress?: () => void;

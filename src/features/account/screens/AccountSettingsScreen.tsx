@@ -1,14 +1,14 @@
-import { Image } from 'expo-image';
-import { Pressable, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText } from '@/components/AppText';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { AccountHeader } from '../components/AccountHeader';
-import { AccountPicker } from '../components/AccountPicker';
-import { accountFixture } from '../fixtures/accountFixture';
-import { GENDER_OPTIONS } from '../constants/accountOptions';
-import { useAccountSettings } from '../hooks/useAccountSettings';
-import { styles } from './AccountSettingsScreen.styles';
+import { Image } from "expo-image";
+import { Pressable, ScrollView, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { AppText } from "@/components/AppText";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { AccountHeader } from "../components/AccountHeader";
+import { AccountPicker } from "../components/AccountPicker";
+import { accountFixture } from "../fixtures/accountFixture";
+import { GENDER_OPTIONS } from "../constants/accountOptions";
+import { useAccountSettings } from "../hooks/useAccountSettings";
+import { styles } from "./AccountSettingsScreen.styles";
 
 export function AccountSettingsScreen() {
   const account = useAccountSettings();
@@ -23,8 +23,8 @@ export function AccountSettingsScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="성별 변경"
-            accessibilityState={{ expanded: account.sheet === 'gender' }}
-            onPress={() => account.openSheet('gender')}
+            accessibilityState={{ expanded: account.sheet === "gender" }}
+            onPress={() => account.openSheet("gender")}
             style={styles.infoRow}
           >
             <AppText style={styles.label}>성별</AppText>
@@ -38,8 +38,8 @@ export function AccountSettingsScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="출생연도 변경"
-            accessibilityState={{ expanded: account.sheet === 'birth' }}
-            onPress={() => account.openSheet('birth')}
+            accessibilityState={{ expanded: account.sheet === "birth" }}
+            onPress={() => account.openSheet("birth")}
             style={styles.infoRow}
           >
             <AppText style={styles.label}>출생연도</AppText>
@@ -66,14 +66,14 @@ export function AccountSettingsScreen() {
             </AppText>
             {[
               {
-                provider: 'GOOGLE',
-                label: '구글',
-                icon: require('@/assets/images/account/google.png'),
+                provider: "GOOGLE",
+                label: "구글",
+                icon: require("@/assets/images/account/google.png"),
               },
               {
-                provider: 'KAKAO',
-                label: '카카오',
-                icon: require('@/assets/images/account/kakao.png'),
+                provider: "KAKAO",
+                label: "카카오",
+                icon: require("@/assets/images/account/kakao.png"),
               },
             ].map((item) => (
               <View key={item.provider} style={styles.providerRow}>

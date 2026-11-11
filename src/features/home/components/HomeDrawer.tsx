@@ -1,6 +1,6 @@
-import { Image } from 'expo-image';
-import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { Image } from "expo-image";
+import { router } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Easing,
@@ -9,18 +9,18 @@ import {
   ScrollView,
   StyleSheet,
   View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import appConfig from '../../../../app.json';
-import { AppText } from '@/components/AppText';
-import { userFixture } from '@/fixtures/userFixture';
-import { styles } from './HomeDrawer.styles';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import appConfig from "../../../../app.json";
+import { AppText } from "@/components/AppText";
+import { userFixture } from "@/fixtures/userFixture";
+import { styles } from "./HomeDrawer.styles";
 type Props = { visible: boolean; onClose: () => void };
 
-const MENU_ITEMS = ['친구 및 그룹', '계정 관리', '알림 설정', '공지사항'];
+const MENU_ITEMS = ["친구 및 그룹", "계정 관리", "알림 설정", "공지사항"];
 
 // 웹 시안의 임시 주소. 실제 문의 주소 확정/복사 연결은 후속 작업.
-const CONTACT_EMAIL = 'abc123456@gmail.com';
+const CONTACT_EMAIL = "abc123456@gmail.com";
 
 export function HomeDrawer({ visible, onClose }: Props) {
   const insets = useSafeAreaInsets();
@@ -105,7 +105,7 @@ export function HomeDrawer({ visible, onClose }: Props) {
             <View style={styles.profile}>
               <View style={styles.avatarBox}>
                 <Image
-                  source={require('@/assets/images/profile/default-profile.png')}
+                  source={require("@/assets/images/profile/default-profile.png")}
                   style={styles.avatar}
                   accessible={false}
                 />
@@ -115,13 +115,13 @@ export function HomeDrawer({ visible, onClose }: Props) {
                   onPress={() =>
                     dismiss(() => {
                       onClose();
-                      router.push('/profile-center');
+                      router.push("/profile-center");
                     })
                   }
                   style={styles.settings}
                 >
                   <Image
-                    source={require('@/assets/images/home/settings.svg')}
+                    source={require("@/assets/images/home/settings.svg")}
                     style={styles.settingsIcon}
                     accessible={false}
                   />
@@ -136,18 +136,18 @@ export function HomeDrawer({ visible, onClose }: Props) {
               {MENU_ITEMS.map((label, index) => (
                 <Pressable
                   key={label}
-                  disabled={label !== '계정 관리'}
+                  disabled={label !== "계정 관리"}
                   onPress={
-                    label === '계정 관리'
+                    label === "계정 관리"
                       ? () =>
                           dismiss(() => {
                             onClose();
-                            router.push('/account-setting');
+                            router.push("/account-setting");
                           })
                       : undefined
                   }
                   accessibilityRole="button"
-                  accessibilityState={{ disabled: label !== '계정 관리' }}
+                  accessibilityState={{ disabled: label !== "계정 관리" }}
                   style={[
                     styles.menuItem,
                     index === MENU_ITEMS.length - 1 && styles.lastItem,

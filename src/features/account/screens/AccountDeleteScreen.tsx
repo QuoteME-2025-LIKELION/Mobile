@@ -1,4 +1,4 @@
-import { Image } from 'expo-image';
+import { Image } from "expo-image";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -6,14 +6,14 @@ import {
   ScrollView,
   TextInput,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText } from '@/components/AppText';
-import { colors } from '@/styles/theme';
-import { AccountHeader } from '../components/AccountHeader';
-import { DELETE_REASONS } from '../constants/accountOptions';
-import { useAccountDelete } from '../hooks/useAccountDelete';
-import { styles } from './AccountDeleteScreen.styles';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { AppText } from "@/components/AppText";
+import { colors } from "@/styles/theme";
+import { AccountHeader } from "../components/AccountHeader";
+import { DELETE_REASONS } from "../constants/accountOptions";
+import { useAccountDelete } from "../hooks/useAccountDelete";
+import { styles } from "./AccountDeleteScreen.styles";
 export function AccountDeleteScreen() {
   const form = useAccountDelete();
   return (
@@ -21,7 +21,7 @@ export function AccountDeleteScreen() {
       <AccountHeader onBack={form.goBack} />
       <KeyboardAvoidingView
         style={styles.fill}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
           keyboardShouldPersistTaps="handled"
@@ -30,11 +30,11 @@ export function AccountDeleteScreen() {
         >
           <View style={styles.content}>
             <AppText accessibilityRole="header" style={styles.title}>
-              {'쿼트미 계정을\n삭제하시겠어요?'}
+              {"쿼트미 계정을\n삭제하시겠어요?"}
             </AppText>
             <AppText style={styles.description}>
               {
-                '계정을 삭제하면 모든 계정 정보와\n작성한 글이 삭제되며 복구가 불가능 합니다.'
+                "계정을 삭제하면 모든 계정 정보와\n작성한 글이 삭제되며 복구가 불가능 합니다."
               }
             </AppText>
             {/* 완료 화면 검토만을 위한 개발용 진입. 실제 삭제 버튼과 분리한다. */}
@@ -60,8 +60,8 @@ export function AccountDeleteScreen() {
                 <Image
                   source={
                     form.selectedReasons.includes(reason)
-                      ? require('@/assets/images/write/tag-checkbox-checked.svg')
-                      : require('@/assets/images/write/tag-checkbox-unchecked.svg')
+                      ? require("@/assets/images/write/tag-checkbox-checked.svg")
+                      : require("@/assets/images/write/tag-checkbox-unchecked.svg")
                   }
                   style={styles.checkbox}
                   accessible={false}
@@ -74,7 +74,7 @@ export function AccountDeleteScreen() {
                 value={form.otherReason}
                 onChangeText={form.setOtherReason}
                 placeholder="탈퇴 사유를 작성해 주세요"
-                placeholderTextColor={colors['grey-400']}
+                placeholderTextColor={colors["grey-400"]}
                 multiline
                 style={styles.otherInput}
               />

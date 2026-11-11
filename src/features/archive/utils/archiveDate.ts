@@ -11,13 +11,13 @@ export function getArchiveDateInMonth(
   baseDate: Date,
   year: number,
   month: number,
-  today = new Date(),
+  today = new Date()
 ) {
   const lastDate = new Date(year, month + 1, 0).getDate();
   const candidate = new Date(
     year,
     month,
-    Math.min(baseDate.getDate(), lastDate),
+    Math.min(baseDate.getDate(), lastDate)
   );
   return isFutureArchiveDate(candidate, today)
     ? new Date(today.getFullYear(), today.getMonth(), today.getDate())
@@ -36,7 +36,7 @@ export function isFutureArchiveMonth(date: Date, today = new Date()) {
 export function getArchiveMonthInYear(
   baseMonth: Date,
   year: number,
-  today = new Date(),
+  today = new Date()
 ) {
   if (year > today.getFullYear()) return null;
   const month =
@@ -47,7 +47,7 @@ export function getArchiveMonthInYear(
 }
 
 export function archiveDateKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 /** 웹과 동일하게 인접 월 날짜를 포함한 최소 5주, 필요하면 6주를 표시한다. */
@@ -59,6 +59,6 @@ export function getCalendarDates(monthDate: Date): Date[] {
   const weeks = Math.max(5, Math.ceil((firstWeekday + lastDay) / 7));
   return Array.from(
     { length: weeks * 7 },
-    (_, index) => new Date(year, month, 1 - firstWeekday + index),
+    (_, index) => new Date(year, month, 1 - firstWeekday + index)
   );
 }

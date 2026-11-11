@@ -1,22 +1,22 @@
-import { StatusBar } from 'expo-status-bar';
-import { Pressable, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText } from '@/components/AppText';
+import { StatusBar } from "expo-status-bar";
+import { Pressable, ScrollView, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { AppText } from "@/components/AppText";
 import {
   ArchiveArrow,
   ArchiveCalendar,
   ArchiveMonthBar,
   ArchiveMonthPicker,
-} from '../components/ArchiveCalendar';
-import { type ArchiveTab } from '../fixtures/archiveFixtures';
-import { ArchiveQuoteCard } from '../components/ArchiveQuoteCard';
-import { styles } from './ArchiveScreen.styles';
-import { useArchive } from '../hooks/useArchive';
+} from "../components/ArchiveCalendar";
+import { type ArchiveTab } from "../fixtures/archiveFixtures";
+import { ArchiveQuoteCard } from "../components/ArchiveQuoteCard";
+import { styles } from "./ArchiveScreen.styles";
+import { useArchive } from "../hooks/useArchive";
 
 const TABS: { id: ArchiveTab; label: string }[] = [
-  { id: 'all', label: '전체보기' },
-  { id: 'mine', label: '나의 명언' },
-  { id: 'bookmarks', label: '북마크' },
+  { id: "all", label: "전체보기" },
+  { id: "mine", label: "나의 명언" },
+  { id: "bookmarks", label: "북마크" },
 ];
 
 export function ArchiveScreen() {
@@ -38,7 +38,7 @@ export function ArchiveScreen() {
     selectTab,
   } = useArchive();
   return (
-    <SafeAreaView edges={['top']} style={styles.screen}>
+    <SafeAreaView edges={["top"]} style={styles.screen}>
       <StatusBar style="dark" />
       <View style={styles.header}>
         <ArchiveArrow label="홈으로 돌아가기" onPress={goBack} />
@@ -52,7 +52,7 @@ export function ArchiveScreen() {
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
       >
-        {tab === 'all' ? (
+        {tab === "all" ? (
           <ArchiveCalendar
             month={selection.month}
             selectedDate={selection.date}
@@ -90,7 +90,7 @@ export function ArchiveScreen() {
               <ArchiveQuoteCard
                 key={quote.id}
                 quote={quote}
-                showOriginalContent={tab === 'mine'}
+                showOriginalContent={tab === "mine"}
               />
             ))
           ) : (

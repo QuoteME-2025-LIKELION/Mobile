@@ -1,13 +1,13 @@
-import { StyleSheet } from 'react-native';
-import { colors, fonts } from '@/styles/theme';
+import { StyleSheet } from "react-native";
+import { colors, fonts } from "@/styles/theme";
 
 export const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.primary },
   content: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 76 },
   brand: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 24,
     gap: 0,
   },
@@ -19,24 +19,24 @@ export const styles = StyleSheet.create({
     includeFontPadding: true,
     color: colors.white,
   },
-  tagline: { color: colors.white, textAlign: 'center', fontWeight: '500' },
+  tagline: { color: colors.white, textAlign: "center", fontWeight: "500" },
   actions: { gap: 14 },
   loginRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     gap: 22,
   },
   textButton: {
     minHeight: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 8,
   },
   login: {
     color: colors.white,
     fontSize: 14,
     lineHeight: 21,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });

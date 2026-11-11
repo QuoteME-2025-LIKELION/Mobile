@@ -40,7 +40,6 @@ Docs: https://docs.expo.dev/eas/index.md
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
 
-
 ## Project collaboration conventions
 
 - Follow `README.md` → “커밋 컨벤션, 브랜치 전략” for commit and branch names. Read it and inspect recent commits before suggesting or writing a commit title; preserve gitmoji, type case, punctuation, and noun endings.
@@ -56,3 +55,9 @@ Docs: https://docs.expo.dev/eas/index.md
 - Put fixed styles next to the component in `ComponentName.styles.ts`. Import shared theme values from `@/styles/theme`.
 - Move complex screen state/effects/actions to feature hooks. Keep small component-local UI state local rather than adding unnecessary abstractions.
 - Structural changes must preserve the existing quote layout, style values and interactions. Keep automatic checks and actual device verification separate.
+
+## Formatting
+
+- Use the pinned local Prettier version and `.prettierrc`. Run `npm run format` and `npm run format:check`; do not pass ad hoc quote or width overrides.
+- The formatter options match the current Frontend configuration (double quotes, 2 spaces, width 80). This is a project choice, not a React Native requirement.
+- Keep formatting-only changes separate from feature changes. Preserve the asset-require test harness support for both quote styles.

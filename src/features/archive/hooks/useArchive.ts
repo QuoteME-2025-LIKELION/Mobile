@@ -1,19 +1,19 @@
-import { router } from 'expo-router';
-import { useRef, useState } from 'react';
-import type { ComponentRef } from 'react';
-import { type ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from "expo-router";
+import { useRef, useState } from "react";
+import type { ComponentRef } from "react";
+import { type ScrollView } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   getArchiveDateInMonth,
   getArchiveMonthInYear,
   isFutureArchiveDate,
   isFutureArchiveMonth,
-} from '../utils/archiveDate';
+} from "../utils/archiveDate";
 import {
   getDateArchiveFixtures,
   getMonthlyArchiveFixtures,
   type ArchiveTab,
-} from '../fixtures/archiveFixtures';
+} from "../fixtures/archiveFixtures";
 
 export function useArchive() {
   const insets = useSafeAreaInsets();
@@ -25,24 +25,24 @@ export function useArchive() {
     };
   });
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [tab, setTab] = useState<ArchiveTab>('all');
+  const [tab, setTab] = useState<ArchiveTab>("all");
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const quotes =
-    tab === 'all'
+    tab === "all"
       ? getDateArchiveFixtures(selection.date)
       : getMonthlyArchiveFixtures(selection.month, tab);
   const emptyMessage =
-    tab === 'all'
-      ? '이날 작성된 명언이 없어요'
-      : tab === 'mine'
-        ? '작성된 명언이 없어요'
-        : '마음에 드는 명언은 북마크를 통해 모아보세요';
+    tab === "all"
+      ? "이날 작성된 명언이 없어요"
+      : tab === "mine"
+        ? "작성된 명언이 없어요"
+        : "마음에 드는 명언은 북마크를 통해 모아보세요";
   const moveMonth = (amount: number) =>
     setSelection((prev) => {
       const month = new Date(
         prev.month.getFullYear(),
         prev.month.getMonth() + amount,
-        1,
+        1
       );
       if (isFutureArchiveMonth(month)) return prev;
       return {
@@ -50,7 +50,7 @@ export function useArchive() {
         date: getArchiveDateInMonth(
           prev.date,
           month.getFullYear(),
-          month.getMonth(),
+          month.getMonth()
         ),
       };
     });
@@ -65,7 +65,7 @@ export function useArchive() {
     setSelection((prev) => {
       const month = getArchiveMonthInYear(
         prev.month,
-        prev.month.getFullYear() + amount,
+        prev.month.getFullYear() + amount
       );
       if (!month) return prev;
       return {
@@ -73,7 +73,7 @@ export function useArchive() {
         date: getArchiveDateInMonth(
           prev.date,
           month.getFullYear(),
-          month.getMonth(),
+          month.getMonth()
         ),
       };
     });
@@ -88,7 +88,7 @@ export function useArchive() {
   };
   const goBack = () => {
     if (router.canGoBack()) router.back();
-    else router.replace('/home');
+    else router.replace("/home");
   };
   const openMonthPicker = () => setPickerOpen(true);
   const closeMonthPicker = () => setPickerOpen(false);

@@ -1,5 +1,5 @@
-import { StyleSheet } from 'react-native';
-import { colors } from '@/styles/theme';
+import { StyleSheet } from "react-native";
+import { colors } from "@/styles/theme";
 
 export const styles = StyleSheet.create({
   button: {
@@ -8,18 +8,18 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
   },
   label: {
     fontSize: 14,
     lineHeight: 21,
     letterSpacing: -0.28,
-    fontWeight: '500',
-    textAlign: 'center',
+    fontWeight: "500",
+    textAlign: "center",
   },
-  bordered: { borderWidth: 1, borderColor: colors['grey-200'] },
+  bordered: { borderWidth: 1, borderColor: colors["grey-200"] },
   pressed: { opacity: 0.7 },
 });

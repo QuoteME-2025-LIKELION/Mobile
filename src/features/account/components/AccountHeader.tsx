@@ -1,6 +1,6 @@
-import { Pressable, View } from 'react-native';
-import { AppText } from '@/components/AppText';
-import { styles } from './AccountHeader.styles';
+import { Pressable, View } from "react-native";
+import { AppText } from "@/components/AppText";
+import { styles } from "./AccountHeader.styles";
 export function AccountHeader({ onBack }: { onBack: () => void }) {
   return (
     <View style={styles.header}>

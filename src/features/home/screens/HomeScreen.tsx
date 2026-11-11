@@ -1,13 +1,13 @@
-import { Image, type ImageSource } from 'expo-image';
-import { Pressable, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText } from '@/components/AppText';
-import { FeedCard } from '../components/FeedCard';
-import { HomeDrawer } from '../components/HomeDrawer';
-import { GroupFilter } from '../components/GroupFilter';
-import { TodayQuote } from '../components/TodayQuote';
-import { styles } from './HomeScreen.styles';
-import { useHomeFeed } from '../hooks/useHomeFeed';
+import { Image, type ImageSource } from "expo-image";
+import { Pressable, ScrollView, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { AppText } from "@/components/AppText";
+import { FeedCard } from "../components/FeedCard";
+import { HomeDrawer } from "../components/HomeDrawer";
+import { GroupFilter } from "../components/GroupFilter";
+import { TodayQuote } from "../components/TodayQuote";
+import { styles } from "./HomeScreen.styles";
+import { useHomeFeed } from "../hooks/useHomeFeed";
 
 // /home은 개발 빌드 전용. 월 길게 누르기: 작성 전 → 작성 후 → 친구 없음.
 export function HomeScreen() {
@@ -35,17 +35,17 @@ export function HomeScreen() {
       <View style={styles.header} onTouchStart={closeMenus}>
         <HeaderButton
           label="아카이브"
-          source={require('@/assets/images/home/archive.svg')}
+          source={require("@/assets/images/home/archive.svg")}
           onPress={openArchive}
         />
         <View style={styles.headerActions}>
           <HeaderButton
             label="알림"
-            source={require('@/assets/images/home/notification.svg')}
+            source={require("@/assets/images/home/notification.svg")}
           />
           <HeaderButton
             label="메뉴"
-            source={require('@/assets/images/home/menu.svg')}
+            source={require("@/assets/images/home/menu.svg")}
             onPress={openDrawer}
           />
         </View>
@@ -86,8 +86,8 @@ export function HomeScreen() {
             <View style={styles.empty}>
               <AppText style={styles.emptyText}>
                 {selectedGroupId === null
-                  ? '친구를 추가하면 매일 피드에서\n명언을 확인할 수 있어요'
-                  : '아직 함께 볼 그룹 멤버가 없어요.'}
+                  ? "친구를 추가하면 매일 피드에서\n명언을 확인할 수 있어요"
+                  : "아직 함께 볼 그룹 멤버가 없어요."}
               </AppText>
               {selectedGroupId === null ? (
                 <Pressable

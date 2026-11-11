@@ -1,6 +1,6 @@
-import { Pressable } from 'react-native';
-import { AppText } from '@/components/AppText';
-import { styles } from './WriteAction.styles';
+import { Pressable } from "react-native";
+import { AppText } from "@/components/AppText";
+import { styles } from "./WriteAction.styles";
 type Props = { title: string; onPress?: () => void; disabled?: boolean };
 
 export function WriteAction({ title, onPress, disabled = false }: Props) {

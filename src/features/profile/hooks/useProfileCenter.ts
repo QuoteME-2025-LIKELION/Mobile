@@ -1,14 +1,14 @@
-import { router, usePreventRemove } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Keyboard } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { userFixture } from '@/fixtures/userFixture';
-import { pickProfileImage } from '../services/pickProfileImage';
+import { router, usePreventRemove } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import { Keyboard } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { userFixture } from "@/fixtures/userFixture";
+import { pickProfileImage } from "../services/pickProfileImage";
 import {
   validateProfileImage,
   limitProfileText,
   type ProfileImage,
-} from '../utils/profileInput';
+} from "../utils/profileInput";
 
 const initialProfile = userFixture;
 
@@ -19,14 +19,14 @@ export function useProfileCenter({
   const [editing, setEditing] = useState(false);
   const [nickname, setNickname] = useState<string>(initialProfile.nickname);
   const [introduction, setIntroduction] = useState<string>(
-    initialProfile.introduction,
+    initialProfile.introduction
   );
   const [image, setImage] = useState<ProfileImage | null>(null);
   const [imageFailed, setImageFailed] = useState(false);
-  const [imageError, setImageError] = useState('');
+  const [imageError, setImageError] = useState("");
   const [picking, setPicking] = useState(false);
-  const [focused, setFocused] = useState<'nickname' | 'introduction' | null>(
-    null,
+  const [focused, setFocused] = useState<"nickname" | "introduction" | null>(
+    null
   );
   const [exitOpen, setExitOpen] = useState(false);
   const [allowExit, setAllowExit] = useState(false);
@@ -52,11 +52,11 @@ export function useProfileCenter({
       Keyboard.dismiss();
       exitAction.current = repeat;
       setExitOpen(true);
-    },
+    }
   );
   const goBack = () => {
     if (router.canGoBack()) router.back();
-    else router.replace('/home');
+    else router.replace("/home");
   };
   const close = () => {
     if (busy.current) return;
@@ -74,7 +74,7 @@ export function useProfileCenter({
     setPicking(true);
     Keyboard.dismiss();
     setFocused(null);
-    setImageError('');
+    setImageError("");
     try {
       const selected = await selectImage();
       if (!mounted.current || !selected) return;
@@ -87,7 +87,7 @@ export function useProfileCenter({
       setImageFailed(false);
     } catch {
       if (mounted.current)
-        setImageError('이미지를 불러오지 못했어요. 다시 선택해 주세요.');
+        setImageError("이미지를 불러오지 못했어요. 다시 선택해 주세요.");
     } finally {
       busy.current = false;
       if (mounted.current) setPicking(false);
@@ -96,7 +96,7 @@ export function useProfileCenter({
   const handleImageError = () => {
     if (image) {
       setImageFailed(true);
-      setImageError('이미지를 표시하지 못했어요. 다시 선택해 주세요.');
+      setImageError("이미지를 표시하지 못했어요. 다시 선택해 주세요.");
     }
   };
   const confirmExit = () => {

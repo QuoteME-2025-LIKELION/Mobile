@@ -1,4 +1,4 @@
-import { Image } from 'expo-image';
+import { Image } from "expo-image";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -6,18 +6,18 @@ import {
   ScrollView,
   TextInput,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { AppText } from '@/components/AppText';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { colors, withOpacity } from '@/styles/theme';
-import { EmptyInputCaret } from '../components/EmptyInputCaret';
-import { RecommendationList } from '../components/RecommendationList';
-import { FriendTagSelector } from '../components/FriendTagSelector';
-import { WriteAction } from '../components/WriteAction';
-import { LINE_HEIGHT } from '../constants/writeLayout';
-import { styles } from './WriteScreen.styles';
-import { useWrite } from '../hooks/useWrite';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { AppText } from "@/components/AppText";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { colors, withOpacity } from "@/styles/theme";
+import { EmptyInputCaret } from "../components/EmptyInputCaret";
+import { RecommendationList } from "../components/RecommendationList";
+import { FriendTagSelector } from "../components/FriendTagSelector";
+import { WriteAction } from "../components/WriteAction";
+import { LINE_HEIGHT } from "../constants/writeLayout";
+import { styles } from "./WriteScreen.styles";
+import { useWrite } from "../hooks/useWrite";
 
 export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
   const {
@@ -62,7 +62,7 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
   } = useWrite(options);
   return (
     <SafeAreaView
-      edges={['top', 'left', 'right']}
+      edges={["top", "left", "right"]}
       style={styles.screen}
       onTouchStart={() => {
         if (showInfo) setShowInfo(false);
@@ -70,7 +70,7 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
     >
       <KeyboardAvoidingView
         style={styles.fill}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={styles.header}>
           <Pressable
@@ -80,7 +80,7 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
             style={styles.close}
           >
             <Image
-              source={require('@/assets/images/write/close.svg')}
+              source={require("@/assets/images/write/close.svg")}
               style={styles.closeIcon}
               accessible={false}
             />
@@ -92,7 +92,7 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={
-            Platform.OS === 'ios' ? 'interactive' : 'on-drag'
+            Platform.OS === "ios" ? "interactive" : "on-drag"
           }
           onScrollBeginDrag={() => setShowInfo(false)}
         >
@@ -102,7 +102,7 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
                 {today.getMonth() + 1}/{today.getDate()}
               </AppText>
               <AppText style={styles.weekday}>
-                {today.toLocaleDateString('ko-KR', { weekday: 'long' })}
+                {today.toLocaleDateString("ko-KR", { weekday: "long" })}
               </AppText>
             </View>
             <ScrollView
@@ -126,7 +126,7 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
                   style={[styles.input, styles.measurement]}
                   onTextLayout={handleTextLayout}
                 >
-                  {displayedText || ' '}
+                  {displayedText || " "}
                 </AppText>
                 <View pointerEvents="none" style={styles.lines}>
                   {Array.from(
@@ -141,7 +141,7 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
                           },
                         ]}
                       />
-                    ),
+                    )
                   )}
                 </View>
                 <TextInput
@@ -149,7 +149,7 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
                   accessibilityHint="최대 50자 입력, 직접 게시할 명언은 30자 이하"
                   multiline
                   scrollEnabled={false}
-                  editable={step === 'write'}
+                  editable={step === "write"}
                   value={displayedText}
                   onChangeText={handleChangeText}
                   onFocus={() => {
@@ -166,14 +166,14 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
                   selectionHandleColor={colors.white}
                   caretHidden={useEmptyCaret}
                   selectionColor={
-                    Platform.OS === 'android'
+                    Platform.OS === "android"
                       ? withOpacity(colors.white, 0.25)
                       : colors.white
                   }
                   textAlignVertical="top"
                   style={[styles.input, { height: inputHeight }]}
                 />
-                {step === 'write' && text.length === 0 && (
+                {step === "write" && text.length === 0 && (
                   <View
                     pointerEvents="none"
                     accessibilityElementsHidden
@@ -194,11 +194,11 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
             <AppText style={styles.count}>{displayedLength}자/50자</AppText>
           </View>
           <View style={[styles.body, { paddingBottom: 39 + insets.bottom }]}>
-            {step === 'write' ? (
+            {step === "write" ? (
               <>
                 <View style={styles.guideArea}>
                   <AppText style={styles.guide}>
-                    오늘의 명언을 직접 적고{'\n'}그대로 게시하거나{'\n'}AI에게
+                    오늘의 명언을 직접 적고{"\n"}그대로 게시하거나{"\n"}AI에게
                     명언을 추천 받을 수 있어요.
                   </AppText>
                 </View>
@@ -242,14 +242,14 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
                   />
                 </View>
               </>
-            ) : step === 'recommend' ? (
+            ) : step === "recommend" ? (
               <RecommendationList
                 status={recommendationStatus}
                 recommendations={recommendations}
                 selectedIndex={recommendationIndex}
                 onSelect={setRecommendationIndex}
                 onRefresh={refreshRecommendations}
-                onBack={() => setStep('write')}
+                onBack={() => setStep("write")}
                 onNext={acceptRecommendation}
               />
             ) : (
@@ -266,7 +266,7 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
             )}
           </View>
         </ScrollView>
-        {message !== '' && (
+        {message !== "" && (
           <View
             accessibilityLiveRegion="polite"
             style={[styles.toast, { bottom: insets.bottom + 16 }]}

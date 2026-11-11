@@ -1,10 +1,10 @@
-import { Image } from 'expo-image';
-import { router } from 'expo-router';
-import { Pressable, View } from 'react-native';
-import { AppText } from '@/components/AppText';
-import { FeedIcon } from './FeedCard';
-import { myQuoteFixture, splitHomeQuote } from '../fixtures/homeFixtures';
-import { styles } from './TodayQuote.styles';
+import { Image } from "expo-image";
+import { router } from "expo-router";
+import { Pressable, View } from "react-native";
+import { AppText } from "@/components/AppText";
+import { FeedIcon } from "./FeedCard";
+import { myQuoteFixture, splitHomeQuote } from "../fixtures/homeFixtures";
+import { styles } from "./TodayQuote.styles";
 type Props = {
   posted: boolean;
   onNextScenario: () => void;
@@ -21,7 +21,7 @@ export function TodayQuote({
   const today = new Date();
   const lines = posted
     ? splitHomeQuote(myQuoteFixture.content)
-    : ['오늘 있었던 일을 바탕으로', '명언을 남겨보세요'];
+    : ["오늘 있었던 일을 바탕으로", "명언을 남겨보세요"];
   const closeTags = () => onTagMenuChange(false);
 
   return (
@@ -36,18 +36,18 @@ export function TodayQuote({
         }}
       >
         <AppText style={styles.month}>
-          {today.toLocaleDateString('en-US', { month: 'short' }).toLowerCase()}
+          {today.toLocaleDateString("en-US", { month: "short" }).toLowerCase()}
         </AppText>
       </Pressable>
       <AppText style={styles.weekday}>
-        {today.toLocaleDateString('ko-KR', { weekday: 'long' })}
+        {today.toLocaleDateString("ko-KR", { weekday: "long" })}
       </AppText>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={posted ? '오늘의 명언' : '오늘의 명언 작성'}
+        accessibilityLabel={posted ? "오늘의 명언" : "오늘의 명언 작성"}
         disabled={posted}
         accessibilityState={{ disabled: posted }}
-        onPress={() => router.push('/write')}
+        onPress={() => router.push("/write")}
         style={styles.quoteRow}
       >
         <AppText
@@ -81,7 +81,7 @@ export function TodayQuote({
                 hitSlop={8}
               >
                 <Image
-                  source={require('@/assets/images/feed/own-user.svg')}
+                  source={require("@/assets/images/feed/own-user.svg")}
                   style={styles.userIcon}
                   accessible={false}
                 />
@@ -116,11 +116,11 @@ export function TodayQuote({
             <View style={styles.actions} onTouchStart={closeTags}>
               <FeedIcon
                 label="내 명언 북마크"
-                source={require('@/assets/images/feed/own-bookmark-outline.svg')}
+                source={require("@/assets/images/feed/own-bookmark-outline.svg")}
               />
               <FeedIcon
                 label="내 명언 공유하기"
-                source={require('@/assets/images/feed/own-share.svg')}
+                source={require("@/assets/images/feed/own-share.svg")}
               />
             </View>
           </>

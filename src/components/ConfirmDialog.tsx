@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Modal,
@@ -6,10 +6,10 @@ import {
   ScrollView,
   StyleSheet,
   View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppText } from '@/components/AppText';
-import { styles } from './ConfirmDialog.styles';
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppText } from "@/components/AppText";
+import { styles } from "./ConfirmDialog.styles";
 type Props = {
   visible: boolean;
   onClose: () => void;
@@ -25,10 +25,10 @@ export function ConfirmDialog({
   visible,
   onClose,
   onConfirm,
-  title = '저장하지 않고 나가시겠어요?',
-  description = '작성한 글은 저장되지 않습니다.',
-  dismissLabel = '계속 작성하기',
-  confirmLabel = '나가기',
+  title = "저장하지 않고 나가시겠어요?",
+  description = "작성한 글은 저장되지 않습니다.",
+  dismissLabel = "계속 작성하기",
+  confirmLabel = "나가기",
   confirmDisabled = false,
 }: Props) {
   const insets = useSafeAreaInsets();

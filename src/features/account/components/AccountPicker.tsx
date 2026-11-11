@@ -1,12 +1,12 @@
-import { useRef, type ComponentRef } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppText } from '@/components/AppText';
-import { GENDER_OPTIONS, type Gender } from '../constants/accountOptions';
-import { styles } from './AccountPicker.styles';
+import { useRef, type ComponentRef } from "react";
+import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppText } from "@/components/AppText";
+import { GENDER_OPTIONS, type Gender } from "../constants/accountOptions";
+import { styles } from "./AccountPicker.styles";
 
 type Props = {
-  sheet: 'gender' | 'birth' | null;
+  sheet: "gender" | "birth" | null;
   gender: Gender;
   birthYear: number;
   years: number[];
@@ -50,7 +50,7 @@ export function AccountPicker({
         <View
           accessibilityViewIsModal
           accessibilityLabel={
-            sheet === 'gender' ? '성별 선택' : '출생연도 선택'
+            sheet === "gender" ? "성별 선택" : "출생연도 선택"
           }
           onAccessibilityEscape={onClose}
           style={[
@@ -59,7 +59,7 @@ export function AccountPicker({
           ]}
         >
           <ScrollView bounces={false}>
-            {sheet === 'gender' ? (
+            {sheet === "gender" ? (
               <View>
                 {GENDER_OPTIONS.map((option) => (
                   <Pressable

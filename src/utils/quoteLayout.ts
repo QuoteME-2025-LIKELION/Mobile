@@ -9,19 +9,19 @@ export type QuoteVariant = keyof typeof quoteMetrics;
 export function getQuoteMarkPositions(
   rowWidth: number,
   textWidth: number,
-  variant: QuoteVariant,
+  variant: QuoteVariant
 ) {
   const { markWidth, gap } = quoteMetrics[variant];
   const reserve = markWidth + gap;
   const available = Math.max(0, rowWidth - reserve * 2 - 8);
   const visibleWidth = Math.max(0, Math.min(textWidth, available));
   const textLeft =
-    variant === 'feed' ? reserve + 4 : (rowWidth - visibleWidth) / 2;
+    variant === "feed" ? reserve + 4 : (rowWidth - visibleWidth) / 2;
   return {
     left: Math.max(0, textLeft - gap - 4 - markWidth),
     right: Math.min(
       Math.max(0, rowWidth - markWidth),
-      textLeft + visibleWidth + gap + 4,
+      textLeft + visibleWidth + gap + 4
     ),
   };
 }
