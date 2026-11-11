@@ -22,7 +22,7 @@
 
 <!-- 체크는 [x]로-->
 
-- [ ] develop 브랜치 pull 완료
+- [ ] main 브랜치 pull 완료
 - [ ] Assignees 설정
 - [ ] `npx tsc --noEmit` 통과
 - [ ] `npm run lint` 통과

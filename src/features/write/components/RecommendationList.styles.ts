@@ -1,0 +1,76 @@
+import { StyleSheet } from "react-native";
+import { colors, fonts } from "@/styles/theme";
+
+export const styles = StyleSheet.create({
+  container: { flexGrow: 1, gap: 14 },
+  title: {
+    fontFamily: fonts.quote,
+    fontSize: 20,
+    lineHeight: 24,
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  refresh: {
+    flexDirection: "row",
+    gap: 6,
+    minWidth: 64,
+    minHeight: 44,
+    alignSelf: "center",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  refreshIcon: { width: 16, height: 16 },
+  usage: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: colors.primary,
+    fontWeight: "500",
+  },
+  disabled: { opacity: 0.5 },
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    minHeight: 58,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 2,
+    borderWidth: 1,
+    borderColor: colors.white,
+    backgroundColor: colors.white,
+  },
+  selectedCard: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  pressedCard: { backgroundColor: colors["grey-100"] },
+  quoteIcon: {
+    width: 11,
+    height: 10,
+    flexShrink: 0,
+    transform: [{ translateY: -2 }],
+  },
+  quote: {
+    flex: 1,
+    fontFamily: fonts.quote,
+    fontSize: 15,
+    lineHeight: 21,
+    textAlign: "center",
+    color: colors.black,
+  },
+  selectedText: { color: colors.white },
+  status: {
+    minHeight: 100,
+    paddingVertical: 16,
+    gap: 12,
+    justifyContent: "center",
+  },
+  statusText: {
+    fontFamily: fonts.quote,
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: "center",
+    color: colors.territory,
+  },
+  actions: { flexDirection: "row", gap: 12, marginTop: "auto", paddingTop: 10 },
+});

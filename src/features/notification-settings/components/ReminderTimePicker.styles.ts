@@ -1,0 +1,50 @@
+import { StyleSheet } from "react-native";
+import { colors, fonts, withOpacity } from "@/styles/theme";
+export const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: withOpacity(colors.black, 0.36),
+  },
+  sheet: {
+    maxHeight: "100%",
+    backgroundColor: colors.secondary,
+    paddingTop: 34,
+    paddingHorizontal: 24,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  columns: { flexDirection: "row", gap: 12 },
+  column: { height: 140, flex: 1, flexGrow: 1 },
+  options: { paddingVertical: 48 },
+  option: { height: 44, justifyContent: "center", alignItems: "center" },
+  optionText: {
+    alignSelf: "stretch",
+    paddingHorizontal: 4,
+    fontFamily: fonts.quote,
+    fontSize: 20,
+    lineHeight: 28,
+    fontWeight: "500",
+    letterSpacing: -0.4,
+    color: colors["grey-300"],
+    textAlign: "center",
+  },
+  selected: { color: colors["grey-950"], fontWeight: "700" },
+  done: {
+    minHeight: 48,
+    marginTop: 32,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: withOpacity(colors.primary, 0.55),
+  },
+  doneText: {
+    fontSize: 15,
+    lineHeight: 20.25,
+    fontWeight: "500",
+    letterSpacing: -0.28,
+    color: colors["grey-950"],
+  },
+});

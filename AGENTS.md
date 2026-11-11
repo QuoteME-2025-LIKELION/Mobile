@@ -40,10 +40,24 @@ Docs: https://docs.expo.dev/eas/index.md
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
 
-
 ## Project collaboration conventions
 
 - Follow `README.md` → “커밋 컨벤션, 브랜치 전략” for commit and branch names. Read it and inspect recent commits before suggesting or writing a commit title; preserve gitmoji, type case, punctuation, and noun endings.
 - Use this Mobile repository's issue numbers, not Frontend issue numbers. Do not invent issue numbers or claim a documented branch already exists without checking Git.
 - Use `.github/ISSUE_TEMPLATE/issue_template.md` and `.github/pull_request_template.md` when drafting issues or PRs.
 - Distinguish type/lint results, actual device verification, and unverified platforms. Link an ongoing issue without closing it; use `Closes` only when the whole issue is complete.
+
+## Source organization
+
+- Follow `ARCHITECTURE.md` for this project's organization; these are local choices, not mandatory React Native conventions.
+- Keep routes in `src/app` thin. Put feature screens, components, hooks, fixtures and utilities under their respective feature folders.
+- Use role-based screen names without `Preview`. Keep development data explicitly in `fixtures`; renaming a screen does not remove development guards or authorize real API integration.
+- Put fixed styles next to the component in `ComponentName.styles.ts`. Import shared theme values from `@/styles/theme`.
+- Move complex screen state/effects/actions to feature hooks. Keep small component-local UI state local rather than adding unnecessary abstractions.
+- Structural changes must preserve the existing quote layout, style values and interactions. Keep automatic checks and actual device verification separate.
+
+## Formatting
+
+- Use the pinned local Prettier version and `.prettierrc`. Run `npm run format` and `npm run format:check`; do not pass ad hoc quote or width overrides.
+- The formatter options match the current Frontend configuration (double quotes, 2 spaces, width 80). This is a project choice, not a React Native requirement.
+- Keep formatting-only changes separate from feature changes. Preserve the asset-require test harness support for both quote styles.

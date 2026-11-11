@@ -1,18 +1,57 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { useFonts } from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
+import { DefaultTheme, Stack, ThemeProvider } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import { colors, fontSources } from "@/styles/theme";
 
 SplashScreen.preventAutoHideAsync();
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+const navigationTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: colors.primary,
+    primary: colors.primary,
+  },
+};
+
+export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts(fontSources);
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      // 로딩 실패 시에도 네이티브 스플래시에 멈추지 않게 한다.
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) return null;
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
+    <ThemeProvider value={navigationTheme}>
+      <StatusBar style="light" />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.primary },
+        }}
+      >
+        <Stack.Screen name="index" />
+        <Stack.Screen name="home" />
+        <Stack.Screen name="archive" />
+        <Stack.Screen name="write" />
+        <Stack.Screen name="profile" />
+        <Stack.Screen name="profile-center" />
+        <Stack.Screen name="notice/index" />
+        <Stack.Screen name="notification-setting" />
+        <Stack.Screen name="notification" />
+        <Stack.Screen name="blocked-members" />
+        <Stack.Screen name="account-setting" />
+        <Stack.Screen name="account-delete" />
+        <Stack.Screen name="account-delete-complete" />
+      </Stack>
     </ThemeProvider>
   );
 }
