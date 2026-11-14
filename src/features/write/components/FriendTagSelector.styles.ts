@@ -73,7 +73,12 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  removeCross: { width: 8, height: 8 },
+  removeCross: {
+    width: 8,
+    height: 8,
+    // Optical adjustment based on the Android device capture.
+    transform: [{ translateX: 0.5 }, { translateY: 0.5 }],
+  },
   removeStroke: {
     position: "absolute",
     top: 3.5,
