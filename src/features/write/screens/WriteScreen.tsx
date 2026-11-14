@@ -20,12 +20,14 @@ import { LINE_HEIGHT } from "../constants/writeLayout";
 import { styles } from "./WriteScreen.styles";
 import { useWrite } from "../hooks/useWrite";
 
-export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
+export function WriteScreen() {
   const {
     text,
     step,
     setStep,
     recommendationStatus,
+    aiUsage,
+    aiUsageStatus,
     recommendationIndex,
     setRecommendationIndex,
     recommendations,
@@ -61,7 +63,7 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
     refreshRecommendations,
     acceptRecommendation,
     toggleFriendTag,
-  } = useWrite(options);
+  } = useWrite();
   return (
     <SafeAreaView
       edges={["top", "left", "right"]}
@@ -247,6 +249,8 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
             ) : step === "recommend" ? (
               <RecommendationList
                 status={recommendationStatus}
+                usage={aiUsage}
+                usageStatus={aiUsageStatus}
                 recommendations={recommendations}
                 selectedIndex={recommendationIndex}
                 onSelect={setRecommendationIndex}

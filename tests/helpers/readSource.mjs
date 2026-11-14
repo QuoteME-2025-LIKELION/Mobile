@@ -32,7 +32,10 @@ async function resolveInternal(specifier, from) {
 }
 
 /** Keep the existing RN stubs while exercising the real extracted hooks and styles. */
-export async function readSource(relativeFile) {
+export async function readSource(relativeFile, { external = [] } = {}) {
+  const externalFiles = new Set(
+    external.map((file) => path.resolve(srcRoot, file))
+  );
   const visited = new Set(),
     body = [],
     imports = new Map();
@@ -50,7 +53,11 @@ export async function readSource(relativeFile) {
       if (statement.importClause?.isTypeOnly) continue;
       const original = statement.moduleSpecifier.text;
       const resolved = await resolveInternal(original, file);
-      if (resolved && shouldInline(resolved.file)) {
+      if (
+        resolved &&
+        shouldInline(resolved.file) &&
+        !externalFiles.has(resolved.file)
+      ) {
         await visit(resolved.file, resolved.source);
         continue;
       }

@@ -13,12 +13,12 @@ const compile = (source) =>
       target: ts.ScriptTarget.ES2022,
     },
   }).outputText;
-const read = readSource;
+const read = (file) =>
+  readSource(file, {
+    external: ["features/write/hooks/useAiRecommendations.ts"],
+  });
 const inputUrl = url(compile(await read("features/write/utils/quoteInput.ts")));
 const input = await import(inputUrl);
-const recommendationsUrl = url(
-  compile(await read("features/write/fixtures/recommendationFixtures.ts"))
-);
 const themeUrl = url(
   compile(await read("styles/theme.ts")).replace(
     /require\(['"][^'"]+['"]\)/g,
@@ -83,7 +83,9 @@ for (const [from, to] of Object.entries({
   ),
   "@/styles/theme": themeUrl,
   "@/features/write/utils/quoteInput": inputUrl,
-  "@/features/write/fixtures/recommendationFixtures": recommendationsUrl,
+  "@/features/write/hooks/useAiRecommendations": url(
+    "export const useAiRecommendations=()=>globalThis.__writeHarness.ai;"
+  ),
   "@/features/write/components/RecommendationList": url(
     "export const RecommendationList='RecommendationList';"
   ),
@@ -111,7 +113,30 @@ const nodes = (tree) =>
     : [tree, ...[tree.props?.children].flat(Infinity).flatMap(nodes)];
 const find = (tree, check) => nodes(tree).find(check);
 function harness(Component = WriteScreen, props = {}) {
-  const state = { next: 0, values: [], effects: [], backs: 0, disables: 0 };
+  const state = {
+    next: 0,
+    values: [],
+    effects: [],
+    backs: 0,
+    disables: 0,
+    aiCalls: 0,
+    aiScenario: props.recommendationScenario ?? "success",
+  };
+  state.ai = {
+    status: "idle",
+    usageStatus: "success",
+    usage: { used: 0, remaining: 2, limit: 2 },
+    recommendations: [],
+    content: "",
+    loadUsage: async () => {},
+    generate: async (content) => {
+      state.aiCalls++;
+      state.ai.status = "loading";
+      state.ai.content = content.trim();
+      state.ai.recommendations = [];
+      return null;
+    },
+  };
   return {
     state,
     render: () => {
@@ -503,9 +528,12 @@ test("late line-layout events for an old draft cannot change current guide heigh
 const recommendation = (tree) =>
   find(tree, (node) => node.type === "RecommendationList");
 async function finishRecommendation(state) {
-  const cleanups = state.effects.map((effect) => effect());
-  await new Promise((resolve) => setTimeout(resolve, 650));
-  cleanups.forEach((cleanup) => cleanup?.());
+  await Promise.resolve();
+  state.ai.status = state.aiScenario;
+  state.ai.recommendations =
+    state.aiScenario === "success"
+      ? ["서버 추천 첫 문장", `서버 추천 ${state.aiCalls}번째 문장`]
+      : [];
 }
 
 test("AI validates original input, preserves original/selected result/tags through back navigation and resets selection on refresh", async () => {
@@ -619,6 +647,12 @@ test("recommendation panel only enables next for a current result and disables r
     const selected = [];
     const props = {
       status,
+      usage: {
+        used: status === "exhausted" ? 1 : 0,
+        remaining: status === "exhausted" ? 0 : 1,
+        limit: 1,
+      },
+      usageStatus: "success",
       recommendations: ["선택할 명언"],
       selectedIndex: null,
       onSelect: (index) => selected.push(index),

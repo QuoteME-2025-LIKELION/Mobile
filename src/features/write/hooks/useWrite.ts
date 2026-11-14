@@ -8,11 +8,7 @@ import {
   type TextLayoutEvent,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  recommendationFixtures,
-  type RecommendationScenario,
-  type RecommendationStatus,
-} from "../fixtures/recommendationFixtures";
+import { useAiRecommendations } from "./useAiRecommendations";
 import {
   countCodePoints,
   getQuoteInputError,
@@ -20,20 +16,16 @@ import {
 } from "../utils/quoteInput";
 import { INPUT_HEIGHT, LINE_HEIGHT } from "../constants/writeLayout";
 
-export function useWrite({
-  recommendationScenario = "success",
-}: { recommendationScenario?: RecommendationScenario } = {}) {
+export function useWrite() {
+  const ai = useAiRecommendations();
   const [text, setText] = useState("");
   const [step, setStep] = useState<"write" | "recommend" | "tag">("write");
   const [source, setSource] = useState<"direct" | "ai">("direct");
-  const [recommendationStatus, setRecommendationStatus] =
-    useState<RecommendationStatus>("idle");
+  const recommendationStatus = ai.status;
+  const recommendations = ai.recommendations;
   const [recommendationIndex, setRecommendationIndex] = useState<number | null>(
     null
   );
-  const [recommendationRound, setRecommendationRound] = useState(0);
-  const recommendations =
-    recommendationFixtures[recommendationRound % recommendationFixtures.length];
   const resultText =
     step === "tag" && source === "ai" && recommendationIndex !== null
       ? recommendations[recommendationIndex]
@@ -77,14 +69,6 @@ export function useWrite({
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [step]);
-  useEffect(() => {
-    if (step !== "recommend" || recommendationStatus !== "loading") return;
-    const timer = setTimeout(
-      () => setRecommendationStatus(recommendationScenario),
-      600
-    );
-    return () => clearTimeout(timer);
-  }, [step, recommendationStatus, recommendationScenario]);
   const goHome = () => {
     if (router.canGoBack()) router.back();
     else router.replace("/home");
@@ -101,7 +85,7 @@ export function useWrite({
     };
     setExitOpen(true);
   };
-  const recommend = () => {
+  const recommend = async () => {
     const error = getQuoteInputError(text, "ai");
     if (error) {
       setMessage(error);
@@ -111,8 +95,23 @@ export function useWrite({
     setShowInfo(false);
     setMessage("");
     setRecommendationIndex(null);
-    setRecommendationStatus("loading");
+    const cached = ai.status === "success" && ai.content === text.trim();
+    if (!cached && ai.usageStatus !== "success") {
+      if (ai.usageStatus === "error") void ai.loadUsage();
+      setMessage("AI 사용량을 확인한 뒤 다시 시도해 주세요.");
+      return;
+    }
+    if (!cached && (ai.status === "exhausted" || ai.usage?.remaining === 0)) {
+      setMessage("오늘 AI 추천 횟수를 모두 사용했어요.");
+      return;
+    }
+    if (ai.status === "loading" && ai.content !== text.trim()) {
+      setMessage("진행 중인 AI 추천을 받은 뒤 다시 시도해 주세요.");
+      return;
+    }
     setStep("recommend");
+    const message = await ai.generate(text);
+    if (message) setMessage(message);
   };
   const backFromTag = () => {
     Keyboard.dismiss();
@@ -164,13 +163,23 @@ export function useWrite({
     setAllowExit(true);
     action?.();
   };
-  const refreshRecommendations = () => {
+  const refreshRecommendations = async () => {
+    if (ai.usageStatus !== "success") {
+      await ai.loadUsage();
+      return;
+    }
+    if (ai.usage?.remaining === 0 || ai.status === "loading") return;
     setRecommendationIndex(null);
-    setRecommendationRound((round) => round + 1);
-    setRecommendationStatus("loading");
+    const message = await ai.generate(text, true);
+    if (message) setMessage(message);
   };
   const acceptRecommendation = () => {
-    if (recommendationStatus !== "success" || recommendationIndex === null)
+    if (
+      recommendationStatus !== "success" ||
+      recommendationIndex === null ||
+      !recommendations[recommendationIndex] ||
+      ai.content !== text.trim()
+    )
       return;
     setSource("ai");
     setStep("tag");
@@ -186,6 +195,8 @@ export function useWrite({
     step,
     setStep,
     recommendationStatus,
+    aiUsage: ai.usage,
+    aiUsageStatus: ai.usageStatus,
     recommendationIndex,
     setRecommendationIndex,
     recommendations,
