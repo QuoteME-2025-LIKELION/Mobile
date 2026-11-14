@@ -103,5 +103,11 @@ export const styles = StyleSheet.create({
     letterSpacing: -0.28,
     color: colors.black,
   },
+  logoutError: {
+    color: colors.red,
+    paddingHorizontal: 24,
+    paddingBottom: 16,
+    textAlign: "center",
+  },
   danger: { color: colors.red },
 });

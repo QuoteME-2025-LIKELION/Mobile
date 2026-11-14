@@ -23,10 +23,16 @@ let code = compile(await readSource("features/auth/screens/StartScreen.tsx"));
 for (const [from, to] of Object.entries({
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: url(
-    `export const useState=initial=>{const h=globalThis.__start;const index=h.next++;if(!(index in h.values))h.values[index]=initial;return [h.values[index],v=>h.values[index]=typeof v==='function'?v(h.values[index]):v];};`
+    `export const useRef=initial=>({current:initial});export const useState=initial=>{const h=globalThis.__start;const index=h.next++;if(!(index in h.values))h.values[index]=initial;return [h.values[index],v=>h.values[index]=typeof v==='function'?v(h.values[index]):v];};`
+  ),
+  "@/features/auth/services/session": url(
+    "export const session={loginGuest:async()=>{globalThis.__start.guestCalls++;}};"
+  ),
+  "@/features/auth/stores/useSession": url(
+    "export const useSession=()=>({busy:false});"
   ),
   "react-native": url(
-    "export const View='View',Pressable='Pressable',ScrollView='ScrollView',StyleSheet={create:value=>value};"
+    "export const View='View',Pressable='Pressable',ScrollView='ScrollView',Alert={alert:(...args)=>globalThis.__start.alerts.push(args)},StyleSheet={create:value=>value};"
   ),
   "react-native-safe-area-context": url(
     "export const SafeAreaView='SafeAreaView';"
@@ -52,7 +58,7 @@ const nodes = (tree) =>
     ? []
     : [tree, ...[tree.props?.children].flat(Infinity).flatMap(nodes)];
 function harness(dev) {
-  const state = { next: 0, values: [], routes: [] };
+  const state = { next: 0, values: [], routes: [], guestCalls: 0, alerts: [] };
   const render = () => {
     state.next = 0;
     globalThis.__start = state;
@@ -65,7 +71,11 @@ function harness(dev) {
 test("start screen opens and closes the login sheet after hook extraction", () => {
   const { render } = harness(true);
   let tree = render();
-  const button = nodes(tree).find((node) => node.type === "Pressable");
+  const button = nodes(tree).find(
+    (node) =>
+      node.type === "Pressable" &&
+      node.props.accessibilityState?.expanded !== undefined
+  );
   assert.equal(button.props.accessibilityState.expanded, false);
   button.props.onPress();
   tree = render();
@@ -79,16 +89,27 @@ test("start screen opens and closes the login sheet after hook extraction", () =
   );
 });
 
-test("development long presses remain gated and keep their original routes", () => {
+test("guest login is hidden behind a development-only logo long press and confirmation", async () => {
   const { state, render } = harness(true);
   const tree = render();
-  nodes(tree)
-    .filter((node) => node.props.onLongPress)
-    .forEach((node) => node.props.onLongPress());
-  assert.deepEqual(state.routes, ["/home", "/profile"]);
-  const production = harness(false).render();
+  const shortcuts = nodes(tree).filter((node) => node.props.onLongPress);
+  assert.equal(shortcuts.length, 1);
+  assert.equal(shortcuts[0].props.children, "QuoteMe");
   assert.equal(
-    nodes(production).filter((node) => node.props.onLongPress).length,
-    0
+    nodes(tree).filter((node) => node.type === "Pressable").length,
+    1
+  );
+  shortcuts[0].props.onLongPress();
+  assert.equal(state.guestCalls, 0);
+  const [title, , buttons] = state.alerts[0];
+  assert.equal(title, "개발용 게스트 로그인");
+  assert.equal(buttons[0].style, "cancel");
+  buttons[1].onPress();
+  await Promise.resolve();
+  assert.equal(state.guestCalls, 1);
+  assert.deepEqual(state.routes, []);
+  assert.equal(
+    nodes(harness(false).render()).some((node) => node.props.onLongPress),
+    false
   );
 });

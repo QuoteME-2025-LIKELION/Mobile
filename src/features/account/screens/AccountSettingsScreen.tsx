@@ -106,7 +106,9 @@ export function AccountSettingsScreen() {
             onPress={account.openLogout}
             style={styles.action}
           >
-            <AppText style={styles.actionLabel}>로그아웃</AppText>
+            <AppText style={styles.actionLabel}>
+              {account.logoutPending ? "로그아웃 중…" : "로그아웃"}
+            </AppText>
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -119,6 +121,11 @@ export function AccountSettingsScreen() {
           </Pressable>
         </View>
       </ScrollView>
+      {account.logoutError ? (
+        <AppText accessibilityRole="alert" style={styles.logoutError}>
+          {account.logoutError}
+        </AppText>
+      ) : null}
       <AccountPicker
         sheet={account.sheet}
         gender={account.draftGender}
@@ -135,9 +142,11 @@ export function AccountSettingsScreen() {
         description=""
         dismissLabel="돌아가기"
         confirmLabel="로그아웃"
-        confirmDisabled
+        confirmDisabled={!account.canLogout}
         onClose={account.closeLogout}
-        onConfirm={account.closeLogout}
+        onConfirm={() => {
+          void account.confirmLogout();
+        }}
       />
     </SafeAreaView>
   );

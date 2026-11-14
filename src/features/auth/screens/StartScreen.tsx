@@ -7,8 +7,7 @@ import { styles } from "./StartScreen.styles";
 import { useStart } from "../hooks/useStart";
 
 export function StartScreen() {
-  const { loginOpen, openHome, openProfileSetup, openLogin, closeLogin } =
-    useStart();
+  const { loginOpen, openLogin, closeLogin, openGuestLogin } = useStart();
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -16,14 +15,11 @@ export function StartScreen() {
           <AppText
             accessibilityRole="header"
             style={styles.logo}
-            onLongPress={__DEV__ ? openHome : undefined}
+            onLongPress={__DEV__ ? openGuestLogin : undefined}
           >
             QuoteMe
           </AppText>
-          <AppText
-            style={styles.tagline}
-            onLongPress={__DEV__ ? openProfileSetup : undefined}
-          >
+          <AppText style={styles.tagline}>
             소소한 생각도 쿼트미로 소중하게 모아보세요.
           </AppText>
         </View>

@@ -4,6 +4,9 @@ import { useEffect } from "react";
 import { DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
+import { session } from "@/features/auth/services/session";
+import { useSession } from "@/features/auth/stores/useSession";
+import { SessionRecovery } from "@/features/auth/components/SessionRecovery";
 import { colors, fontSources } from "@/styles/theme";
 
 SplashScreen.preventAutoHideAsync();
@@ -18,6 +21,10 @@ const navigationTheme = {
 };
 
 export default function RootLayout() {
+  const auth = useSession();
+  useEffect(() => {
+    void session.initialize();
+  }, []);
   const [fontsLoaded, fontError] = useFonts(fontSources);
 
   useEffect(() => {
@@ -32,26 +39,34 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={navigationTheme}>
       <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.primary },
-        }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="home" />
-        <Stack.Screen name="archive" />
-        <Stack.Screen name="write" />
-        <Stack.Screen name="profile" />
-        <Stack.Screen name="profile-center" />
-        <Stack.Screen name="notice/index" />
-        <Stack.Screen name="notification-setting" />
-        <Stack.Screen name="notification" />
-        <Stack.Screen name="blocked-members" />
-        <Stack.Screen name="account-setting" />
-        <Stack.Screen name="account-delete" />
-        <Stack.Screen name="account-delete-complete" />
-      </Stack>
+      {auth.status === "loading" || auth.status === "error" ? (
+        <SessionRecovery />
+      ) : (
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.primary },
+          }}
+        >
+          <Stack.Protected guard={auth.status !== "authenticated" || !__DEV__}>
+            <Stack.Screen name="index" />
+          </Stack.Protected>
+          <Stack.Protected guard={auth.status === "authenticated" && __DEV__}>
+            <Stack.Screen name="home" />
+            <Stack.Screen name="archive" />
+            <Stack.Screen name="write" />
+            <Stack.Screen name="profile" />
+            <Stack.Screen name="profile-center" />
+            <Stack.Screen name="notice/index" />
+            <Stack.Screen name="notification-setting" />
+            <Stack.Screen name="notification" />
+            <Stack.Screen name="blocked-members" />
+            <Stack.Screen name="account-setting" />
+            <Stack.Screen name="account-delete" />
+            <Stack.Screen name="account-delete-complete" />
+          </Stack.Protected>
+        </Stack>
+      )}
     </ThemeProvider>
   );
 }

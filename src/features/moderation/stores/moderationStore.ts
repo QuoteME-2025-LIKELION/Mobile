@@ -54,3 +54,9 @@ export function useModerationState() {
     () => EMPTY
   );
 }
+
+/** 실제 세션 전환 시 개발 예시 상태도 다른 세션으로 넘기지 않는다. */
+export function resetModerationFixtures() {
+  snapshot = EMPTY;
+  emit();
+}
