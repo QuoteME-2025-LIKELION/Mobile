@@ -6,3 +6,16 @@ export type RecommendationStatus =
   | "empty"
   | "error"
   | "exhausted";
+
+export type WriteFriend = {
+  id: number;
+  nickname: string;
+  introduction?: string;
+  profileImage?: string;
+};
+export type QuotePayload = {
+  content: string;
+  originalContent?: string;
+  summary?: string;
+  taggedMemberIds: number[];
+};

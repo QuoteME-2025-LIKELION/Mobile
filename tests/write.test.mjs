@@ -15,10 +15,25 @@ const compile = (source) =>
   }).outputText;
 const read = (file) =>
   readSource(file, {
-    external: ["features/write/hooks/useAiRecommendations.ts"],
+    external: [
+      "features/write/hooks/useAiRecommendations.ts",
+      "features/write/hooks/useWriteFriends.ts",
+    ],
   });
 const inputUrl = url(compile(await read("features/write/utils/quoteInput.ts")));
 const input = await import(inputUrl);
+const apiErrorUrl = url(compile(await read("api/createApiClient.ts")));
+const { ApiError } = await import(apiErrorUrl);
+const payloadUrl = url(
+  compile(await read("features/write/services/createQuotePayload.ts"))
+    .replaceAll("'@/features/write/utils/quoteInput'", JSON.stringify(inputUrl))
+    .replaceAll('"@/features/write/utils/quoteInput"', JSON.stringify(inputUrl))
+);
+const testFriends = Array.from({ length: 5 }, (_, index) => ({
+  id: index + 1,
+  nickname: index === 1 ? "라라진" : `서버친구${index + 1}`,
+  profileImage: "https://avatars.githubusercontent.com/test/image",
+}));
 const themeUrl = url(
   compile(await read("styles/theme.ts")).replace(
     /require\(['"][^'"]+['"]\)/g,
@@ -56,14 +71,14 @@ export const useRef=initial=>{
  return state.values[index]??={current:initial};
 };`);
 const routerUrl =
-  url(`export const router={canGoBack:()=>true,back:()=>globalThis.__writeHarness.backs++,replace:()=>globalThis.__writeHarness.backs++};
+  url(`export const router={dismissTo:path=>{globalThis.__writeHarness.destination=path;globalThis.__writeHarness.backs++;},canGoBack:()=>true,back:()=>globalThis.__writeHarness.backs++,replace:()=>globalThis.__writeHarness.backs++};
 export const usePreventRemove=(enabled,callback)=>{
  globalThis.__writeHarness.guard=enabled;globalThis.__writeHarness.prevented=callback;
  return ()=>{globalThis.__writeHarness.disables++;};
 };`);
 const nativeUrl =
   url(`export const Keyboard={dismiss:()=>{}},Platform={OS:'android'},StyleSheet={create:value=>value};
-export const KeyboardAvoidingView='KeyboardAvoidingView',Pressable='Pressable',ScrollView='ScrollView',TextInput='TextInput',View='View';`);
+export const ActivityIndicator='ActivityIndicator',KeyboardAvoidingView='KeyboardAvoidingView',Pressable='Pressable',ScrollView='ScrollView',TextInput='TextInput',View='View';`);
 let code = compile(await read("features/write/screens/WriteScreen.tsx"));
 for (const [from, to] of Object.entries({
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
@@ -83,6 +98,17 @@ for (const [from, to] of Object.entries({
   ),
   "@/styles/theme": themeUrl,
   "@/features/write/utils/quoteInput": inputUrl,
+  "@/api/createApiClient": apiErrorUrl,
+  "@/features/write/services/createQuotePayload": payloadUrl,
+  "@/features/write/services/writeApi": url(
+    "export const writeApi={createQuote:async payload=>{const h=globalThis.__writeHarness;h.posts.push(payload);if(h.postError)throw h.postError;if(h.postWait)await h.postWait;return {id:7};}};"
+  ),
+  "@/features/home/stores/homeResource": url(
+    "export const homeResource={invalidate:()=>globalThis.__writeHarness.invalidations++};"
+  ),
+  "@/features/write/hooks/useWriteFriends": url(
+    "export const useWriteFriends=()=>globalThis.__writeHarness.friends;"
+  ),
   "@/features/write/hooks/useAiRecommendations": url(
     "export const useAiRecommendations=()=>globalThis.__writeHarness.ai;"
   ),
@@ -120,7 +146,15 @@ function harness(Component = WriteScreen, props = {}) {
     backs: 0,
     disables: 0,
     aiCalls: 0,
+    posts: [],
+    invalidations: 0,
     aiScenario: props.recommendationScenario ?? "success",
+  };
+  state.friends = {
+    status: "success",
+    items: testFriends,
+    memberId: 99,
+    refresh: async () => state.latestFriends ?? testFriends,
   };
   state.ai = {
     status: "idle",
@@ -143,7 +177,12 @@ function harness(Component = WriteScreen, props = {}) {
       state.next = 0;
       state.effects = [];
       globalThis.__writeHarness = state;
-      return Component(props);
+      return Component({
+        friends: testFriends,
+        status: "success",
+        onRetry() {},
+        ...props,
+      });
     },
   };
 }
@@ -157,7 +196,7 @@ const action = (tree, title) =>
   );
 const dialog = (tree) => find(tree, (node) => node.type === "ConfirmDialog");
 
-test("direct draft moves to tag preview and back without losing text or selection; posting stays disconnected", () => {
+test("direct draft moves to tag preview and back without losing text or selection; posting uses the current real-friend state", () => {
   const { render, state } = harness();
   let tree = render();
   field(tree).props.onChangeText("123");
@@ -175,7 +214,7 @@ test("direct draft moves to tag preview and back without losing text or selectio
   assert.equal(field(tree).props.editable, false);
   find(tree, (node) => node.type === "FriendTagSelector").props.onToggle(2);
   tree = render();
-  assert.equal(action(tree, "게시하기").props.onPress, undefined);
+  assert.equal(typeof action(tree, "게시하기").props.onPress, "function");
   // Android route removal in tag step returns to writing instead of discarding.
   state.prevented({
     repeat: () => {
@@ -390,7 +429,7 @@ test("tag UI uses image sources with Q fallback and web search with clear/refocu
   assert.equal(focused, 1);
   find(
     tree,
-    (node) => node.props?.accessibilityLabel === "어푸 태그 제거"
+    (node) => node.props?.accessibilityLabel === "라라진 태그 제거"
   ).props.onPress();
   assert.deepEqual(toggled, [2]);
 });
@@ -564,7 +603,7 @@ test("AI validates original input, preserves original/selected result/tags throu
   tree = render();
   assert.equal(field(tree).props.value, chosen);
   assert.equal(field(tree).props.editable, false);
-  assert.equal(action(tree, "게시하기").props.onPress, undefined);
+  assert.equal(typeof action(tree, "게시하기").props.onPress, "function");
   find(tree, (node) => node.type === "FriendTagSelector").props.onToggle(3);
   tree = render();
   state.prevented({ repeat: () => state.backs++ });
@@ -718,4 +757,162 @@ test("confirmation can show a custom label while disabling unconnected server ac
     ).length,
     0
   );
+});
+
+test("direct publishing sends only direct content and selected friend IDs, then invalidates home before leaving", async () => {
+  const { state, render } = harness();
+  let tree = render();
+  field(tree).props.onChangeText("직접 쓴 실제 명언");
+  tree = render();
+  action(tree, "다음으로").props.onPress();
+  tree = render();
+  find(tree, (n) => n.type === "FriendTagSelector").props.onToggle(2);
+  tree = render();
+  await action(tree, "게시하기").props.onPress();
+  assert.deepEqual(state.posts, [
+    { content: "직접 쓴 실제 명언", taggedMemberIds: [2] },
+  ]);
+  assert.equal(state.invalidations, 1);
+  assert.equal(state.destination, "/home");
+  assert.equal(state.backs, 1);
+  assert.equal(state.disables, 1);
+});
+
+test("AI publishing sends the selected summary and original; direct switch never leaks AI fields", async () => {
+  for (const direct of [false, true]) {
+    const { state, render } = harness();
+    let tree = render();
+    const original =
+      "오늘 하루를 돌아보며 나만의 속도로 천천히 앞으로 나아가고 있다";
+    field(tree).props.onChangeText(original);
+    tree = render();
+    await action(tree, "AI 추천 받기").props.onPress();
+    await finishRecommendation(state);
+    tree = render();
+    recommendation(tree).props.onSelect(1);
+    tree = render();
+    const chosen = recommendation(tree).props.recommendations[1];
+    recommendation(tree).props.onNext();
+    tree = render();
+    if (direct) {
+      action(tree, "뒤로가기").props.onPress();
+      tree = render();
+      recommendation(tree).props.onBack();
+      tree = render();
+      field(tree).props.onChangeText("다시 직접 작성한 명언");
+      tree = render();
+      action(tree, "다음으로").props.onPress();
+      tree = render();
+    }
+    await action(tree, "게시하기").props.onPress();
+    assert.deepEqual(
+      state.posts[0],
+      direct
+        ? { content: "다시 직접 작성한 명언", taggedMemberIds: [] }
+        : {
+            content: chosen,
+            summary: chosen,
+            originalContent: original,
+            taggedMemberIds: [],
+          }
+    );
+  }
+});
+
+test("removed friend and failed list block posting; no fake success or navigation", async () => {
+  const { state, render } = harness();
+  let tree = render();
+  field(tree).props.onChangeText("게시할 명언");
+  tree = render();
+  action(tree, "다음으로").props.onPress();
+  tree = render();
+  find(tree, (n) => n.type === "FriendTagSelector").props.onToggle(2);
+  tree = render();
+  state.latestFriends = testFriends.filter((friend) => friend.id !== 2);
+  await action(tree, "게시하기").props.onPress();
+  tree = render();
+  assert.equal(state.posts.length, 0);
+  assert.equal(state.backs, 0);
+  assert.equal(
+    find(tree, (n) => n.type === "FriendTagSelector").props.selected.length,
+    0
+  );
+  assert.match(
+    find(tree, (n) => n.type?.name?.includes("Toast") || n.props?.message)
+      ?.props.message ?? "",
+    /친구 목록이 변경/
+  );
+  state.friends.refresh = async () => null;
+  await action(tree, "게시하기").props.onPress();
+  assert.equal(state.posts.length, 0);
+});
+
+test("double publish and hardware back are blocked while pending; 409 retains draft and does not invalidate home", async () => {
+  const { state, render } = harness();
+  let release;
+  state.postWait = new Promise((resolve) => (release = resolve));
+  let tree = render();
+  field(tree).props.onChangeText("중복 요청을 막는 명언");
+  tree = render();
+  action(tree, "다음으로").props.onPress();
+  tree = render();
+  const post = action(tree, "게시하기").props.onPress;
+  const pending = post();
+  await post();
+  await Promise.resolve();
+  state.prevented({ repeat: () => state.backs++ });
+  assert.equal(state.backs, 0);
+  assert.equal(state.posts.length, 1);
+  release();
+  await pending;
+  assert.equal(state.backs, 1);
+  const failed = harness();
+  tree = failed.render();
+  field(tree).props.onChangeText("이미 작성한 계정의 글");
+  tree = failed.render();
+  action(tree, "다음으로").props.onPress();
+  tree = failed.render();
+  failed.state.postError = new ApiError(409);
+  await action(tree, "게시하기").props.onPress();
+  tree = failed.render();
+  assert.equal(failed.state.backs, 0);
+  assert.equal(failed.state.invalidations, 0);
+  assert.equal(field(tree).props.value, "이미 작성한 계정의 글");
+});
+
+test("friend lookup loading/error differs from a confirmed empty list and publishing is disabled until ready", () => {
+  for (const status of ["loading", "error", "success"]) {
+    let retries = 0;
+    const { render } = harness(FriendTagSelector, {
+      friends: [],
+      status,
+      selected: [],
+      onToggle() {},
+      onRetry() {
+        retries++;
+      },
+    });
+    const tree = render();
+    const empty = nodes(tree).find(
+      (n) => n.props.children === "태그할 수 있는 친구가 없어요."
+    );
+    assert.equal(Boolean(empty), status === "success");
+    if (status === "error") {
+      find(
+        tree,
+        (n) =>
+          n.type === "Pressable" &&
+          nodes(n).some((child) => child.props.children === "다시 시도")
+      ).props.onPress();
+      assert.equal(retries, 1);
+    }
+  }
+  const { state, render } = harness();
+  state.friends.status = "error";
+  let tree = render();
+  field(tree).props.onChangeText("친구 조회 실패 확인");
+  tree = render();
+  action(tree, "다음으로").props.onPress();
+  tree = render();
+  assert.equal(action(tree, "게시하기").props.disabled, true);
 });

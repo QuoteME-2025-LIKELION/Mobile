@@ -8,6 +8,11 @@ import {
   type TextLayoutEvent,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ApiError } from "@/api/createApiClient";
+import { homeResource } from "@/features/home/stores/homeResource";
+import { createQuotePayload } from "../services/createQuotePayload";
+import { writeApi } from "../services/writeApi";
+import { useWriteFriends } from "./useWriteFriends";
 import { useAiRecommendations } from "./useAiRecommendations";
 import {
   countCodePoints,
@@ -20,6 +25,18 @@ export function useWrite() {
   const ai = useAiRecommendations();
   const [text, setText] = useState("");
   const [step, setStep] = useState<"write" | "recommend" | "tag">("write");
+  const friends = useWriteFriends(step === "tag");
+  const [publishing, setPublishing] = useState(false);
+  const publishingRef = useRef(false);
+  const mounted = useRef(true);
+  const publishController = useRef<AbortController | null>(null);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      publishController.current?.abort();
+    };
+  }, []);
   const [source, setSource] = useState<"direct" | "ai">("direct");
   const recommendationStatus = ai.status;
   const recommendations = ai.recommendations;
@@ -49,6 +66,7 @@ export function useWrite() {
   const disablePrevention = usePreventRemove(
     !allowExit && (hasDraft || step !== "write"),
     ({ repeat }) => {
+      if (publishingRef.current) return;
       Keyboard.dismiss();
       if (step !== "write") {
         setStep(step === "tag" && source === "ai" ? "recommend" : "write");
@@ -74,6 +92,7 @@ export function useWrite() {
     else router.replace("/home");
   };
   const close = () => {
+    if (publishingRef.current) return;
     Keyboard.dismiss();
     if (!hasDraft) {
       goHome();
@@ -114,6 +133,7 @@ export function useWrite() {
     if (message) setMessage(message);
   };
   const backFromTag = () => {
+    if (publishingRef.current) return;
     Keyboard.dismiss();
     setStep(source === "ai" ? "recommend" : "write");
   };
@@ -184,14 +204,90 @@ export function useWrite() {
     setSource("ai");
     setStep("tag");
   };
-  const toggleFriendTag = (id: number) =>
+  const toggleFriendTag = (id: number) => {
+    if (
+      publishingRef.current ||
+      friends.status !== "success" ||
+      !friends.items.some((friend) => friend.id === id)
+    )
+      return;
     setSelected((current) =>
       current.includes(id)
         ? current.filter((value) => value !== id)
         : [...current, id]
     );
+  };
+  const publish = async () => {
+    if (publishingRef.current || step !== "tag") return;
+    if (friends.status !== "success" || !friends.memberId) {
+      setMessage("친구 목록을 확인한 뒤 다시 게시해 주세요.");
+      return;
+    }
+    if (source === "ai" && ai.content !== text.trim()) {
+      setMessage("AI 추천 원문이 변경됐어요. 다시 확인해 주세요.");
+      return;
+    }
+    publishingRef.current = true;
+    setPublishing(true);
+    setMessage("");
+    const controller = new AbortController();
+    publishController.current = controller;
+    try {
+      const latest = await friends.refresh();
+      if (!mounted.current || controller.signal.aborted) return;
+      if (!latest) {
+        setMessage("친구 목록을 불러오지 못했어요. 다시 시도해 주세요.");
+        return;
+      }
+      const validIds = new Set(
+        latest
+          .filter((friend) => friend.id !== friends.memberId)
+          .map((friend) => friend.id)
+      );
+      if (selected.some((id) => !validIds.has(id))) {
+        setSelected((current) => current.filter((id) => validIds.has(id)));
+        setMessage(
+          "친구 목록이 변경됐어요. 태그를 확인하고 다시 게시해 주세요."
+        );
+        return;
+      }
+      const payload = createQuotePayload({
+        content: resultText,
+        originalContent: text,
+        source,
+        selectedIds: selected,
+        friends: latest,
+        myId: friends.memberId,
+      });
+      await writeApi.createQuote(payload, controller.signal);
+      if (!mounted.current || controller.signal.aborted) return;
+      homeResource.invalidate();
+      setAllowExit(true);
+      disablePrevention();
+      router.dismissTo("/home");
+    } catch (error) {
+      if (!mounted.current || controller.signal.aborted) return;
+      setMessage(
+        error instanceof ApiError && error.status === 409
+          ? "오늘 이미 명언을 작성했어요. 홈에서 확인해 주세요."
+          : error instanceof ApiError && error.status === 400
+            ? "명언 내용과 친구 태그를 확인하고 다시 시도해 주세요."
+            : "게시 결과를 확인하지 못했어요. 홈을 확인한 뒤 다시 시도해 주세요."
+      );
+    } finally {
+      publishingRef.current = false;
+      if (mounted.current) setPublishing(false);
+    }
+  };
   return {
     text,
+    publishing,
+    publish,
+    friends: friends.items,
+    friendsStatus: friends.status,
+    retryFriends: () => {
+      void friends.refresh();
+    },
     step,
     setStep,
     recommendationStatus,

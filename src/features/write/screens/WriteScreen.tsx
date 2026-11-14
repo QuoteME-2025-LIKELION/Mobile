@@ -23,6 +23,11 @@ import { useWrite } from "../hooks/useWrite";
 export function WriteScreen() {
   const {
     text,
+    publishing,
+    publish,
+    friends,
+    friendsStatus,
+    retryFriends,
     step,
     setStep,
     recommendationStatus,
@@ -81,6 +86,8 @@ export function WriteScreen() {
             accessibilityRole="button"
             accessibilityLabel="닫기"
             onPress={close}
+            disabled={publishing}
+            accessibilityState={{ disabled: publishing }}
             style={styles.close}
           >
             <Image
@@ -261,12 +268,24 @@ export function WriteScreen() {
             ) : (
               <>
                 <FriendTagSelector
+                  friends={friends}
+                  status={friendsStatus}
+                  onRetry={retryFriends}
+                  disabled={publishing}
                   selected={selected}
                   onToggle={toggleFriendTag}
                 />
                 <View style={styles.tagActions}>
-                  <WriteAction title="뒤로가기" onPress={backFromTag} />
-                  <WriteAction title="게시하기" />
+                  <WriteAction
+                    title="뒤로가기"
+                    onPress={backFromTag}
+                    disabled={publishing}
+                  />
+                  <WriteAction
+                    title={publishing ? "게시 중…" : "게시하기"}
+                    onPress={publish}
+                    disabled={publishing || friendsStatus !== "success"}
+                  />
                 </View>
               </>
             )}

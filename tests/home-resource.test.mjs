@@ -165,3 +165,15 @@ test("unread-count outage cannot turn a successful home response into a fake unr
   assert.equal(resource.getSnapshot().status, "success");
   assert.equal(resource.getSnapshot().data.unreadCount, null);
 });
+
+test("posting invalidation removes old home data while preserving the server group for the next focus reload", async () => {
+  const { resource } = fixture();
+  await resource.load(7);
+  resource.invalidate();
+  assert.equal(resource.getSnapshot().status, "idle");
+  assert.equal(resource.getSnapshot().data, null);
+  assert.equal(resource.getSnapshot().groupId, 7);
+  await resource.load();
+  assert.equal(resource.getSnapshot().status, "success");
+  assert.equal(resource.getSnapshot().groupId, 7);
+});

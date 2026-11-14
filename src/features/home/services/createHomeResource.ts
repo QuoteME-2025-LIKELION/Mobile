@@ -191,5 +191,10 @@ export function createHomeResource(request: Request) {
     },
     load,
     reset,
+    invalidate() {
+      sequence++;
+      controller?.abort();
+      emit({ ...snapshot, status: "idle", data: null });
+    },
   };
 }
