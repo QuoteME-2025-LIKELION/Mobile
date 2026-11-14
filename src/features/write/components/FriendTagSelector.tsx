@@ -155,7 +155,24 @@ export function FriendTagSelector({
                 >
                   <Avatar uri={friend.profileImage} size={32} />
                   <View style={styles.removeMark}>
-                    <AppText style={styles.removeText}>×</AppText>
+                    <View
+                      style={styles.removeCross}
+                      pointerEvents="none"
+                      accessible={false}
+                    >
+                      <View
+                        style={[
+                          styles.removeStroke,
+                          styles.removeStrokeForward,
+                        ]}
+                      />
+                      <View
+                        style={[
+                          styles.removeStroke,
+                          styles.removeStrokeBackward,
+                        ]}
+                      />
+                    </View>
                   </View>
                   <AppText style={styles.selectedName}>
                     {friend.nickname}
