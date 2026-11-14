@@ -2,7 +2,8 @@ import { router, usePreventRemove } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Keyboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { userFixture } from "@/fixtures/userFixture";
+import { homeResource } from "@/features/home/stores/homeResource";
+import { useHomeData } from "@/features/home/stores/useHomeData";
 import { pickProfileImage } from "../services/pickProfileImage";
 import {
   validateProfileImage,
@@ -10,17 +11,20 @@ import {
   type ProfileImage,
 } from "../utils/profileInput";
 
-const initialProfile = userFixture;
-
 export function useProfileCenter({
   selectImage = pickProfileImage,
 }: { selectImage?: () => Promise<ProfileImage | null> } = {}) {
+  const home = useHomeData();
+  const initialProfile = home.data?.profile;
+  useEffect(() => {
+    if (home.status === "idle") void homeResource.load();
+  }, [home.status]);
   const insets = useSafeAreaInsets();
   const [editing, setEditing] = useState(false);
-  const [nickname, setNickname] = useState<string>(initialProfile.nickname);
-  const [introduction, setIntroduction] = useState<string>(
-    initialProfile.introduction
-  );
+  const [nicknameDraft, setNickname] = useState<string | null>(null);
+  const [introductionDraft, setIntroduction] = useState<string | null>(null);
+  const nickname = nicknameDraft ?? initialProfile?.nickname ?? "";
+  const introduction = introductionDraft ?? initialProfile?.introduction ?? "";
   const [image, setImage] = useState<ProfileImage | null>(null);
   const [imageFailed, setImageFailed] = useState(false);
   const [imageError, setImageError] = useState("");
@@ -35,8 +39,8 @@ export function useProfileCenter({
   const exitAction = useRef<(() => void) | null>(null);
   const nicknameEmpty = nickname.trim().length === 0;
   const changed =
-    nickname.trim() !== initialProfile.nickname ||
-    introduction !== initialProfile.introduction ||
+    nickname.trim() !== (initialProfile?.nickname ?? "") ||
+    introduction !== (initialProfile?.introduction ?? "") ||
     image !== null;
   const dirty = editing && changed;
   useEffect(() => {
@@ -94,8 +98,8 @@ export function useProfileCenter({
     }
   };
   const handleImageError = () => {
+    setImageFailed(true);
     if (image) {
-      setImageFailed(true);
       setImageError("이미지를 표시하지 못했어요. 다시 선택해 주세요.");
     }
   };
@@ -110,8 +114,19 @@ export function useProfileCenter({
   const changeIntroduction = (value: string) =>
     setIntroduction(limitProfileText(value, 20));
   const cancelExit = () => setExitOpen(false);
-  const beginEditing = () => setEditing(true);
+  const beginEditing = () => {
+    if (!initialProfile || home.status !== "success") return;
+    setNickname(initialProfile.nickname);
+    setIntroduction(initialProfile.introduction);
+    setEditing(true);
+  };
   return {
+    loading: !initialProfile && home.status !== "error",
+    loadError: home.status === "error",
+    retry: () => {
+      void homeResource.load();
+    },
+    profileImage: initialProfile?.profileImage,
     insets,
     editing,
     nickname,

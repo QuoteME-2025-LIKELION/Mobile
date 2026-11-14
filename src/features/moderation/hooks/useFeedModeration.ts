@@ -1,10 +1,9 @@
 import { useState } from "react";
-import {
-  blockFixtureMember,
-  type ModerationMember,
-} from "../stores/moderationStore";
-export type ModerationTarget = ModerationMember & {
+export type ModerationTarget = {
+  memberId?: number;
   quoteId?: number;
+  nickname: string;
+  introduction?: string;
   content: string | null;
   isAiGenerated?: boolean;
 };
@@ -31,8 +30,11 @@ export function useFeedModeration() {
   };
   const confirm = () => {
     if (!dialog || !__DEV__) return;
-    if (blockFixtureMember(dialog.target))
-      setToast(dialog.kind === "report" ? "신고가 접수됐어요" : "차단했어요.");
+    setToast(
+      dialog.kind === "report"
+        ? "신고 기능을 준비 중이에요."
+        : "차단 기능을 준비 중이에요."
+    );
     setDialog(null);
   };
   return {

@@ -49,6 +49,8 @@ Docs: https://docs.expo.dev/eas/index.md
 
 ## Source organization
 
+- User decision (2026-11-14): Complete real account-input login and real API data integration, then remove the app's runtime mock/fixture files and their unused imports, scenario switches, fake delays, and simulated-success paths. Include this cleanup in the implementation and PR completion criteria; do not leave runtime sample data as a fallback for empty/error API responses. Preserve real empty/loading/error/retry behavior and verify affected routes after cleanup. Apply this to Mobile only, not Frontend. Existing fixtures may remain during the transition until their real replacement is connected; do not delete unconnected screens' data prematurely or report the cleanup complete before remaining usages are removed.
+
 - Follow `ARCHITECTURE.md` for this project's organization; these are local choices, not mandatory React Native conventions.
 - Keep routes in `src/app` thin. Put feature screens, components, hooks, fixtures and utilities under their respective feature folders.
 - Use role-based screen names without `Preview`. Keep development data explicitly in `fixtures`; renaming a screen does not remove development guards or authorize real API integration.

@@ -146,24 +146,24 @@ export function createSessionManager(
     });
     return initializeTask;
   }
-  async function loginGuest() {
+  async function login(credentials: { email: string; password: string }) {
     if (loginTask) return loginTask;
     if (snapshot.status !== "anonymous")
       throw new Error("로그인 상태를 먼저 확인해 주세요.");
     const version = ++generation;
     emit({ status: "anonymous", member: null, busy: true });
+    let storageTouched = false;
     loginTask = (async () => {
       try {
-        const response = await transport<AuthResponse>(
-          "/api/auth/guest-login",
-          { method: "POST" }
-        );
+        const response = await transport<AuthResponse>("/api/auth/login", {
+          method: "POST",
+          body: credentials,
+        });
         check(version);
         const nextAccess = token(response.data?.accessToken);
         const nextRefresh = token(response.data?.refreshToken);
         const nextMember = member(response.data?.item);
-        if (!nextMember.profileCompleted)
-          throw new Error("Invalid guest profile response");
+        storageTouched = true;
         await stored(async () => {
           check(version);
           await storage.write(nextRefresh);
@@ -174,7 +174,10 @@ export function createSessionManager(
         resetSessionData();
         emit({ status: "authenticated", member: nextMember, busy: false });
       } catch (error) {
-        if (version === generation) await clear(version);
+        if (version === generation) {
+          if (storageTouched) await clear(version);
+          else emit({ status: "anonymous", member: null, busy: false });
+        }
         throw error;
       } finally {
         loginTask = null;
@@ -260,7 +263,7 @@ export function createSessionManager(
       };
     },
     initialize,
-    loginGuest,
+    login,
     logout,
     request,
     retryStorageCleanup: () => clear(generation),

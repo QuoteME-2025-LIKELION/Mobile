@@ -1,5 +1,5 @@
 import { Image, type ImageSource } from "expo-image";
-import { Pressable, ScrollView, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppText } from "@/components/AppText";
 import { FeedCard } from "../components/FeedCard";
@@ -14,14 +14,17 @@ import { ToastMessage } from "@/components/ToastMessage";
 import { styles } from "./HomeScreen.styles";
 import { useHomeFeed } from "../hooks/useHomeFeed";
 
-// /home은 개발 빌드 전용. 월 길게 누르기: 작성 전 → 작성 후 → 친구 없음.
+// 표시 데이터는 현재 로그인 세션의 서버 응답만 사용한다.
 export function HomeScreen() {
   const moderation = useFeedModeration();
   const {
     hasUnreadNotifications,
     openNotifications,
-    removedNames,
-    scenario,
+    status,
+    date,
+    profile,
+    myQuote,
+    retry,
     drawerOpen,
     tagMenuOpen,
     setTagMenuOpen,
@@ -30,7 +33,6 @@ export function HomeScreen() {
     groups,
     items,
     closeMenus,
-    nextScenario,
     openArchive,
     openDrawer,
     closeDrawer,
@@ -75,13 +77,33 @@ export function HomeScreen() {
           style={{ zIndex: tagMenuOpen ? 4 : 0 }}
           onTouchStart={closeFilter}
         >
-          <TodayQuote
-            removedNames={removedNames}
-            tagMenuOpen={tagMenuOpen}
-            onTagMenuChange={setTagMenuOpen}
-            posted={scenario === 1}
-            onNextScenario={nextScenario}
-          />
+          {status === "success" ? (
+            <TodayQuote
+              quote={myQuote}
+              date={date}
+              tagMenuOpen={tagMenuOpen}
+              onTagMenuChange={setTagMenuOpen}
+            />
+          ) : (
+            <View style={styles.statusBox}>
+              {status === "error" ? (
+                <>
+                  <AppText accessibilityRole="alert" style={styles.statusText}>
+                    홈을 불러오지 못했어요.
+                  </AppText>
+                  <Pressable
+                    accessibilityRole="button"
+                    style={styles.addFriend}
+                    onPress={retry}
+                  >
+                    <AppText style={styles.statusText}>다시 시도</AppText>
+                  </Pressable>
+                </>
+              ) : (
+                <ActivityIndicator accessibilityLabel="홈 불러오는 중" />
+              )}
+            </View>
+          )}
         </View>
         <View style={styles.feed} onTouchStart={closeTags}>
           {filterOpen && (
@@ -99,7 +121,7 @@ export function HomeScreen() {
             onToggle={toggleFilter}
             onSelect={selectGroup}
           />
-          {items.length === 0 ? (
+          {status !== "success" ? null : items.length === 0 ? (
             <View style={styles.empty}>
               <AppText style={styles.emptyText}>
                 {selectedGroupId === null
@@ -124,12 +146,15 @@ export function HomeScreen() {
           ) : (
             items.map((item) => (
               <FeedCard
-                key={item.id}
+                key={`${item.content === null ? "member" : "quote"}-${item.id}`}
                 item={item}
                 onMore={(target, anchor) => {
                   closeMenus();
                   moderation.openMenu(
-                    { ...target, id: target.memberId, quoteId: target.id },
+                    {
+                      ...target,
+                      quoteId: target.content === null ? undefined : target.id,
+                    },
                     anchor
                   );
                 }}
@@ -138,7 +163,11 @@ export function HomeScreen() {
           )}
         </View>
       </ScrollView>
-      <HomeDrawer visible={drawerOpen} onClose={closeDrawer} />
+      <HomeDrawer
+        visible={drawerOpen}
+        onClose={closeDrawer}
+        profile={profile}
+      />
       {moderation.menu && (
         <FeedActionsMenu
           anchor={moderation.menu.anchor}

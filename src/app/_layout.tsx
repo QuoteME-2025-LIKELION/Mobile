@@ -39,7 +39,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={navigationTheme}>
       <StatusBar style="light" />
-      {auth.status === "loading" || auth.status === "error" ? (
+      {auth.status === "loading" ||
+      auth.status === "error" ||
+      auth.member?.profileCompleted === false ? (
         <SessionRecovery />
       ) : (
         <Stack

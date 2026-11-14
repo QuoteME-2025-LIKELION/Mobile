@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { Pressable, ScrollView, View } from "react-native";
 import { AppText } from "@/components/AppText";
-import type { FeedGroup } from "../fixtures/homeFixtures";
+import type { FeedGroup } from "../types/homeTypes";
 import { styles } from "./GroupFilter.styles";
 type Props = {
   groups: FeedGroup[];

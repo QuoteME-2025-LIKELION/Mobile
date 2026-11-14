@@ -24,13 +24,19 @@ let code = compile(
 for (const [from, to] of Object.entries({
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: reactUrl,
+  "@/features/home/stores/useHomeData": url(
+    'export const useHomeData=()=>globalThis.__profileData??({status:"success",data:{profile:{nickname:"듀가나다",introduction:"매일 한 문장씩 남겨요",profileImage:null}}});'
+  ),
+  "@/features/home/stores/homeResource": url(
+    "export const homeResource={load:async()=>{}};"
+  ),
   "expo-image": url("export const Image='Image';"),
   "expo-status-bar": url("export const StatusBar='StatusBar';"),
   "expo-router": url(
     `export const router={canGoBack:()=>true,back:()=>globalThis.__profileCenter.backs++,replace:()=>globalThis.__profileCenter.backs++};export const usePreventRemove=(guard,cb)=>{globalThis.__profileCenter.guard=guard;globalThis.__profileCenter.prevent=cb;return ()=>globalThis.__profileCenter.disabled++;};`
   ),
   "react-native": url(
-    "export const Keyboard={dismiss(){}},Platform={OS:'android'},StyleSheet={create:x=>x},View='View',Pressable='Pressable',ScrollView='ScrollView',TextInput='TextInput',KeyboardAvoidingView='KeyboardAvoidingView';"
+    "export const Keyboard={dismiss(){}},Platform={OS:'android'},StyleSheet={create:x=>x},ActivityIndicator='ActivityIndicator',View='View',Pressable='Pressable',ScrollView='ScrollView',TextInput='TextInput',KeyboardAvoidingView='KeyboardAvoidingView';"
   ),
   "react-native-safe-area-context": url(
     "export const SafeAreaView='SafeAreaView',useSafeAreaInsets=()=>({top:24,bottom:16});"
@@ -45,9 +51,7 @@ for (const [from, to] of Object.entries({
       "1"
     )
   ),
-  "@/features/home/fixtures/homeFixtures": url(
-    compile(await read("features/home/fixtures/homeFixtures.ts"))
-  ),
+
   "@/features/profile/utils/profileInput": url(
     compile(await read("features/profile/utils/profileInput.ts"))
   ),
@@ -252,4 +256,16 @@ test("late image selection after unmount does not update the abandoned screen", 
   resolve(image);
   await pending;
   assert.equal(h.writes, writes);
+});
+
+test("profile query failure exposes retry and disables editing without a sample identity", () => {
+  globalThis.__profileData = { status: "error", data: null };
+  const { render } = harness();
+  const tree = render();
+  assert.match(text(tree), /프로필을 불러오지 못했어요/);
+  assert.doesNotMatch(text(tree), /듀가나다/);
+  assert.equal(button(tree, "편집하기").props.disabled, true);
+  assert.ok(button(tree, "다시 시도"));
+  assert.equal(label(tree, "프로필 관리 닫기").props.disabled, false);
+  delete globalThis.__profileData;
 });

@@ -3,6 +3,13 @@ import { colors, fonts } from "@/styles/theme";
 
 export const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.primary },
+  statusBox: {
+    minHeight: 220,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  statusText: { color: colors.white, textAlign: "center" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",

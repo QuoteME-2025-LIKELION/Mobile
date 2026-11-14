@@ -2,6 +2,7 @@ import { StyleSheet } from "react-native";
 import { colors, fonts, withOpacity } from "@/styles/theme";
 
 export const styles = StyleSheet.create({
+  loadState: { alignItems: "center", padding: 24, gap: 12 },
   screen: { flex: 1, backgroundColor: colors.secondary },
   fill: { flex: 1 },
   header: {

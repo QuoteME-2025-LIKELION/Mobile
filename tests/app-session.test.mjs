@@ -46,14 +46,17 @@ function fixture(handler = async () => renewed, saved = null) {
   };
   const manager = createSessionManager(async (path, options) => {
     state.calls.push([path, options]);
-    return path === "/api/auth/guest-login" ? login : handler(path, options);
+    return path === "/api/auth/login" ? login : handler(path, options);
   }, storage);
   return { manager, state, storage };
 }
 async function signedIn(handler) {
   const f = fixture(handler);
   await f.manager.initialize();
-  await f.manager.loginGuest();
+  await f.manager.login({
+    email: "member@example.test",
+    password: "example-test-input",
+  });
   return f;
 }
 const deferred = () => {
@@ -65,12 +68,21 @@ const deferred = () => {
   return { promise, resolve, reject };
 };
 
-test("guest login stores only refresh and never exposes either token in snapshots", async () => {
+test("account login stores only refresh and never exposes either token in snapshots", async () => {
   const { manager, state } = fixture();
   await manager.initialize();
-  await Promise.all([manager.loginGuest(), manager.loginGuest()]);
+  await Promise.all([
+    manager.login({
+      email: "member@example.test",
+      password: "example-test-input",
+    }),
+    manager.login({
+      email: "member@example.test",
+      password: "example-test-input",
+    }),
+  ]);
   assert.equal(
-    state.calls.filter(([path]) => path.endsWith("guest-login")).length,
+    state.calls.filter(([path]) => path.endsWith("login")).length,
     1
   );
   assert.equal(state.saved, "refresh-1");
@@ -254,7 +266,12 @@ test("storage failures never authenticate and cleanup failure stays blocked unti
   storage.remove = async () => {
     throw new Error("keystore unavailable");
   };
-  await assert.rejects(manager.loginGuest());
+  await assert.rejects(
+    manager.login({
+      email: "member@example.test",
+      password: "example-test-input",
+    })
+  );
   assert.equal(manager.getSnapshot().status, "error");
   storage.remove = async () => {};
   await manager.retryStorageCleanup();
@@ -395,5 +412,38 @@ test("root navigator protects every development screen behind the real session",
       .filter((node) => node.type === "Protected")
       .map((node) => node.props.guard),
     [true, false]
+  );
+});
+
+test("wrong account input stays on the sign-in screen without a refresh or storage reset", async () => {
+  const states = [],
+    calls = [];
+  let removals = 0;
+  const manager = createSessionManager(
+    async (path, options) => {
+      calls.push([path, options]);
+      throw new ApiError(401, "401-1");
+    },
+    {
+      read: async () => null,
+      write: async () => {},
+      remove: async () => {
+        removals++;
+      },
+    }
+  );
+  await manager.initialize();
+  manager.subscribe(() => states.push(manager.getSnapshot().status));
+  await assert.rejects(
+    manager.login({
+      email: "member@example.test",
+      password: "invalid-test-input",
+    })
+  );
+  assert.deepEqual(states, ["anonymous", "anonymous"]);
+  assert.equal(removals, 0);
+  assert.deepEqual(
+    calls.map(([path]) => path),
+    ["/api/auth/login"]
   );
 });

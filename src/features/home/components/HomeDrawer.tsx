@@ -13,9 +13,13 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import appConfig from "../../../../app.json";
 import { AppText } from "@/components/AppText";
-import { userFixture } from "@/fixtures/userFixture";
+import type { MyProfile } from "../types/homeTypes";
 import { styles } from "./HomeDrawer.styles";
-type Props = { visible: boolean; onClose: () => void };
+type Props = {
+  visible: boolean;
+  onClose: () => void;
+  profile: MyProfile | null;
+};
 
 const MENU_ROUTES = {
   "계정 관리": "/account-setting",
@@ -27,7 +31,7 @@ const MENU_ITEMS = ["친구 및 그룹", "계정 관리", "알림 설정", "공�
 // 웹 시안의 임시 주소. 실제 문의 주소 확정/복사 연결은 후속 작업.
 const CONTACT_EMAIL = "abc123456@gmail.com";
 
-export function HomeDrawer({ visible, onClose }: Props) {
+export function HomeDrawer({ visible, onClose, profile }: Props) {
   const insets = useSafeAreaInsets();
   const [progress] = useState(() => new Animated.Value(0));
   const closing = useRef(false);
@@ -110,7 +114,11 @@ export function HomeDrawer({ visible, onClose }: Props) {
             <View style={styles.profile}>
               <View style={styles.avatarBox}>
                 <Image
-                  source={require("@/assets/images/profile/default-profile.png")}
+                  source={
+                    profile?.profileImage
+                      ? { uri: profile.profileImage }
+                      : require("@/assets/images/profile/default-profile.png")
+                  }
                   style={styles.avatar}
                   accessible={false}
                 />
@@ -132,9 +140,11 @@ export function HomeDrawer({ visible, onClose }: Props) {
                   />
                 </Pressable>
               </View>
-              <AppText style={styles.nickname}>{userFixture.nickname}</AppText>
+              <AppText style={styles.nickname}>
+                {profile?.nickname ?? ""}
+              </AppText>
               <AppText style={styles.introduction}>
-                {userFixture.introduction}
+                {profile?.introduction ?? ""}
               </AppText>
             </View>
             <View style={styles.menu}>

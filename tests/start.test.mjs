@@ -25,9 +25,6 @@ for (const [from, to] of Object.entries({
   react: url(
     `export const useRef=initial=>({current:initial});export const useState=initial=>{const h=globalThis.__start;const index=h.next++;if(!(index in h.values))h.values[index]=initial;return [h.values[index],v=>h.values[index]=typeof v==='function'?v(h.values[index]):v];};`
   ),
-  "@/features/auth/services/session": url(
-    "export const session={loginGuest:async()=>{globalThis.__start.guestCalls++;}};"
-  ),
   "@/features/auth/stores/useSession": url(
     "export const useSession=()=>({busy:false});"
   ),
@@ -42,6 +39,9 @@ for (const [from, to] of Object.entries({
   ),
   "@/styles/theme": theme,
   "@/components/AppText": url("export const AppText='AppText';"),
+  "@/features/auth/components/TestLoginDialog": url(
+    "export const TestLoginDialog='TestLoginDialog';"
+  ),
   "@/features/auth/components/LoginSheet": url(
     "export const LoginSheet='LoginSheet';"
   ),
@@ -58,7 +58,7 @@ const nodes = (tree) =>
     ? []
     : [tree, ...[tree.props?.children].flat(Infinity).flatMap(nodes)];
 function harness(dev) {
-  const state = { next: 0, values: [], routes: [], guestCalls: 0, alerts: [] };
+  const state = { next: 0, values: [], routes: [], alerts: [] };
   const render = () => {
     state.next = 0;
     globalThis.__start = state;
@@ -89,9 +89,9 @@ test("start screen opens and closes the login sheet after hook extraction", () =
   );
 });
 
-test("guest login is hidden behind a development-only logo long press and confirmation", async () => {
+test("account-input test login is hidden behind the development-only logo long press", () => {
   const { state, render } = harness(true);
-  const tree = render();
+  let tree = render();
   const shortcuts = nodes(tree).filter((node) => node.props.onLongPress);
   assert.equal(shortcuts.length, 1);
   assert.equal(shortcuts[0].props.children, "QuoteMe");
@@ -99,15 +99,21 @@ test("guest login is hidden behind a development-only logo long press and confir
     nodes(tree).filter((node) => node.type === "Pressable").length,
     1
   );
+  assert.equal(
+    nodes(tree).some((node) => node.type === "TestLoginDialog"),
+    false
+  );
   shortcuts[0].props.onLongPress();
-  assert.equal(state.guestCalls, 0);
-  const [title, , buttons] = state.alerts[0];
-  assert.equal(title, "개발용 게스트 로그인");
-  assert.equal(buttons[0].style, "cancel");
-  buttons[1].onPress();
-  await Promise.resolve();
-  assert.equal(state.guestCalls, 1);
-  assert.deepEqual(state.routes, []);
+  tree = render();
+  const dialog = nodes(tree).find((node) => node.type === "TestLoginDialog");
+  assert.ok(dialog);
+
+  dialog.props.onClose();
+  tree = render();
+  assert.equal(
+    nodes(tree).some((node) => node.type === "TestLoginDialog"),
+    false
+  );
   assert.equal(
     nodes(harness(false).render()).some((node) => node.props.onLongPress),
     false
