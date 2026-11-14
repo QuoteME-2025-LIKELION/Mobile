@@ -1,5 +1,5 @@
-import { StyleSheet } from "react-native";
 import { colors, fonts } from "@/styles/theme";
+import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   container: { flex: 1, gap: 4 },
@@ -76,7 +76,6 @@ export const styles = StyleSheet.create({
   removeCross: {
     width: 8,
     height: 8,
-    // Optical adjustment based on the Android device capture.
     transform: [{ translateX: 0.5 }, { translateY: 0.5 }],
   },
   removeStroke: {
