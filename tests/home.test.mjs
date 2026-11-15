@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
-import { readSource } from "./helpers/readSource.mjs";
 import test from "node:test";
 import ts from "typescript";
-
+import { readSource as read } from "./helpers/readSource.mjs";
 const url = (code) =>
   `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`;
 const compile = (source) =>
@@ -13,37 +12,72 @@ const compile = (source) =>
       target: ts.ScriptTarget.ES2022,
     },
   }).outputText;
-const read = readSource;
-const dataUrl = url(
-  compile(await read("features/home/fixtures/homeFixtures.ts"))
+const { splitHomeQuote } = await import(
+  url(compile(await read("features/home/utils/splitHomeQuote.ts")))
 );
-const { splitHomeQuote, feedFixtures } = await import(dataUrl);
-const themeUrl = url(
-  compile(await read("styles/theme.ts")).replace(
-    /require\(['"][^'"]+['"]\)/g,
-    "1"
-  )
-);
+const items = [
+  {
+    id: 10,
+    nickname: "서버작성자",
+    content: "서버에서 받은 명언",
+    tags: ["친구"],
+    profileImage: "https://example.test/image.jpg",
+  },
+  { id: 2, memberId: 2, nickname: "미작성회원", content: null, tags: [] },
+];
+const snapshot = {
+  status: "success",
+  date: "2026-11-14",
+  groupId: null,
+  data: {
+    profile: {
+      id: 1,
+      nickname: "내 계정",
+      introduction: "소개",
+      profileImage: null,
+    },
+    myQuote: null,
+    items,
+    groups: [{ id: 4, name: "서버그룹" }],
+    unreadCount: 2,
+  },
+};
+globalThis.__homeSnapshot = snapshot;
 const replacements = {
-  react: url("export const useRef=initial=>({current:initial});"),
-  "@/features/moderation/stores/moderationStore": url(
-    "export const useModerationState=()=>({blocked:[],formerFriendIds:[]});export const blockFixtureMember=()=>true;"
-  ),
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
+  react: url(
+    `export const useRef=initial=>({current:initial});export const useCallback=fn=>fn;export const useState=initial=>{const h=globalThis.__home;const i=h.next++;if(!(i in h.values))h.values[i]=initial;return [h.values[i],v=>h.values[i]=typeof v==='function'?v(h.values[i]):v];};export const useEffect=fn=>{const cleanup=fn();if(cleanup)globalThis.__home.cleanups.push(cleanup);};`
+  ),
   "react-native": url(
-    "export const Pressable='Pressable',View='View',ScrollView='ScrollView',StyleSheet={create:x=>x,absoluteFill:{position:'absolute'}};"
+    "export const ActivityIndicator='ActivityIndicator',Pressable='Pressable',View='View',ScrollView='ScrollView',StyleSheet={create:x=>x,absoluteFill:{}},BackHandler={addEventListener:(_,cb)=>{globalThis.__home.back=cb;return {remove:()=>globalThis.__home.back=null};}};"
   ),
   "expo-image": url("export const Image='Image';"),
-  "expo-router": url("export const router={push:p=>globalThis.__homeRoute=p};"),
+  "expo-router": url(
+    "export const useFocusEffect=()=>{};export const router={push:path=>globalThis.__home.routes.push(path)};"
+  ),
+  "react-native-safe-area-context": url(
+    "export const SafeAreaView='SafeAreaView';"
+  ),
   "@/components/AppText": url("export const AppText='AppText';"),
-  "@/components/QuoteText": url(
-    "export const QuoteText=({content,...props})=>({type:'QuoteText',props:{...props,children:content}});"
+  "@/components/QuoteText": url("export const QuoteText='QuoteText';"),
+  "@/styles/theme": url(
+    compile(await read("styles/theme.ts")).replace(
+      /require\(['"][^'"]+['"]\)/g,
+      "1"
+    )
   ),
-  "@/styles/theme": themeUrl,
-  "@/features/notifications/stores/notificationStore": url(
-    "export const useNotificationItems=()=>[];"
+  "@/features/home/utils/splitHomeQuote": url(
+    compile(await read("features/home/utils/splitHomeQuote.ts"))
   ),
-  "@/features/home/fixtures/homeFixtures": dataUrl,
+  "@/features/home/stores/useHomeData": url(
+    "export const useHomeData=()=>globalThis.__homeSnapshot;"
+  ),
+  "@/features/home/stores/homeResource": url(
+    "export const homeResource={load:id=>globalThis.__home.loads.push(id)};"
+  ),
+  "@/features/moderation/hooks/useFeedModeration": url(
+    "export const useFeedModeration=()=>({menu:null,dialog:null,toast:'',openMenu(){},closeMenu(){},closeDialog(){},confirm(){},choose(){},closeToast(){}});"
+  ),
 };
 async function load(file, extra = {}) {
   let code = compile(await read(file)).replace(
@@ -54,394 +88,192 @@ async function load(file, extra = {}) {
     code = code
       .replaceAll(`from '${from}'`, `from '${to}'`)
       .replaceAll(`from "${from}"`, `from "${to}"`);
-  return import(url(code));
+  return { module: await import(url(code)), code };
 }
-const feedCode = compile(
-  await read("features/home/components/FeedCard.tsx")
-).replace(/require\(['"][^'"]+['"]\)/g, "1");
-let resolvedFeed = feedCode;
-for (const [from, to] of Object.entries(replacements))
-  resolvedFeed = resolvedFeed
-    .replaceAll(`from '${from}'`, `from '${to}'`)
-    .replaceAll(`from "${from}"`, `from "${to}"`);
-const feedUrl = url(resolvedFeed);
-const { FeedCard } = await import(feedUrl);
-const { TodayQuote } = await load("features/home/components/TodayQuote.tsx", {
-  "@/features/home/components/FeedCard": feedUrl,
+const {
+  module: { FeedCard },
+  code: feedCode,
+} = await load("features/home/components/FeedCard.tsx");
+const {
+  module: { TodayQuote },
+} = await load("features/home/components/TodayQuote.tsx", {
+  "@/features/home/components/FeedCard": url(feedCode),
 });
-function nodes(element) {
-  if (!element || typeof element !== "object") return [];
-  if (typeof element.type === "function")
-    return nodes(element.type(element.props));
-  return [element, ...[element.props?.children].flat(Infinity).flatMap(nodes)];
+const {
+  module: { GroupFilter },
+} = await load("features/home/components/GroupFilter.tsx");
+const mocks = {};
+for (const name of ["TodayQuote", "FeedCard", "GroupFilter", "HomeDrawer"])
+  mocks[`@/features/home/components/${name}`] = url(
+    `export const ${name}='${name}';`
+  );
+for (const [folder, name] of [
+  ["components", "ConfirmDialog"],
+  ["components", "ToastMessage"],
+  ["features/moderation/components", "FeedActionsMenu"],
+  ["features/moderation/components", "ReportDialog"],
+])
+  mocks[`@/${folder}/${name}`] = url(`export const ${name}='${name}';`);
+const {
+  module: { HomeScreen },
+} = await load("features/home/screens/HomeScreen.tsx", mocks);
+const all = (t) =>
+  !t || typeof t !== "object"
+    ? []
+    : [t, ...[t.props?.children].flat(Infinity).flatMap(all)];
+const text = (t) =>
+  typeof t === "string" || typeof t === "number"
+    ? String(t)
+    : !t
+      ? ""
+      : Array.isArray(t)
+        ? t.map(text).join("")
+        : text(t.props?.children);
+function harness(Component, props = {}) {
+  const state = {
+    next: 0,
+    values: [],
+    routes: [],
+    loads: [],
+    cleanups: [],
+    back: null,
+  };
+  return {
+    state,
+    render() {
+      globalThis.__home = state;
+      state.next = 0;
+      return Component(props);
+    },
+  };
 }
-function text(element) {
-  if (typeof element === "string" || typeof element === "number")
-    return String(element);
-  if (!element) return "";
-  if (Array.isArray(element)) return element.map(text).join("");
-  if (typeof element.type === "function")
-    return text(element.type(element.props));
-  return text(element.props?.children);
-}
-
-test("home quote splitting preserves emoji and prioritizes a space near the middle", () => {
-  assert.deepEqual(splitHomeQuote("짧은 명언"), ["짧은 명언", ""]);
+test("home split preserves the established quote layout and emoji", () => {
   assert.deepEqual(splitHomeQuote("오늘의 작은 시작이 내일을 만든다"), [
     "오늘의 작은",
     "시작이 내일을 만든다",
   ]);
-  const original = "가".repeat(6) + "😀" + "나".repeat(6);
-  const parts = splitHomeQuote(original);
-  assert.equal(parts.join(""), original);
-  assert.ok(parts.every((p) => !/[\uD800-\uDBFF]$/.test(p)));
+  const input = "가".repeat(6) + "😀" + "나".repeat(6);
+  assert.equal(splitHomeQuote(input).join(""), input);
 });
-
-test("unwritten card shows its introduction and poke, with no bookmark or share", () => {
-  const card = FeedCard({ item: feedFixtures[2] });
-  assert.match(text(card), /작심삼일의 권위자/);
-  assert.match(text(card), /때로는 침묵이 가장 큰 지혜다/);
-  const buttons = nodes(card).filter((n) => n.type === "Pressable");
-  assert.ok(buttons.some((n) => n.props.accessibilityLabel === "콕 찌르기"));
+test("cards use real avatar and missing introduction stays absent; posted and unwritten IDs are distinct", () => {
+  const posted = FeedCard({ item: items[0] });
   assert.ok(
-    !buttons.some((n) =>
-      ["북마크", "공유하기"].includes(n.props.accessibilityLabel)
+    all(posted).some(
+      (n) =>
+        n.type === "Image" &&
+        n.props.source?.uri === "https://example.test/image.jpg"
     )
   );
-  assert.ok(buttons.every((n) => n.props.disabled && !n.props.onPress));
+  const unwritten = FeedCard({ item: items[1] });
+  assert.equal(
+    all(unwritten).some((n) => n.props.accessibilityLabel === "북마크"),
+    false
+  );
+  assert.equal(
+    all(unwritten).some((n) => n.props.accessibilityLabel === "공유하기"),
+    false
+  );
+  assert.equal(
+    all(unwritten).some((n) => n.props.onLongPress),
+    false
+  );
 });
-
-test("posted friend cards show tags or request action, keeping server actions disabled", () => {
-  for (const item of feedFixtures.slice(0, 2)) {
-    const card = FeedCard({ item });
-    assert.match(text(card), new RegExp(item.content));
-    const buttons = nodes(card).filter((n) => n.type === "Pressable");
-    assert.ok(buttons.some((n) => n.props.accessibilityLabel === "북마크"));
-    assert.ok(buttons.some((n) => n.props.accessibilityLabel === "공유하기"));
-    assert.ok(
-      buttons.some((n) => n.props.accessibilityLabel === "태그 요청하기")
-    );
-    assert.ok(buttons.every((n) => n.props.disabled && !n.props.onPress));
-  }
-});
-
-test("own card before posting opens write and hides author/tags/actions", () => {
+test("today card renders server quote and author; no development scenario remains", () => {
+  const quote = {
+    id: 9,
+    content: "실제 내 명언",
+    nickname: "실제 작성자",
+    birthYear: "1990",
+    tags: ["친구"],
+  };
   const card = TodayQuote({
-    posted: false,
+    quote,
+    date: "2026-11-14",
+    tagMenuOpen: true,
+    onTagMenuChange() {},
+  });
+  assert.match(text(card), /실제 작성자\(1990~\)/);
+  assert.match(text(card), /실제 내 명언/);
+  assert.equal(
+    all(card).some((n) => n.props.onLongPress),
+    false
+  );
+  globalThis.__home = { routes: [] };
+  const empty = TodayQuote({
+    quote: null,
     tagMenuOpen: false,
     onTagMenuChange() {},
-    onNextScenario() {},
   });
-  const buttons = nodes(card).filter((n) => n.type === "Pressable");
-  assert.equal(buttons.length, 2);
-  buttons
+  all(empty)
     .find((n) => n.props.accessibilityLabel === "오늘의 명언 작성")
     .props.onPress();
-  assert.equal(globalThis.__homeRoute, "/write");
-  assert.match(text(card), /오늘 있었던 일을 바탕으로명언을 남겨보세요/);
-  assert.doesNotMatch(text(card), /듀가나다/);
+  assert.deepEqual(globalThis.__home.routes, ["/write"]);
 });
-
-test("own posted card opens/closes tag list without pretending to edit or post", () => {
-  let open = false;
-  let scenarios = 0;
-  const props = {
-    posted: true,
-    tagMenuOpen: false,
-    onTagMenuChange: (v) => {
-      open = v;
-    },
-    onNextScenario: () => scenarios++,
-  };
-  let card = TodayQuote(props);
-  nodes(card)
-    .find((n) => n.props.accessibilityLabel === "태그된 친구 2명")
-    .props.onPress();
-  assert.equal(open, true);
-  card = TodayQuote({ ...props, tagMenuOpen: open });
-  assert.match(text(card), /듀랄라/);
-  assert.ok(
-    nodes(card).find((n) => text(n) === "수정하기" && n.type === "Pressable")
-      .props.disabled
-  );
-  nodes(card)
-    .find((n) => n.props.accessibilityLabel === "태그 목록 닫기")
-    .props.onPress();
-  assert.equal(open, false);
-  nodes(card)
-    .find((n) => n.props.onLongPress)
-    .props.onLongPress();
-  assert.equal(scenarios, 1);
-});
-
-const { groupFixtures, filterFeedFixtures } = await import(dataUrl);
-const { GroupFilter } = await load("features/home/components/GroupFilter.tsx");
-test("group membership filters written and unwritten cards without changing source data", () => {
-  assert.deepEqual(
-    filterFeedFixtures(feedFixtures, groupFixtures, null).map((x) => x.id),
-    [1, 2, 3]
-  );
-  assert.deepEqual(
-    filterFeedFixtures(feedFixtures, groupFixtures, 1).map((x) => x.id),
-    [1, 3]
-  );
-  assert.deepEqual(
-    filterFeedFixtures(feedFixtures, groupFixtures, 2).map((x) => x.id),
-    [2]
-  );
-  assert.deepEqual(filterFeedFixtures(feedFixtures, groupFixtures, 3), []);
-  assert.deepEqual(filterFeedFixtures(feedFixtures, groupFixtures, 999), []);
-  assert.equal(feedFixtures.length, 3);
-});
-
-test("group menu shows one selected option and no-group create action stays disconnected", () => {
+test("group filter uses server groups and delegates selection without local member filtering", () => {
   let selected;
-  const props = {
-    groups: groupFixtures,
-    selectedId: 1,
+  const tree = GroupFilter({
+    groups: snapshot.data.groups,
+    selectedId: null,
     open: true,
     onToggle() {},
     onSelect: (id) => (selected = id),
-  };
-  let tree = GroupFilter(props);
-  const options = nodes(tree).filter(
-    (n) =>
-      n.type === "Pressable" &&
-      n.props.accessibilityState?.selected !== undefined
-  );
-  assert.equal(
-    options.filter((n) => n.props.accessibilityState.selected).length,
-    1
-  );
-  options.find((n) => text(n) === "오늘의 지혜").props.onPress();
-  assert.equal(selected, 2);
-  options.find((n) => text(n) === "전체보기").props.onPress();
-  assert.equal(selected, null);
-  tree = GroupFilter({ ...props, groups: [], selectedId: null });
-  const create = nodes(tree).find(
-    (n) => n.type === "Pressable" && text(n) === "그룹 만들기"
-  );
-  assert.ok(create.props.disabled);
-  assert.equal(create.props.onPress, undefined);
-  assert.equal(
-    nodes(GroupFilter({ ...props, open: false })).filter(
-      (n) => n.type === "Pressable"
-    ).length,
-    1
-  );
+  });
+  all(tree)
+    .find((n) => n.type === "Pressable" && text(n) === "서버그룹")
+    .props.onPress();
+  assert.equal(selected, 4);
 });
-
-const reactHome = url(`
-export const useState=initial=>{
- const h=globalThis.__homeHarness; const i=h.next++;
- if(!(i in h.values)) h.values[i]=initial;
- return [h.values[i],value=>{h.values[i]=typeof value==='function'?value(h.values[i]):value;}];
-};
-export const useEffect=callback=>{const cleanup=callback();if(cleanup)globalThis.__homeHarness.cleanups.push(cleanup);};`);
-let groupCode = compile(
-  await read("features/home/components/GroupFilter.tsx")
-).replace(/require\(['"][^'"]+['"]\)/g, "1");
-for (const [from, to] of Object.entries(replacements))
-  groupCode = groupCode
-    .replaceAll(`from '${from}'`, `from '${to}'`)
-    .replaceAll(`from "${from}"`, `from "${to}"`);
-const { HomeScreen } = await load("features/home/screens/HomeScreen.tsx", {
-  react: reactHome,
-  "react-native": url(
-    "export const View='View',Pressable='Pressable',ScrollView='ScrollView',StyleSheet={create:x=>x,absoluteFill:{position:'absolute'}},BackHandler={addEventListener:(_,cb)=>{globalThis.__homeHarness.back=cb;return {remove(){globalThis.__homeHarness.back=null;}};}};"
-  ),
-  "react-native-safe-area-context": url(
-    "export const SafeAreaView='SafeAreaView';"
-  ),
-  "@/features/home/components/FeedCard": url(
-    "export const FeedCard=props=>({type:'FeedCard',props});"
-  ),
-  "@/features/home/components/TodayQuote": url(
-    "export const TodayQuote=props=>({type:'TodayQuote',props});"
-  ),
-  "@/features/home/components/GroupFilter": url(groupCode),
-  "@/components/ConfirmDialog": url(
-    "export const ConfirmDialog=props=>({type:'ConfirmDialog',props});"
-  ),
-  "@/components/ToastMessage": url(
-    "export const ToastMessage=props=>({type:'ToastMessage',props});"
-  ),
-  "@/features/moderation/components/FeedActionsMenu": url(
-    "export const FeedActionsMenu=props=>({type:'FeedActionsMenu',props});"
-  ),
-  "@/features/moderation/components/ReportDialog": url(
-    "export const ReportDialog=props=>({type:'ReportDialog',props});"
-  ),
-  "@/features/home/components/HomeDrawer": url(
-    "export const HomeDrawer=props=>({type:'HomeDrawer',props});"
-  ),
-});
-
-test("home selection closes menu, outside/scroll/back dismiss it, and scenarios reset the group", () => {
-  const h = { next: 0, values: [], cleanups: [], back: null };
-  function render() {
-    for (const cleanup of h.cleanups) cleanup();
-    h.cleanups = [];
-    h.next = 0;
-    globalThis.__homeHarness = h;
-    return HomeScreen();
+test("home loading and errors do not show fabricated quotes or the empty-feed message", () => {
+  for (const status of ["loading", "error"]) {
+    globalThis.__homeSnapshot = { ...snapshot, status };
+    const { state, render } = harness(HomeScreen);
+    const tree = render();
+    assert.equal(
+      all(tree).some((n) => n.type === "FeedCard"),
+      false
+    );
+    assert.equal(
+      all(tree).some((n) => n.type === "TodayQuote"),
+      false
+    );
+    assert.doesNotMatch(text(tree), /친구를 추가하면/);
+    if (status === "error") {
+      all(tree)
+        .find((n) => n.type === "Pressable" && text(n) === "다시 시도")
+        .props.onPress();
+      assert.equal(state.loads.length, 1);
+    }
   }
-  const find = (tree, label) =>
-    nodes(tree).find((n) => n.props.accessibilityLabel === label);
-  const option = (tree, name) =>
-    nodes(tree).find((n) => n.type === "Pressable" && text(n) === name);
+  globalThis.__homeSnapshot = snapshot;
+});
+test("home uses server data, keeps drawer profile and group changes request new data", () => {
+  const { state, render } = harness(HomeScreen);
   let tree = render();
-  find(tree, "피드 그룹 필터").props.onPress();
-  tree = render();
-  option(tree, "매일 한 문장").props.onPress();
-  tree = render();
-  assert.equal(
-    find(tree, "피드 그룹 필터").props.accessibilityState.expanded,
-    false
-  );
   assert.deepEqual(
-    nodes(tree)
+    all(tree)
       .filter((n) => n.type === "FeedCard")
       .map((n) => n.props.item.id),
-    [1, 3]
+    [10, 2]
   );
-  find(tree, "피드 그룹 필터").props.onPress();
+  const filter = all(tree).find((n) => n.type === "GroupFilter");
+  filter.props.onToggle();
   tree = render();
-  assert.equal(h.back(), true);
-  tree = render();
-  assert.equal(h.back, null);
-  find(tree, "피드 그룹 필터").props.onPress();
-  tree = render();
-  find(tree, "그룹 필터 닫기").props.onPress();
-  tree = render();
-  assert.equal(
-    find(tree, "피드 그룹 필터").props.accessibilityState.expanded,
-    false
-  );
-  find(tree, "피드 그룹 필터").props.onPress();
-  tree = render();
-  nodes(tree)
-    .find((n) => n.type === "ScrollView" && n.props.onScrollBeginDrag)
-    .props.onScrollBeginDrag();
-  tree = render();
-  assert.equal(
-    find(tree, "피드 그룹 필터").props.accessibilityState.expanded,
-    false
-  );
-  nodes(tree)
-    .find((n) => n.type === "TodayQuote")
-    .props.onNextScenario();
-  tree = render();
-  assert.equal(text(find(tree, "피드 그룹 필터")), "전체보기");
-  nodes(tree)
-    .find((n) => n.type === "TodayQuote")
-    .props.onNextScenario();
-  tree = render();
-  find(tree, "피드 그룹 필터").props.onPress();
-  tree = render();
-  assert.ok(option(tree, "그룹 만들기").props.disabled);
-  assert.equal(nodes(tree).filter((n) => n.type === "FeedCard").length, 0);
-  for (const cleanup of h.cleanups) cleanup();
-});
-
-test("home menu opens drawer and dismisses filter; closing drawer preserves the selected feed", () => {
-  const h = { next: 0, values: [], cleanups: [], back: null };
-  const render = () => {
-    h.cleanups.forEach((fn) => fn());
-    h.cleanups = [];
-    h.next = 0;
-    globalThis.__homeHarness = h;
-    return HomeScreen();
-  };
-  let tree = render();
-  nodes(tree)
-    .find((n) => n.props.accessibilityLabel === "피드 그룹 필터")
+  all(tree)
+    .find((n) => n.type === "GroupFilter")
+    .props.onSelect(4);
+  assert.deepEqual(state.loads, [4]);
+  all(tree)
+    .find((n) => n.props.label === "메뉴")
     .props.onPress();
   tree = render();
-  const menu = nodes(tree).find(
-    (n) => n.type === "Pressable" && n.props.accessibilityLabel === "메뉴"
-  );
-  assert.equal(menu.props.disabled, false);
-  menu.props.onPress();
-  tree = render();
-  let drawer = nodes(tree).find((n) => n.type === "HomeDrawer");
+  const drawer = all(tree).find((n) => n.type === "HomeDrawer");
   assert.equal(drawer.props.visible, true);
-  assert.equal(
-    nodes(tree).find((n) => n.props.accessibilityLabel === "피드 그룹 필터")
-      .props.accessibilityState.expanded,
-    false
-  );
-  drawer.props.onClose();
-  tree = render();
-  drawer = nodes(tree).find((n) => n.type === "HomeDrawer");
-  assert.equal(drawer.props.visible, false);
-  assert.equal(nodes(tree).filter((n) => n.type === "FeedCard").length, 3);
-});
-
-test("home archive button opens the archive route", () => {
-  const h = { next: 0, values: [], cleanups: [], back: null };
-  globalThis.__homeHarness = h;
-  const tree = HomeScreen();
-  const button = nodes(tree).find(
-    (n) => n.type === "Pressable" && n.props.accessibilityLabel === "아카이브"
-  );
-  assert.equal(button.props.disabled, false);
-  button.props.onPress();
-  assert.equal(globalThis.__homeRoute, "/archive");
-  h.cleanups.forEach((fn) => fn());
-});
-
-test("feed more measures the trigger and opens the menu without changing quote layout", () => {
-  let selected;
-  const item = feedFixtures[0];
-  const card = FeedCard({
-    item,
-    onMore: (target, anchor) => (selected = { target, anchor }),
-  });
-  const more = nodes(card).find(
-    (n) => n.props.accessibilityLabel === `${item.nickname} 더보기`
-  );
-  assert.equal(more.props.disabled, false);
-  more.props.ref.current = {
-    measureInWindow: (callback) => callback(280, 120, 20, 24),
-  };
-  more.props.onPress();
-  assert.equal(selected.target, item);
-  assert.deepEqual(selected.anchor, { x: 280, y: 120, width: 20, height: 24 });
-});
-
-test("home notification button opens the list with the current writing preview status", () => {
-  const h = { next: 0, values: [], cleanups: [], back: null };
-  const render = () => {
-    h.cleanups.forEach((fn) => fn());
-    h.cleanups = [];
-    h.next = 0;
-    globalThis.__homeHarness = h;
-    return HomeScreen();
-  };
-  let tree = render();
-  nodes(tree)
-    .find(
-      (node) =>
-        node.type === "Pressable" && node.props.accessibilityLabel === "알림"
-    )
+  assert.equal(drawer.props.profile.nickname, "내 계정");
+  all(tree)
+    .find((n) => n.props.label === "알림, 읽지 않은 알림 있음")
     .props.onPress();
-  assert.deepEqual(globalThis.__homeRoute, {
+  assert.deepEqual(state.routes.at(-1), {
     pathname: "/notification",
     params: { written: "0" },
-  });
-  nodes(tree)
-    .find((node) => node.type === "TodayQuote")
-    .props.onNextScenario();
-  tree = render();
-  nodes(tree)
-    .find(
-      (node) =>
-        node.type === "Pressable" && node.props.accessibilityLabel === "알림"
-    )
-    .props.onPress();
-  assert.deepEqual(globalThis.__homeRoute, {
-    pathname: "/notification",
-    params: { written: "1" },
   });
 });

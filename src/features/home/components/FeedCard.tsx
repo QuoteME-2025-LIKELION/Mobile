@@ -3,7 +3,7 @@ import { useRef, type ComponentRef } from "react";
 import { Pressable, View } from "react-native";
 import { AppText } from "@/components/AppText";
 import { QuoteText } from "@/components/QuoteText";
-import type { FeedItem } from "../fixtures/homeFixtures";
+import type { FeedItem } from "../types/homeTypes";
 import { styles } from "./FeedCard.styles";
 import type { MenuAnchor } from "@/features/moderation/hooks/useFeedModeration";
 // 공유·서버 쓰기는 미연동. 더보기는 개발용 신고/차단 흐름만 연다.
@@ -21,7 +21,11 @@ export function FeedCard({
     <View style={styles.card}>
       <View style={styles.profile}>
         <Image
-          source={require("@/assets/images/profile/default-profile.png")}
+          source={
+            item.profileImage
+              ? { uri: item.profileImage }
+              : require("@/assets/images/profile/default-profile.png")
+          }
           style={styles.avatar}
           accessible={false}
         />
@@ -77,8 +81,8 @@ export function FeedCard({
           {item.tags.length ? (
             <>
               <View style={styles.names}>
-                {item.tags.map((name) => (
-                  <AppText key={name} style={styles.name}>
+                {item.tags.map((name, index) => (
+                  <AppText key={`${name}-${index}`} style={styles.name}>
                     {name}
                   </AppText>
                 ))}

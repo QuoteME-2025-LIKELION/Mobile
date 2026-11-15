@@ -23,10 +23,13 @@ let code = compile(await readSource("features/auth/screens/StartScreen.tsx"));
 for (const [from, to] of Object.entries({
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: url(
-    `export const useState=initial=>{const h=globalThis.__start;const index=h.next++;if(!(index in h.values))h.values[index]=initial;return [h.values[index],v=>h.values[index]=typeof v==='function'?v(h.values[index]):v];};`
+    `export const useRef=initial=>({current:initial});export const useState=initial=>{const h=globalThis.__start;const index=h.next++;if(!(index in h.values))h.values[index]=initial;return [h.values[index],v=>h.values[index]=typeof v==='function'?v(h.values[index]):v];};`
+  ),
+  "@/features/auth/stores/useSession": url(
+    "export const useSession=()=>({busy:false});"
   ),
   "react-native": url(
-    "export const View='View',Pressable='Pressable',ScrollView='ScrollView',StyleSheet={create:value=>value};"
+    "export const View='View',Pressable='Pressable',ScrollView='ScrollView',Alert={alert:(...args)=>globalThis.__start.alerts.push(args)},StyleSheet={create:value=>value};"
   ),
   "react-native-safe-area-context": url(
     "export const SafeAreaView='SafeAreaView';"
@@ -36,6 +39,9 @@ for (const [from, to] of Object.entries({
   ),
   "@/styles/theme": theme,
   "@/components/AppText": url("export const AppText='AppText';"),
+  "@/features/auth/components/TestLoginDialog": url(
+    "export const TestLoginDialog='TestLoginDialog';"
+  ),
   "@/features/auth/components/LoginSheet": url(
     "export const LoginSheet='LoginSheet';"
   ),
@@ -52,7 +58,7 @@ const nodes = (tree) =>
     ? []
     : [tree, ...[tree.props?.children].flat(Infinity).flatMap(nodes)];
 function harness(dev) {
-  const state = { next: 0, values: [], routes: [] };
+  const state = { next: 0, values: [], routes: [], alerts: [] };
   const render = () => {
     state.next = 0;
     globalThis.__start = state;
@@ -65,7 +71,11 @@ function harness(dev) {
 test("start screen opens and closes the login sheet after hook extraction", () => {
   const { render } = harness(true);
   let tree = render();
-  const button = nodes(tree).find((node) => node.type === "Pressable");
+  const button = nodes(tree).find(
+    (node) =>
+      node.type === "Pressable" &&
+      node.props.accessibilityState?.expanded !== undefined
+  );
   assert.equal(button.props.accessibilityState.expanded, false);
   button.props.onPress();
   tree = render();
@@ -79,16 +89,33 @@ test("start screen opens and closes the login sheet after hook extraction", () =
   );
 });
 
-test("development long presses remain gated and keep their original routes", () => {
+test("account-input test login is hidden behind the development-only logo long press", () => {
   const { state, render } = harness(true);
-  const tree = render();
-  nodes(tree)
-    .filter((node) => node.props.onLongPress)
-    .forEach((node) => node.props.onLongPress());
-  assert.deepEqual(state.routes, ["/home", "/profile"]);
-  const production = harness(false).render();
+  let tree = render();
+  const shortcuts = nodes(tree).filter((node) => node.props.onLongPress);
+  assert.equal(shortcuts.length, 1);
+  assert.equal(shortcuts[0].props.children, "QuoteMe");
   assert.equal(
-    nodes(production).filter((node) => node.props.onLongPress).length,
-    0
+    nodes(tree).filter((node) => node.type === "Pressable").length,
+    1
+  );
+  assert.equal(
+    nodes(tree).some((node) => node.type === "TestLoginDialog"),
+    false
+  );
+  shortcuts[0].props.onLongPress();
+  tree = render();
+  const dialog = nodes(tree).find((node) => node.type === "TestLoginDialog");
+  assert.ok(dialog);
+
+  dialog.props.onClose();
+  tree = render();
+  assert.equal(
+    nodes(tree).some((node) => node.type === "TestLoginDialog"),
+    false
+  );
+  assert.equal(
+    nodes(harness(false).render()).some((node) => node.props.onLongPress),
+    false
   );
 });

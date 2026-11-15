@@ -1,5 +1,5 @@
-import { StyleSheet } from "react-native";
 import { colors, fonts } from "@/styles/theme";
+import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   container: { flex: 1, gap: 4 },
@@ -73,7 +73,22 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  removeText: { color: colors.white, fontSize: 10, lineHeight: 12 },
+  removeCross: {
+    width: 8,
+    height: 8,
+    transform: [{ translateX: 0.5 }, { translateY: 0.5 }],
+  },
+  removeStroke: {
+    position: "absolute",
+    top: 3.5,
+    left: 0,
+    width: 8,
+    height: 1,
+    borderRadius: 0.5,
+    backgroundColor: colors.white,
+  },
+  removeStrokeForward: { transform: [{ rotate: "45deg" }] },
+  removeStrokeBackward: { transform: [{ rotate: "-45deg" }] },
   row: {
     flexDirection: "row",
     alignItems: "center",

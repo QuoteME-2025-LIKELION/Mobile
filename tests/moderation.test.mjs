@@ -153,7 +153,7 @@ test("report form enforces single selection, conditional AI reason, nonblank Oth
   const ai = harness(() => useReportForm(true, () => {})).render();
   assert.equal(ai.reasons.length, 8);
 });
-test("report completion blocks the author; cancellation and unwritten report attempts do not", async () => {
+test("report confirmation stays pending without mutating the real feed; cancellation and unwritten reporting do nothing", async () => {
   const { load, store } = await environment();
   const { useFeedModeration } = (
     await load("features/moderation/hooks/useFeedModeration.ts")
@@ -185,42 +185,28 @@ test("report completion blocks the author; cancellation and unwritten report att
   h = render();
   h.confirm();
   h = render();
-  assert.equal(h.toast, "신고가 접수됐어요");
+  assert.equal(h.toast, "신고 기능을 준비 중이에요.");
   assert.equal(h.dialog, null);
-  assert.equal(store.getModerationSnapshot().blocked[0].id, 1);
+  assert.equal(store.getModerationSnapshot().blocked.length, 0);
 });
-test("blocked authors disappear from all/group feeds, then return only to group feeds after unblock", async () => {
+test("block confirmation reports unavailable API without simulated blocking", async () => {
   const { load, store } = await environment();
-  const { useHomeFeed } = (await load("features/home/hooks/useHomeFeed.ts"))
-    .module;
-  const { render } = harness(useHomeFeed);
+  const { useFeedModeration } = (
+    await load("features/moderation/hooks/useFeedModeration.ts")
+  ).module;
+  const { render } = harness(useFeedModeration);
   let h = render();
-  assert.equal(h.items.length, 3);
-  store.blockFixtureMember({ id: 1, nickname: "듀랄라" });
-  h = render();
-  assert.deepEqual(
-    h.items.map((x) => x.id),
-    [2, 3]
+  h.openMenu(
+    { memberId: 3, nickname: "서버회원", content: null },
+    { x: 0, y: 0, width: 20, height: 20 }
   );
-  h.selectGroup(1);
   h = render();
-  assert.deepEqual(
-    h.items.map((x) => x.id),
-    [3]
-  );
-  store.unblockFixtureMember(1);
+  h.choose("block");
   h = render();
-  assert.deepEqual(
-    h.items.map((x) => x.id),
-    [1, 3]
-  );
-  h.selectGroup(null);
+  h.confirm();
   h = render();
-  assert.deepEqual(
-    h.items.map((x) => x.id),
-    [2, 3]
-  );
-  assert.deepEqual(h.removedNames, ["듀랄라"]);
+  assert.equal(h.toast, "차단 기능을 준비 중이에요.");
+  assert.equal(store.getModerationSnapshot().blocked.length, 0);
 });
 test("blocked list starts empty, cancels without removal, then confirms removal with the specified toast", async () => {
   const { load, store } = await environment();

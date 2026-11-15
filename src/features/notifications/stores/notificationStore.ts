@@ -27,3 +27,8 @@ export function useNotificationItems() {
     () => EMPTY
   );
 }
+
+export function resetNotificationFixtures() {
+  snapshot = notificationFixtures.map((item) => ({ ...item }));
+  listeners.forEach((listener) => listener());
+}

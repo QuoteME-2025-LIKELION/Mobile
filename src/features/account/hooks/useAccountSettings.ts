@@ -1,5 +1,7 @@
 import { useModerationState } from "@/features/moderation/stores/moderationStore";
-import { useState } from "react";
+import { session } from "@/features/auth/services/session";
+import { useSession } from "@/features/auth/stores/useSession";
+import { useRef, useState } from "react";
 import { router } from "expo-router";
 import { accountFixture } from "../fixtures/accountFixture";
 import { getBirthYears, type Gender } from "../constants/accountOptions";
@@ -11,6 +13,10 @@ export function useAccountSettings() {
   const [sheet, setSheet] = useState<Sheet>(null);
   const [draftGender, setDraftGender] = useState<Gender>(gender);
   const [draftBirthYear, setDraftBirthYear] = useState(birthYear);
+  const [logoutError, setLogoutError] = useState("");
+  const [logoutPending, setLogoutPending] = useState(false);
+  const logoutRef = useRef(false);
+  const auth = useSession();
   const [logoutOpen, setLogoutOpen] = useState(false);
   const { blocked } = useModerationState();
   const years = getBirthYears();
@@ -25,7 +31,28 @@ export function useAccountSettings() {
     if (sheet === "birth") setBirthYear(draftBirthYear);
     setSheet(null);
   };
+  const confirmLogout = async () => {
+    if (logoutRef.current || auth.status !== "authenticated") return;
+    logoutRef.current = true;
+    setLogoutPending(true);
+    setLogoutOpen(false);
+    setLogoutError("");
+    try {
+      await session.logout();
+    } catch {
+      setLogoutError(
+        "로그아웃하지 못했어요. 연결을 확인하고 다시 시도해 주세요."
+      );
+    } finally {
+      logoutRef.current = false;
+      setLogoutPending(false);
+    }
+  };
   return {
+    logoutError,
+    logoutPending,
+    canLogout: auth.status === "authenticated" && !auth.busy && !logoutPending,
+    confirmLogout,
     blockedCount: blocked.length,
     openBlocked: () => router.push("/blocked-members"),
     gender,

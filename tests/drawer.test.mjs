@@ -41,9 +41,6 @@ for (const [from, to] of Object.entries({
   "@app/config": url("export default {expo:{version:'1.0.0'}};"),
   "@/components/AppText": url("export const AppText='AppText';"),
   "@/styles/theme": theme,
-  "@/features/home/fixtures/homeFixtures": url(
-    compile(await read("features/home/fixtures/homeFixtures.ts"))
-  ),
 }))
   code = code
     .replaceAll(`from '${from}'`, `from '${to}'`)
@@ -62,7 +59,17 @@ function text(tree) {
 function render(visible = true) {
   const h = { animations: [], cleanups: [], stops: 0, closed: 0 };
   globalThis.__drawer = h;
-  const tree = HomeDrawer({ visible, onClose: () => h.closed++ });
+  const tree = HomeDrawer({
+    visible,
+    onClose: () => h.closed++,
+    profile: {
+      id: 1,
+      nickname: "실제회원",
+      introduction: "서버 소개",
+      profileImage: "https://example.test/profile.jpg",
+      profileCompleted: true,
+    },
+  });
   return { h, tree };
 }
 
@@ -77,7 +84,7 @@ test("drawer keeps profile, menu order and footer while leaving unfinished desti
       .map(text),
     ["친구 및 그룹", "계정 관리", "알림 설정", "공지사항"]
   );
-  assert.match(text(tree), /듀가나다/);
+  assert.match(text(tree), /실제회원/);
   assert.match(text(tree), /이용약관 및 개인정보 처리/);
   assert.match(text(tree), /abc123456@gmail.com/);
   assert.match(text(tree), /버전 1.0.0/);

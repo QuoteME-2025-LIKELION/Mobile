@@ -2,11 +2,13 @@ import { Image } from "expo-image";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { AppText } from "@/components/AppText";
 import { colors } from "@/styles/theme";
-import type { RecommendationStatus } from "../fixtures/recommendationFixtures";
+import type { AiUsage, RecommendationStatus } from "../types/writeTypes";
 import { WriteAction } from "./WriteAction";
 import { styles } from "./RecommendationList.styles";
 type Props = {
   status: RecommendationStatus;
+  usage: AiUsage | null;
+  usageStatus: "loading" | "success" | "error";
   recommendations: readonly string[];
   selectedIndex: number | null;
   onSelect: (index: number) => void;
@@ -25,6 +27,8 @@ const messages: Partial<Record<RecommendationStatus, string>> = {
 
 export function RecommendationList({
   status,
+  usage,
+  usageStatus,
   recommendations,
   selectedIndex,
   onSelect,
@@ -33,7 +37,7 @@ export function RecommendationList({
   onNext,
 }: Props) {
   const busy = status === "loading";
-  const refreshDisabled = busy || status === "exhausted";
+  const refreshDisabled = busy || usageStatus === "loading";
   const canContinue =
     status === "success" &&
     selectedIndex !== null &&
@@ -46,9 +50,11 @@ export function RecommendationList({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={
-          status === "exhausted"
-            ? "오늘 AI 추천 횟수 소진"
-            : "AI 추천 다시 받기"
+          usageStatus === "success" && usage?.remaining === 0
+            ? "AI 사용량 다시 확인"
+            : usageStatus === "error"
+              ? "AI 사용량 다시 확인"
+              : "AI 추천 다시 받기"
         }
         accessibilityState={{ disabled: refreshDisabled, busy }}
         disabled={refreshDisabled}
@@ -60,7 +66,11 @@ export function RecommendationList({
           style={styles.refreshIcon}
           accessible={false}
         />
-        <AppText style={styles.usage}>-/-</AppText>
+        <AppText style={styles.usage}>
+          {usageStatus === "success" && usage
+            ? `${usage.used}/${usage.limit}`
+            : "-/-"}
+        </AppText>
       </Pressable>
       {messages[status] && (
         <View accessibilityLiveRegion="polite" style={styles.status}>

@@ -20,12 +20,19 @@ import { LINE_HEIGHT } from "../constants/writeLayout";
 import { styles } from "./WriteScreen.styles";
 import { useWrite } from "../hooks/useWrite";
 
-export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
+export function WriteScreen() {
   const {
     text,
+    publishing,
+    publish,
+    friends,
+    friendsStatus,
+    retryFriends,
     step,
     setStep,
     recommendationStatus,
+    aiUsage,
+    aiUsageStatus,
     recommendationIndex,
     setRecommendationIndex,
     recommendations,
@@ -61,7 +68,7 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
     refreshRecommendations,
     acceptRecommendation,
     toggleFriendTag,
-  } = useWrite(options);
+  } = useWrite();
   return (
     <SafeAreaView
       edges={["top", "left", "right"]}
@@ -79,6 +86,8 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
             accessibilityRole="button"
             accessibilityLabel="닫기"
             onPress={close}
+            disabled={publishing}
+            accessibilityState={{ disabled: publishing }}
             style={styles.close}
           >
             <Image
@@ -247,6 +256,8 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
             ) : step === "recommend" ? (
               <RecommendationList
                 status={recommendationStatus}
+                usage={aiUsage}
+                usageStatus={aiUsageStatus}
                 recommendations={recommendations}
                 selectedIndex={recommendationIndex}
                 onSelect={setRecommendationIndex}
@@ -257,12 +268,24 @@ export function WriteScreen(options: Parameters<typeof useWrite>[0] = {}) {
             ) : (
               <>
                 <FriendTagSelector
+                  friends={friends}
+                  status={friendsStatus}
+                  onRetry={retryFriends}
+                  disabled={publishing}
                   selected={selected}
                   onToggle={toggleFriendTag}
                 />
                 <View style={styles.tagActions}>
-                  <WriteAction title="뒤로가기" onPress={backFromTag} />
-                  <WriteAction title="게시하기" />
+                  <WriteAction
+                    title="뒤로가기"
+                    onPress={backFromTag}
+                    disabled={publishing}
+                  />
+                  <WriteAction
+                    title={publishing ? "게시 중…" : "게시하기"}
+                    onPress={publish}
+                    disabled={publishing || friendsStatus !== "success"}
+                  />
                 </View>
               </>
             )}

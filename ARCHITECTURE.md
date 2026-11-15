@@ -4,7 +4,8 @@
 
 ```text
 src/
-  app/                       Expo Router 경로·개발 접근 제한·공통 레이아웃
+  app/                       Expo Router 경로·세션/개발 접근 제한·공통 레이아웃
+  api/                       앱 JSON 전송·공개 API origin 설정
   styles/theme.ts            공통 색상·폰트·투명도·브랜드/달력 강조색
   components/                공용 UI와 각 컴포넌트의 .styles.ts
   fixtures/                  기능 간 공유하는 개발용 예시 데이터
@@ -43,10 +44,23 @@ src/
 
 ## 개발 데이터와 실제 연동
 
-- 예시 데이터는 `fixtures`로 드러낸다. `userFixture`, `homeFixtures`, `archiveFixtures`, `friendFixtures`, `recommendationFixtures`는 실제 로그인 사용자/서버 응답이 아니다.
+- 예시 데이터는 `fixtures`로 드러낸다. `archiveFixtures` 및 아직 미연동인 계정·알림·공지 fixture는 실제 로그인 사용자/서버 응답이 아니다.
 - `profileSetupSteps`는 실제 화면 단계/문구이고, `writeLayout`은 실제 입력 레이아웃 상수이므로 fixture와 구분한다.
 - 이번 구조 정리는 개발 접근 제한·길게 누르기·추천 지연/시나리오·비활성 저장/게시 버튼을 제거하지 않았다. 이름 변경 자체가 인증/API 연동 완료를 뜻하지 않는다.
+- 작성의 AI 사용량/추천·친구 선택·게시도 실제 API로 교체하고 추천/친구 fixture와 가짜 지연·강제 시나리오를 제거했다. 게시 성공 시 홈을 무효화하고 복귀 focus에서 서버 데이터를 다시 조회한다.
+- 홈/내 프로필 조회는 실제 응답으로 교체하고 `homeFixtures`·`userFixture`를 삭제했다. 실제 연동 범위부터 fixture·개발 시나리오·가짜 성공을 제거하고 최종 잔여를 전수 점검한다.
 - 실제 연동 때 fixture·개발 진입 동작을 종합 점검하고 서비스/쿼리 계층을 확정한다. 현재 존재하지 않는 API 계약을 구조 이름만으로 확정하지 않는다.
+
+## 앱 세션 기반
+
+- `features/auth/services/createSessionManager.ts`는 네트워크·저장소를 주입받아 계정 입력 로그인, 복원, 재발급, 로그아웃을 처리한다. `session.ts`가 실제 JSON 전송과 SecureStore를 연결하고 `stores/useSession.ts`가 화면에 토큰을 제외한 상태만 제공한다.
+- 재발급의 401 인증 거부만 세션을 삭제한다. 네트워크·시간 초과·서버 오류는 토큰을 보존하며, 시작 시 복원 실패 화면에서 재시도하거나 실행 중 원래 요청을 다시 시도할 수 있다.
+- access는 메모리에만, refresh는 SecureStore에만 저장한다. 일반 API는 `session.request`를 사용한다. 앱 헤더·본문 refresh를 사용하며 쿠키를 보내지 않는다.
+- `.env.local`의 `EXPO_PUBLIC_API_URL`은 공개 origin 설정이며 Git에서 제외한다. `.env.example`에는 인증정보나 실제 주소를 담지 않는다. HTTP는 개발 모드 설정에만 허용하며 실제 기기의 네트워크 허용 여부는 별도다.
+- 개발용 계정 입력 로그인은 시작 화면 QuoteMe 로고 longpress의 이메일/비밀번호 입력창으로만 제공한다. 시작 화면에 상시 게스트 버튼·설명·인라인 개발 안내를 추가하지 않는다(2026-11-14 사용자 요청).
+- 계정 입력 진입은 개발용이다. 루트 Stack의 세션 보호와 각 화면의 개발 모드 제한을 함께 유지한다. 홈·드로어·프로필 조회는 실제 서버 데이터이며 계정 설정·알림 목록·작성·아카이브 등 미연동 데이터는 후속 교체한다.
+- `features/home/services/createHomeResource.ts`는 서버 응답 변환·조회 순서/취소를 관리한다. `stores/homeResource.ts`가 실제 세션 요청을 연결하고 로그아웃/계정 교체 시 데이터를 지운다. 홈은 /api/quotes 전체 응답을 사용하며 그룹 필터는 서버에 다시 조회한다.
+- 로그인/복원/종료 시 개발용 차단·알림 상태를 초기화한다. 소셜 인증, profileCompleted별 설정 저장 흐름, 푸시 등록/해제는 후속 단위다.
 
 ## 검증
 

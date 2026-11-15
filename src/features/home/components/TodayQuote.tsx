@@ -3,43 +3,33 @@ import { router } from "expo-router";
 import { Pressable, View } from "react-native";
 import { AppText } from "@/components/AppText";
 import { FeedIcon } from "./FeedCard";
-import { myQuoteFixture, splitHomeQuote } from "../fixtures/homeFixtures";
+import { splitHomeQuote } from "../utils/splitHomeQuote";
+import type { MyQuote } from "../types/homeTypes";
 import { styles } from "./TodayQuote.styles";
 type Props = {
-  posted: boolean;
-  removedNames?: string[];
-  onNextScenario: () => void;
+  quote: MyQuote | null;
+  date?: string;
   tagMenuOpen: boolean;
   onTagMenuChange: (open: boolean) => void;
 };
 
 export function TodayQuote({
-  posted,
-  removedNames = [],
-  onNextScenario,
+  quote,
+  date,
   tagMenuOpen,
   onTagMenuChange,
 }: Props) {
-  const tags = myQuoteFixture.tags.filter(
-    (name) => !removedNames.includes(name)
-  );
-  const today = new Date();
+  const posted = quote !== null;
+  const tags = quote?.tags ?? [];
+  const today = date ? new Date(`${date}T12:00:00`) : new Date();
   const lines = posted
-    ? splitHomeQuote(myQuoteFixture.content)
+    ? splitHomeQuote(quote!.content)
     : ["오늘 있었던 일을 바탕으로", "명언을 남겨보세요"];
   const closeTags = () => onTagMenuChange(false);
 
   return (
     <View style={styles.card}>
-      <Pressable
-        accessibilityLabel="월 표시, 길게 눌러 개발 화면 전환"
-        accessibilityRole="button"
-        onPress={closeTags}
-        onLongPress={() => {
-          closeTags();
-          onNextScenario();
-        }}
-      >
+      <Pressable accessibilityLabel="월 표시" onPress={closeTags}>
         <AppText style={styles.month}>
           {today.toLocaleDateString("en-US", { month: "short" }).toLowerCase()}
         </AppText>
@@ -94,8 +84,8 @@ export function TodayQuote({
               </Pressable>
               {tagMenuOpen && (
                 <View style={styles.tagMenu}>
-                  {tags.map((name) => (
-                    <View key={name} style={styles.tagName}>
+                  {tags.map((name, index) => (
+                    <View key={`${name}-${index}`} style={styles.tagName}>
                       <AppText style={styles.tagNameText}>{name}</AppText>
                     </View>
                   ))}
@@ -113,7 +103,8 @@ export function TodayQuote({
             <View style={styles.author} onTouchStart={closeTags}>
               <View style={styles.divider} />
               <AppText numberOfLines={1} style={styles.authorText}>
-                {myQuoteFixture.nickname}({myQuoteFixture.birthYear}~)
+                {quote?.nickname}
+                {quote?.birthYear ? `(${quote.birthYear}~)` : ""}
               </AppText>
             </View>
             <View style={styles.actions} onTouchStart={closeTags}>

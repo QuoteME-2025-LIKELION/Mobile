@@ -19,6 +19,12 @@ const theme = url(
   )
 );
 const imports = {
+  "@/features/auth/services/session": url(
+    "export const session={logout:async()=>{globalThis.__account.logoutCalls=(globalThis.__account.logoutCalls??0)+1;}};"
+  ),
+  "@/features/auth/stores/useSession": url(
+    'export const useSession=()=>({status:globalThis.__account.authenticated?"authenticated":"anonymous",busy:false});'
+  ),
   "@/features/moderation/stores/moderationStore": url(
     "export const useModerationState=()=>({blocked:[],formerFriendIds:[]});"
   ),
@@ -289,4 +295,18 @@ test("all account routes redirect outside development builds", async () => {
     globalThis.__DEV__ = true;
     assert.equal(Route().type, screen);
   }
+});
+
+test("authenticated account logout invokes session action once and closes confirmation", async () => {
+  const { state, render } = harness(useAccountSettings);
+  state.authenticated = true;
+  let h = render();
+  assert.equal(h.canLogout, true);
+  h.openLogout();
+  h = render();
+  await Promise.all([h.confirmLogout(), h.confirmLogout()]);
+  h = render();
+  assert.equal(state.logoutCalls, 1);
+  assert.equal(h.logoutOpen, false);
+  assert.equal(h.logoutPending, false);
 });

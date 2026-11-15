@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -19,6 +20,10 @@ export function ProfileCenterScreen(
   options: Parameters<typeof useProfileCenter>[0] = {}
 ) {
   const {
+    loading,
+    loadError,
+    retry,
+    profileImage,
     insets,
     editing,
     nickname,
@@ -43,6 +48,22 @@ export function ProfileCenterScreen(
   return (
     <SafeAreaView edges={["top"]} style={styles.screen}>
       <StatusBar style="dark" />
+      {loading || loadError ? (
+        <View style={styles.loadState}>
+          {loading ? (
+            <ActivityIndicator accessibilityLabel="프로필 불러오는 중" />
+          ) : (
+            <>
+              <AppText accessibilityRole="alert">
+                프로필을 불러오지 못했어요.
+              </AppText>
+              <Pressable accessibilityRole="button" onPress={retry}>
+                <AppText>다시 시도</AppText>
+              </Pressable>
+            </>
+          )}
+        </View>
+      ) : null}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.fill}
@@ -94,7 +115,9 @@ export function ProfileCenterScreen(
                 source={
                   image && !imageFailed
                     ? { uri: image.uri }
-                    : require("@/assets/images/profile/default-profile.png")
+                    : profileImage && !imageFailed
+                      ? { uri: profileImage }
+                      : require("@/assets/images/profile/default-profile.png")
                 }
                 contentFit="cover"
                 style={styles.avatar}
@@ -196,18 +219,22 @@ export function ProfileCenterScreen(
           {/* 서버 미연동: 실제 저장/가짜 성공 처리를 하지 않는다. */}
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: editing || picking }}
-            disabled={editing || picking}
+            accessibilityState={{
+              disabled: editing || picking || loading || loadError,
+            }}
+            disabled={editing || picking || loading || loadError}
             onPress={editing ? undefined : beginEditing}
             style={[
               styles.button,
-              (editing || picking) && styles.disabledButton,
+              (editing || picking || loading || loadError) &&
+                styles.disabledButton,
             ]}
           >
             <AppText
               style={[
                 styles.buttonText,
-                (editing || picking) && styles.disabledText,
+                (editing || picking || loading || loadError) &&
+                  styles.disabledText,
               ]}
             >
               {editing ? "저장하기" : "편집하기"}

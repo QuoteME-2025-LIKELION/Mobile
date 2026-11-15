@@ -1,14 +1,21 @@
 import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppText } from "@/components/AppText";
+import { TestLoginDialog } from "@/features/auth/components/TestLoginDialog";
 import { LoginSheet } from "@/features/auth/components/LoginSheet";
 import { SocialButtons } from "@/features/auth/components/SocialButtons";
 import { styles } from "./StartScreen.styles";
 import { useStart } from "../hooks/useStart";
 
 export function StartScreen() {
-  const { loginOpen, openHome, openProfileSetup, openLogin, closeLogin } =
-    useStart();
+  const {
+    loginOpen,
+    openLogin,
+    closeLogin,
+    testLoginOpen,
+    openTestLogin,
+    closeTestLogin,
+  } = useStart();
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -16,14 +23,11 @@ export function StartScreen() {
           <AppText
             accessibilityRole="header"
             style={styles.logo}
-            onLongPress={__DEV__ ? openHome : undefined}
+            onLongPress={__DEV__ ? openTestLogin : undefined}
           >
             QuoteMe
           </AppText>
-          <AppText
-            style={styles.tagline}
-            onLongPress={__DEV__ ? openProfileSetup : undefined}
-          >
+          <AppText style={styles.tagline}>
             소소한 생각도 쿼트미로 소중하게 모아보세요.
           </AppText>
         </View>
@@ -42,6 +46,9 @@ export function StartScreen() {
           </View>
         </View>
       </ScrollView>
+      {__DEV__ && testLoginOpen ? (
+        <TestLoginDialog onClose={closeTestLogin} />
+      ) : null}
       <LoginSheet visible={loginOpen} onClose={closeLogin} />
     </SafeAreaView>
   );
