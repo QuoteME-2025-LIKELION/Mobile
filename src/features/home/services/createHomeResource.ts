@@ -58,6 +58,12 @@ function parseProfile(value: MyProfile): MyProfile {
     profileImage: value.profileImage ?? null,
   };
 }
+function parseTags(value: unknown): string[] {
+  if (value == null) return [];
+  if (!Array.isArray(value) || value.some((tag) => typeof tag !== "string"))
+    throw new Error("Invalid quote tags");
+  return value;
+}
 export function mapQuoteList(
   value: QuoteList,
   myId: number
@@ -89,7 +95,7 @@ export function mapQuoteList(
         content: mine.content,
         nickname: mine.authorNickname,
         birthYear: mine.birthYear,
-        tags: mine.taggedNicknames ?? [],
+        tags: parseTags(mine.taggedNicknames),
       }
     : null;
   const items: FeedItem[] = value.otherQuotes.map((quote) => ({
@@ -98,7 +104,7 @@ export function mapQuoteList(
     introduction: quote.authorIntroduction ?? undefined,
     profileImage: quote.authorProfileImage ?? undefined,
     content: quote.content,
-    tags: quote.taggedNicknames ?? [],
+    tags: parseTags(quote.taggedNicknames),
     timeAgo: quote.timeAgo,
     isAiGenerated: quote.isAiGenerated === true,
   }));

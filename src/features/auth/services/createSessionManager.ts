@@ -9,6 +9,7 @@ export type SessionSnapshot = {
   status: "loading" | "anonymous" | "authenticated" | "error";
   member: SessionMember | null;
   busy: boolean;
+  retryable?: boolean;
 };
 type AuthResponse = {
   data?: { accessToken?: unknown; refreshToken?: unknown; item?: unknown };
@@ -113,7 +114,12 @@ export function createSessionManager(
         accessToken = nextAccess;
         emit({ status: "authenticated", member: nextMember, busy: false });
       } catch (error) {
-        if (version === generation) await clear(version);
+        if (
+          version === generation &&
+          error instanceof ApiError &&
+          error.status === 401
+        )
+          await clear(version);
         throw error;
       } finally {
         if (refreshTask?.generation === version) refreshTask = null;
@@ -124,7 +130,8 @@ export function createSessionManager(
   }
   async function initialize() {
     if (initializeTask) return initializeTask;
-    if (snapshot.status !== "loading") return;
+    if (snapshot.status !== "loading" && !snapshot.retryable) return;
+    emit({ status: "loading", member: null, busy: false });
     const version = generation;
     initializeTask = (async () => {
       try {
@@ -137,9 +144,9 @@ export function createSessionManager(
         refreshToken = saved;
         await refresh(version);
       } catch {
-        // 재발급 실패는 clear에서 처리한다. 저장소 읽기 실패는 로그인으로 인정하지 않는다.
+        // 인증 거부는 clear에서 처리한다. 일시적 복원 실패는 저장 정보를 유지한다.
         if (version === generation)
-          emit({ status: "error", member: null, busy: false });
+          emit({ status: "error", member: null, busy: false, retryable: true });
       }
     })().finally(() => {
       initializeTask = null;

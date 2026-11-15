@@ -64,3 +64,14 @@ test("late friend response cannot replace a newer list and disposal ignores outs
   await old;
   assert.equal(resource.getSnapshot().items[0].id, 8);
 });
+
+test("optional friend text is preserved only for strings", () => {
+  for (const value of [undefined, null, 1, false, {}, [], "", "소개/사진"]) {
+    const [friend] = parseFriends([
+      { id: 1, nickname: "친구", introduction: value, profileImage: value },
+    ]);
+    const expected = typeof value === "string" ? value : undefined;
+    assert.equal(friend.introduction, expected);
+    assert.equal(friend.profileImage, expected);
+  }
+});

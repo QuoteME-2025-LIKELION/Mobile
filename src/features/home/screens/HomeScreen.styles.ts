@@ -9,7 +9,7 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 12,
   },
-  statusText: { color: colors.white, textAlign: "center" },
+  statusText: { color: colors.primary, textAlign: "center" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",

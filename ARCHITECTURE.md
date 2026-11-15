@@ -54,6 +54,7 @@ src/
 ## 앱 세션 기반
 
 - `features/auth/services/createSessionManager.ts`는 네트워크·저장소를 주입받아 계정 입력 로그인, 복원, 재발급, 로그아웃을 처리한다. `session.ts`가 실제 JSON 전송과 SecureStore를 연결하고 `stores/useSession.ts`가 화면에 토큰을 제외한 상태만 제공한다.
+- 재발급의 401 인증 거부만 세션을 삭제한다. 네트워크·시간 초과·서버 오류는 토큰을 보존하며, 시작 시 복원 실패 화면에서 재시도하거나 실행 중 원래 요청을 다시 시도할 수 있다.
 - access는 메모리에만, refresh는 SecureStore에만 저장한다. 일반 API는 `session.request`를 사용한다. 앱 헤더·본문 refresh를 사용하며 쿠키를 보내지 않는다.
 - `.env.local`의 `EXPO_PUBLIC_API_URL`은 공개 origin 설정이며 Git에서 제외한다. `.env.example`에는 인증정보나 실제 주소를 담지 않는다. HTTP는 개발 모드 설정에만 허용하며 실제 기기의 네트워크 허용 여부는 별도다.
 - 개발용 계정 입력 로그인은 시작 화면 QuoteMe 로고 longpress의 이메일/비밀번호 입력창으로만 제공한다. 시작 화면에 상시 게스트 버튼·설명·인라인 개발 안내를 추가하지 않는다(2026-11-14 사용자 요청).

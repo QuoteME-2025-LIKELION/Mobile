@@ -120,8 +120,9 @@ export function useWrite() {
       setMessage("AI 사용량을 확인한 뒤 다시 시도해 주세요.");
       return;
     }
-    if (!cached && (ai.status === "exhausted" || ai.usage?.remaining === 0)) {
+    if (!cached && ai.usage?.remaining === 0) {
       setMessage("오늘 AI 추천 횟수를 모두 사용했어요.");
+      void ai.loadUsage();
       return;
     }
     if (ai.status === "loading" && ai.content !== text.trim()) {
@@ -188,7 +189,12 @@ export function useWrite() {
       await ai.loadUsage();
       return;
     }
-    if (ai.usage?.remaining === 0 || ai.status === "loading") return;
+    if (ai.status === "loading") return;
+    if (ai.usage?.remaining === 0) {
+      setMessage("오늘 AI 추천 횟수를 모두 사용했어요.");
+      await ai.loadUsage();
+      return;
+    }
     setRecommendationIndex(null);
     const message = await ai.generate(text, true);
     if (message) setMessage(message);

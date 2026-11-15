@@ -680,7 +680,7 @@ recommendCode = recommendCode.replace(
 );
 const { RecommendationList } = await import(url(recommendCode));
 
-test("recommendation panel only enables next for a current result and disables refresh while loading or exhausted", () => {
+test("recommendation panel only enables next for a current result and allows exhausted usage recheck and disables refresh while loading", () => {
   for (const status of ["loading", "success", "empty", "error", "exhausted"]) {
     let nexts = 0;
     const selected = [];
@@ -707,12 +707,9 @@ test("recommendation panel only enables next for a current result and disables r
       tree,
       (node) =>
         node.type === "Pressable" &&
-        node.props.accessibilityLabel?.includes("AI 추천")
+        /AI 추천|AI 사용량/.test(node.props.accessibilityLabel ?? "")
     );
-    assert.equal(
-      refresh.props.disabled,
-      status === "loading" || status === "exhausted"
-    );
+    assert.equal(refresh.props.disabled, status === "loading");
     const cards = nodes(tree).filter(
       (node) => node.props?.accessibilityLabel === "선택할 명언"
     );
@@ -915,4 +912,61 @@ test("friend lookup loading/error differs from a confirmed empty list and publis
   action(tree, "다음으로").props.onPress();
   tree = render();
   assert.equal(action(tree, "게시하기").props.disabled, true);
+});
+
+test("exhausted recommend rechecks usage without generating until a subsequent tap", async () => {
+  for (const remaining of [0, 1]) {
+    const { render, state } = harness();
+    let tree = render();
+    field(tree).props.onChangeText(
+      "오늘은 힘들었지만 작은 용기를 내어 한 걸음 나아갔다"
+    );
+    state.ai.status = "exhausted";
+    state.ai.usage = { used: 1, remaining: 0, limit: 1 };
+    let loads = 0;
+    state.ai.loadUsage = async () => {
+      loads++;
+      state.ai.usage = { used: 1 - remaining, remaining, limit: 1 };
+    };
+    tree = render();
+    await action(tree, "AI 추천 받기").props.onPress();
+    assert.equal(loads, 1);
+    assert.equal(state.aiCalls, 0);
+    tree = render();
+    assert.ok(
+      nodes(tree).some(
+        (n) => n.props?.message === "오늘 AI 추천 횟수를 모두 사용했어요."
+      )
+    );
+    await action(tree, "AI 추천 받기").props.onPress();
+    assert.equal(state.aiCalls, remaining);
+  }
+});
+test("refresh exhausted results rechecks usage, preserves selection and waits for next tap", async () => {
+  for (const remaining of [0, 1]) {
+    const { render, state } = harness();
+    let tree = render();
+    field(tree).props.onChangeText(
+      "오늘은 힘들었지만 작은 용기를 내어 한 걸음 나아갔다"
+    );
+    tree = render();
+    await action(tree, "AI 추천 받기").props.onPress();
+    await finishRecommendation(state);
+    tree = render();
+    recommendation(tree).props.onSelect(0);
+    state.ai.usage = { used: 1, remaining: 0, limit: 1 };
+    let loads = 0;
+    state.ai.loadUsage = async () => {
+      loads++;
+      state.ai.usage = { used: 1 - remaining, remaining, limit: 1 };
+    };
+    tree = render();
+    await recommendation(tree).props.onRefresh();
+    assert.equal(loads, 1);
+    assert.equal(state.aiCalls, 1);
+    tree = render();
+    assert.equal(recommendation(tree).props.selectedIndex, 0);
+    await recommendation(tree).props.onRefresh();
+    assert.equal(state.aiCalls, 1 + remaining);
+  }
 });

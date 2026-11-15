@@ -6,7 +6,7 @@ import { session } from "../services/session";
 import { useSession } from "../stores/useSession";
 import { styles } from "./SessionRecovery.styles";
 export function SessionRecovery() {
-  const { status, member, busy } = useSession();
+  const { status, member, busy, retryable } = useSession();
   const [error, setError] = useState("");
   if (status === "authenticated" && member?.profileCompleted === false)
     return (
@@ -47,11 +47,15 @@ export function SessionRecovery() {
             style={styles.button}
             accessibilityRole="button"
             onPress={() => {
-              void session.retryStorageCleanup().catch(() => {});
+              void (
+                retryable ? session.initialize() : session.retryStorageCleanup()
+              ).catch(() => {});
             }}
           >
             <AppText style={styles.text}>
-              로그인 정보 초기화 후 다시 시작
+              {retryable
+                ? "로그인 상태 다시 확인"
+                : "로그인 정보 초기화 후 다시 시작"}
             </AppText>
           </Pressable>
         </>

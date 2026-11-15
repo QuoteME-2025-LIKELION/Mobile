@@ -177,3 +177,34 @@ test("posting invalidation removes old home data while preserving the server gro
   assert.equal(resource.getSnapshot().status, "success");
   assert.equal(resource.getSnapshot().groupId, 7);
 });
+
+test("both own and other quotes require string-array tags, with nullish tags normalized", () => {
+  const quote = {
+    id: 7,
+    content: "명언",
+    authorNickname: "회원",
+    birthYear: null,
+  };
+  for (const key of ["myQuotes", "otherQuotes"]) {
+    for (const tags of [null, undefined, [], ["친구"]]) {
+      const mapped = mapQuoteList(
+        { ...quotes, [key]: [{ ...quote, taggedNicknames: tags }] },
+        1
+      );
+      assert.deepEqual(
+        key === "myQuotes" ? mapped.myQuote.tags : mapped.items[0].tags,
+        tags ?? []
+      );
+    }
+    for (const tags of ["친구", {}, 1, ["친구", null], [42]]) {
+      assert.throws(
+        () =>
+          mapQuoteList(
+            { ...quotes, [key]: [{ ...quote, taggedNicknames: tags }] },
+            1
+          ),
+        /Invalid quote tags/
+      );
+    }
+  }
+});

@@ -278,14 +278,15 @@ test("storage failures never authenticate and cleanup failure stays blocked unti
   assert.equal(manager.getSnapshot().status, "anonymous");
 });
 
-test("malformed refresh response is cleared rather than treated as an authenticated member", async () => {
+test("malformed refresh response preserves credentials without authenticating", async () => {
   const { manager, state } = fixture(
     async () => ({ data: { accessToken: "a" } }),
     "saved"
   );
   await manager.initialize();
-  assert.equal(manager.getSnapshot().status, "anonymous");
-  assert.equal(state.saved, null);
+  assert.equal(manager.getSnapshot().status, "error");
+  assert.equal(manager.getSnapshot().retryable, true);
+  assert.equal(state.saved, "saved");
 });
 
 test("real JSON transport omits cookies, adds app header and uses bearer only for access", async () => {
@@ -446,4 +447,105 @@ test("wrong account input stays on the sign-in screen without a refresh or stora
     calls.map(([path]) => path),
     ["/api/auth/login"]
   );
+});
+
+for (const failure of [
+  new TypeError("offline"),
+  new Error("timeout"),
+  new ApiError(503),
+  new ApiError(403),
+]) {
+  test(`startup refresh ${failure.message} preserves storage and retries restoration`, async () => {
+    let fail = true;
+    const { manager, state } = fixture(async () => {
+      if (fail) throw failure;
+      return renewed;
+    }, "saved-refresh");
+    await manager.initialize();
+    assert.equal(manager.getSnapshot().status, "error");
+    assert.equal(manager.getSnapshot().retryable, true);
+    assert.equal(state.removes, 0);
+    assert.equal(state.saved, "saved-refresh");
+    fail = false;
+    await manager.initialize();
+    assert.equal(manager.getSnapshot().status, "authenticated");
+    assert.equal(state.saved, "saved-refresh");
+  });
+  test(`runtime refresh ${failure.message} keeps access/member and can retry`, async () => {
+    let fail = true;
+    const { manager, state } = await signedIn(async (path, options) => {
+      if (path.endsWith("refresh")) {
+        if (fail) throw failure;
+        return renewed;
+      }
+      if (options.token === "access-1") throw new ApiError(401, "401-5");
+      return "ok";
+    });
+    const before = manager.getSnapshot();
+    await assert.rejects(manager.request("/api/profile"));
+    assert.deepEqual(manager.getSnapshot(), before);
+    assert.equal(state.removes, 0);
+    assert.equal(state.saved, "refresh-1");
+    fail = false;
+    assert.equal(await manager.request("/api/profile"), "ok");
+    assert.equal(state.calls.filter(([p]) => p.endsWith("refresh")).length, 2);
+  });
+}
+test("startup rejected refresh removes credentials rather than offering restore retry", async () => {
+  const { manager, state } = fixture(async () => {
+    throw new ApiError(401, "401-3");
+  }, "saved");
+  await manager.initialize();
+  assert.equal(manager.getSnapshot().status, "anonymous");
+  assert.equal(state.saved, null);
+});
+
+test("restore recovery retries without invoking credential cleanup", async () => {
+  const calls = [];
+  globalThis.__recoveryState = {
+    status: "error",
+    member: null,
+    busy: false,
+    retryable: true,
+  };
+  globalThis.__recoveryCalls = calls;
+  let code = compile(
+    await source("features/auth/components/SessionRecovery.tsx")
+  );
+  for (const [from, to] of Object.entries({
+    "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
+    react: url("export const useState=()=>['',()=>{}];"),
+    "react-native": url(
+      "export const ActivityIndicator='ActivityIndicator',Pressable='Pressable',View='View';"
+    ),
+    "@/components/AppText": url("export const AppText='AppText';"),
+    "@/styles/theme": url("export const colors={white:'white'};"),
+    "../services/session": url(
+      "export const session={initialize:async()=>globalThis.__recoveryCalls.push('restore'),retryStorageCleanup:async()=>globalThis.__recoveryCalls.push('cleanup')};"
+    ),
+    "../stores/useSession": url(
+      "export const useSession=()=>globalThis.__recoveryState;"
+    ),
+    "./SessionRecovery.styles": url("export const styles={};"),
+  }))
+    code = code.replaceAll(JSON.stringify(from), JSON.stringify(to));
+  const { SessionRecovery } = await import(url(code));
+  const all = (node) =>
+    !node || typeof node !== "object"
+      ? []
+      : [node, ...[node.props?.children].flat(Infinity).flatMap(all)];
+  let tree = SessionRecovery();
+  all(tree)
+    .find((n) => n.type === "Pressable")
+    .props.onPress();
+  assert.deepEqual(calls, ["restore"]);
+  globalThis.__recoveryState = {
+    ...globalThis.__recoveryState,
+    retryable: false,
+  };
+  tree = SessionRecovery();
+  all(tree)
+    .find((n) => n.type === "Pressable")
+    .props.onPress();
+  assert.deepEqual(calls, ["restore", "cleanup"]);
 });

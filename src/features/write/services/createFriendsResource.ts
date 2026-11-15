@@ -14,8 +14,10 @@ export function parseFriends(value: unknown): WriteFriend[] {
   return value.map((item) => ({
     id: item.id,
     nickname: item.nickname,
-    introduction: item.introduction ?? undefined,
-    profileImage: item.profileImage ?? undefined,
+    introduction:
+      typeof item.introduction === "string" ? item.introduction : undefined,
+    profileImage:
+      typeof item.profileImage === "string" ? item.profileImage : undefined,
   }));
 }
 export function createFriendsResource(
