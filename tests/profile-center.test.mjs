@@ -22,15 +22,19 @@ let code = compile(
   await read("features/profile/screens/ProfileCenterScreen.tsx")
 ).replace(/require\(['"][^'"]+['"]\)/g, "1");
 for (const [from, to] of Object.entries({
+  "@/features/profile/components/RemoveProfileImageButton": url(
+    "export const RemoveProfileImageButton='RemoveProfileImageButton';"
+  ),
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: reactUrl,
   "@/features/profile/services/profileApi": url(`
-    export const getProfile=async()=>{if(globalThis.__profileData?.status==="error") throw Error(); return {nickname:"듀가나다",introduction:"매일 한 문장씩 남겨요",profileImage:null};};
-    export const updateProfile=async (data)=>data;
+    export const getProfile=async()=>{if(globalThis.__profileData?.status==="error") throw Error(); return {nickname:"듀가나다",introduction:"매일 한 문장씩 남겨요",profileImage:globalThis.__profileData?.image??null};};
+    export const updateProfile=async (data)=>{if(globalThis.__profileCenter.failSave)throw Error();return data;};
   `),
   "@/features/home/stores/homeResource": url(
     "export const homeResource={load:async()=>{}};"
   ),
+  "@/components/ToastMessage": url("export const ToastMessage='ToastMessage';"),
   "expo-image": url("export const Image='Image';"),
   "expo-status-bar": url("export const StatusBar='StatusBar';"),
   "expo-router": url(
@@ -280,4 +284,30 @@ test("profile query failure exposes retry and disables editing without a sample 
   assert.ok(button(tree, "다시 시도"));
   assert.equal(label(tree, "프로필 관리 닫기").props.disabled, false);
   delete globalThis.__profileData;
+});
+
+test("failed profile image save restores the saved image and displays a toast", async () => {
+  const savedImage = "https://example.test/profile.jpg";
+  globalThis.__profileData = { image: savedImage };
+  const { h, render, edit } = harness({ selectImage: async () => image });
+  await Promise.resolve();
+  delete globalThis.__profileData;
+  let tree = edit();
+  assert.ok(nodes(tree).find((n) => n.type === "RemoveProfileImageButton"));
+  assert.equal(button(tree, "사진 삭제"), undefined);
+  await label(tree, "이미지 바꾸기").props.onPress();
+  h.failSave = true;
+  button(render(), "저장하기").props.onPress();
+  await Promise.resolve();
+  tree = render();
+  assert.ok(nodes(tree).some((n) => n.props.source?.uri === savedImage));
+  assert.equal(
+    nodes(tree).some((n) => n.props.source?.uri === image.uri),
+    false
+  );
+  assert.equal(
+    nodes(tree).find((n) => n.type === "ToastMessage").props.message,
+    "이미지 업로드에 실패했어요."
+  );
+  assert.ok(button(tree, "저장하기"));
 });

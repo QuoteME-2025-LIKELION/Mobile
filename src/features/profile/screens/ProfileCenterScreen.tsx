@@ -13,6 +13,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AppText } from "@/components/AppText";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { colors } from "@/styles/theme";
+import { RemoveProfileImageButton } from "../components/RemoveProfileImageButton";
+import { ToastMessage } from "@/components/ToastMessage";
 import { styles } from "./ProfileCenterScreen.styles";
 import { useProfileCenter } from "../hooks/useProfileCenter";
 
@@ -34,6 +36,8 @@ export function ProfileCenterScreen(
     picking: selecting,
     saving,
     saveError,
+    uploadToast,
+    clearUploadToast,
     saveDisabled,
     save,
     clearImage,
@@ -105,33 +109,41 @@ export function ProfileCenterScreen(
           }
         >
           <View style={styles.profile}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={
-                editing ? "프로필 이미지 변경" : "프로필 이미지"
-              }
-              disabled={!editing || picking}
-              accessibilityState={{
-                disabled: !editing || picking,
-                busy: picking,
-              }}
-              onPress={chooseImage}
-              style={styles.avatarBox}
-            >
-              <Image
-                source={
-                  image && !imageFailed
-                    ? { uri: image.uri }
-                    : profileImage && !imageFailed
-                      ? { uri: profileImage }
-                      : require("@/assets/images/profile/default-profile.png")
+            <View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  editing ? "프로필 이미지 변경" : "프로필 이미지"
                 }
-                contentFit="cover"
-                style={styles.avatar}
-                accessible={false}
-                onError={handleImageError}
-              />
-            </Pressable>
+                disabled={!editing || picking}
+                accessibilityState={{
+                  disabled: !editing || picking,
+                  busy: picking,
+                }}
+                onPress={chooseImage}
+                style={styles.avatarBox}
+              >
+                <Image
+                  source={
+                    image && !imageFailed
+                      ? { uri: image.uri }
+                      : profileImage && !imageFailed
+                        ? { uri: profileImage }
+                        : require("@/assets/images/profile/default-profile.png")
+                  }
+                  contentFit="cover"
+                  style={styles.avatar}
+                  accessible={false}
+                  onError={handleImageError}
+                />
+              </Pressable>
+              {editing && (image || profileImage) ? (
+                <RemoveProfileImageButton
+                  disabled={picking}
+                  onPress={clearImage}
+                />
+              ) : null}
+            </View>
             <Pressable
               disabled={!editing || picking}
               accessibilityRole="button"
@@ -226,15 +238,6 @@ export function ProfileCenterScreen(
           {saveError ? (
             <AppText accessibilityRole="alert">{saveError}</AppText>
           ) : null}
-          {editing && (image || profileImage) ? (
-            <Pressable
-              accessibilityRole="button"
-              disabled={picking}
-              onPress={clearImage}
-            >
-              <AppText>사진 삭제</AppText>
-            </Pressable>
-          ) : null}
           <Pressable
             accessibilityRole="button"
             accessibilityState={{
@@ -251,6 +254,7 @@ export function ProfileCenterScreen(
             </AppText>
           </Pressable>
         </View>
+        <ToastMessage message={uploadToast} onClose={clearUploadToast} />
       </KeyboardAvoidingView>
       <ConfirmDialog
         visible={exitOpen}

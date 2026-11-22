@@ -12,6 +12,7 @@ export const isValidBirthYear = (
 
 export type ProfileImage = {
   uri: string;
+  file?: File;
   fileName?: string | null;
   mimeType?: string | null;
   fileSize?: number;

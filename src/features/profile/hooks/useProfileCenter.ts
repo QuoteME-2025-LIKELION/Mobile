@@ -21,6 +21,7 @@ export function useProfileCenter({
   const [initialProfile, setProfile] = useState<Profile | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadToast, setUploadToast] = useState("");
   const [saveError, setSaveError] = useState("");
   const [removeImage, setRemoveImage] = useState(false);
   const insets = useSafeAreaInsets();
@@ -141,6 +142,7 @@ export function useProfileCenter({
     busy.current = true;
     setSaving(true);
     setSaveError("");
+    setUploadToast("");
     try {
       const profile = await updateProfile(
         {
@@ -161,7 +163,16 @@ export function useProfileCenter({
       setEditing(false);
       void homeResource.load();
     } catch {
-      if (mounted.current) setSaveError("프로필을 저장하지 못했어요.");
+      if (!mounted.current) return;
+      if (image) {
+        setImage(null);
+        setRemoveImage(false);
+        setImageFailed(false);
+        setImageError("");
+        setUploadToast("이미지 업로드에 실패했어요.");
+      } else {
+        setSaveError("프로필을 저장하지 못했어요.");
+      }
     } finally {
       busy.current = false;
       if (mounted.current) setSaving(false);
@@ -176,6 +187,8 @@ export function useProfileCenter({
     },
     saving,
     saveError,
+    uploadToast,
+    clearUploadToast: () => setUploadToast(""),
     saveDisabled: !dirty || nicknameEmpty || Boolean(image && imageFailed),
     save,
     clearImage: () => {

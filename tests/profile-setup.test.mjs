@@ -88,6 +88,9 @@ for (const [from, to] of Object.entries({
   ),
   "@/api/createApiClient": url("export class ApiError extends Error {}"),
   "@/components/ToastMessage": url("export const ToastMessage='ToastMessage';"),
+  "@/features/profile/components/RemoveProfileImageButton": url(
+    "export const RemoveProfileImageButton='RemoveProfileImageButton';"
+  ),
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: reactUrl,
   "expo-image": url("export const Image='Image';"),
@@ -309,10 +312,7 @@ test("removing or failing to upload a photo restores the default image and no-im
     return h.render();
   };
   const remove = (view) =>
-    find(
-      view,
-      (node) => node.props?.accessibilityLabel === "선택한 이미지 제거"
-    );
+    find(view, (node) => node.type === "RemoveProfileImageButton");
   assert.equal(remove(tree), undefined);
   tree = await select();
   assert.ok(button(tree, "쿼트미 시작하기"));
@@ -339,4 +339,33 @@ test("removing or failing to upload a photo restores the default image and no-im
   button(tree, "이미지 없이 시작하기").props.onPress();
   assert.equal(h.state.setups, 1);
   assert.equal(h.state.completed, true);
+});
+
+test("profile requests send image files and a typed JSON part", async () => {
+  const sessionUrl = url(
+    "export const session={request:async(path,options)=>({path,...options})};"
+  );
+  const fileSystemUrl = url(
+    'export class File extends globalThis.File {constructor(uri){super(["image"],uri.split("/").pop(),{type:"image/jpeg"});}}'
+  );
+  const api = await import(
+    url(
+      compile(await read("features/profile/services/profileApi.ts"))
+        .replaceAll("'expo-file-system'", JSON.stringify(fileSystemUrl))
+        .replaceAll(
+          "'@/features/auth/services/session'",
+          JSON.stringify(sessionUrl)
+        )
+    )
+  );
+  const image = { uri: "file:///profile.jpg" };
+  const upload = await api.uploadProfileImage(image);
+  assert.equal(upload.path, "/api/profile");
+  assert.equal(upload.method, "PUT");
+  assert.equal(upload.multipart.get("image").name, "profile.jpg");
+  const update = await api.updateProfile({ nickname: "닉네임" }, image);
+  assert.equal(update.multipart.get("image").type, "image/jpeg");
+  const data = update.multipart.get("data");
+  assert.equal(data.type, "application/json");
+  assert.deepEqual(JSON.parse(await data.text()), { nickname: "닉네임" });
 });

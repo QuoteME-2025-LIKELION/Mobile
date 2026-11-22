@@ -1,4 +1,3 @@
-import { ApiError } from "@/api/createApiClient";
 import { session } from "@/features/auth/services/session";
 import {
   setupProfile,
@@ -160,17 +159,7 @@ export function useProfileSetup({
       if (image) {
         try {
           await uploadProfileImage(image);
-        } catch (error) {
-          if (__DEV__) {
-            const status =
-              error instanceof ApiError ? error.status : "확인 불가";
-            const code =
-              error instanceof ApiError &&
-              /^\d{3}(?:-\d+)?$/.test(error.code ?? "")
-                ? error.code
-                : undefined;
-            console.info("프로필 이미지 업로드 실패", { status, code });
-          }
+        } catch {
           if (mounted.current) {
             clearImage();
             setUploadToast("이미지 업로드에 실패했어요.");

@@ -13,6 +13,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AppText } from "@/components/AppText";
 import { ToastMessage } from "@/components/ToastMessage";
 import { colors } from "@/styles/theme";
+import { RemoveProfileImageButton } from "../components/RemoveProfileImageButton";
 import { styles } from "./ProfileSetupScreen.styles";
 import { useProfileSetup } from "../hooks/useProfileSetup";
 
@@ -160,23 +161,10 @@ export function ProfileSetupScreen(
                     />
                   </View>
                   {image ? (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="선택한 이미지 제거"
+                    <RemoveProfileImageButton
                       disabled={pending}
                       onPress={clearImage}
-                      hitSlop={12}
-                      style={styles.removeImage}
-                    >
-                      <View style={styles.removeCross} pointerEvents="none">
-                        <View
-                          style={[styles.removeStroke, styles.removeForward]}
-                        />
-                        <View
-                          style={[styles.removeStroke, styles.removeBackward]}
-                        />
-                      </View>
-                    </Pressable>
+                    />
                   ) : null}
                 </View>
                 <Pressable
