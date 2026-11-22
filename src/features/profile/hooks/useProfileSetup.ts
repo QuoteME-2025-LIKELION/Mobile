@@ -51,12 +51,15 @@ export function useProfileSetup({
   const mounted = useRef(true);
   const field = profileSetupSteps[step];
   const value = values[step] ?? "";
-  const valid = step === 2 ? isValidBirthYear(value) : value.trim().length > 0;
+  const valid =
+    step === 0
+      ? value.trim().length > 0
+      : step !== 2 || isValidBirthYear(value);
   const error =
     step < 3 && !valid && (touched[step] || (step === 2 && value.length === 4))
       ? step === 2
         ? `1900년부터 ${new Date().getFullYear()}년 사이의 출생연도를 숫자 4자리로 입력해 주세요.`
-        : `${field.label}${step === 0 ? "을" : "를"} 입력해 주세요.`
+        : "닉네임을 입력해 주세요."
       : "";
   const goBackOneStep = useCallback(() => {
     if (busy.current) return;

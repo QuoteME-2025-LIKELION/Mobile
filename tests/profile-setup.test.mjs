@@ -156,7 +156,7 @@ function harness(props = {}) {
   return { state, render, fill, advance };
 }
 
-test("four-step profile requires inputs, preserves them on back, and enables signup on the photo step", () => {
+test("four-step profile accepts a blank introduction while preserving the required fields", () => {
   const h = harness();
   let tree = h.render();
   assert.equal(button(tree, "다음으로").props.disabled, true);
@@ -173,7 +173,8 @@ test("four-step profile requires inputs, preserves them on back, and enables sig
   tree = h.render();
   assert.equal(field(tree).props.value, "😀".repeat(10));
   tree = h.advance("듀랄라");
-  tree = h.advance("오늘도 좋은 하루");
+  assert.equal(button(tree, "다음으로").props.disabled, false);
+  tree = h.advance("   ");
   tree = h.fill("1899");
   assert.equal(button(tree, "다음으로").props.disabled, true);
   tree = h.fill(String(new Date().getFullYear() + 1));
