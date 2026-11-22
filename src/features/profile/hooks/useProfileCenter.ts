@@ -107,8 +107,7 @@ export function useProfileCenter({
       setRemoveImage(false);
       setImageFailed(false);
     } catch {
-      if (mounted.current)
-        setImageError("이미지를 불러오지 못했어요. 다시 선택해 주세요.");
+      if (mounted.current) setImageError("이미지를 불러오지 못했어요.");
     } finally {
       busy.current = false;
       if (mounted.current) setPicking(false);
@@ -117,7 +116,7 @@ export function useProfileCenter({
   const handleImageError = () => {
     setImageFailed(true);
     if (image) {
-      setImageError("이미지를 표시하지 못했어요. 다시 선택해 주세요.");
+      setImageError("이미지를 표시하지 못했어요.");
     }
   };
   const confirmExit = () => {
@@ -162,8 +161,7 @@ export function useProfileCenter({
       setEditing(false);
       void homeResource.load();
     } catch {
-      if (mounted.current)
-        setSaveError("프로필을 저장하지 못했어요. 다시 시도해 주세요.");
+      if (mounted.current) setSaveError("프로필을 저장하지 못했어요.");
     } finally {
       busy.current = false;
       if (mounted.current) setSaving(false);

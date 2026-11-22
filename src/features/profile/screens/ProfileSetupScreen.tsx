@@ -195,7 +195,9 @@ export function ProfileSetupScreen(
                 {saving
                   ? "저장 중…"
                   : step === 3
-                    ? "쿼트미 시작하기"
+                    ? canSkipImage
+                      ? "사진 다시 올리기"
+                      : "쿼트미 시작하기"
                     : "다음으로"}
               </AppText>
             </Pressable>

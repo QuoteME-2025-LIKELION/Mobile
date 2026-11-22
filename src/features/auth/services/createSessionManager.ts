@@ -104,7 +104,7 @@ export function createSessionManager(
         busy: false,
         ...(accountDeleted ? { accountDeleted } : {}),
       });
-      throw new Error("로그인 정보를 지우지 못했어요. 다시 시도해 주세요.");
+      throw new Error("로그인 정보를 지우지 못했어요.");
     }
   }
   async function refresh(version: number) {

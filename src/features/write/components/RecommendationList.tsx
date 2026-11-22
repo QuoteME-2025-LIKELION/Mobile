@@ -19,9 +19,8 @@ type Props = {
 
 const messages: Partial<Record<RecommendationStatus, string>> = {
   loading: "AI 추천을 불러오는 중입니다.",
-  empty:
-    "추천 결과가 없어요. 사용 횟수는 차감되지 않았으니 다시 시도해 주세요.",
-  error: "AI 추천을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
+  empty: "추천 결과가 없어요. 횟수는 차감되지 않았어요.",
+  error: "AI 추천을 불러오지 못했어요.",
   exhausted: "오늘 AI 추천 횟수를 모두 사용했어요.",
 };
 

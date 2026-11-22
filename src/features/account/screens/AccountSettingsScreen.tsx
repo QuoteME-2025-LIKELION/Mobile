@@ -23,12 +23,9 @@ export function AccountSettingsScreen() {
             <AppText>계정 정보를 불러오는 중이에요.</AppText>
           ) : null}
           {account.loadError ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => void account.retry()}
-            >
-              <AppText>계정 정보를 불러오지 못했어요. 다시 시도</AppText>
-            </Pressable>
+            <AppText accessibilityRole="alert">
+              계정 정보를 불러오지 못했습니다.
+            </AppText>
           ) : null}
           <Pressable
             disabled={account.loading || account.loadError || account.saving}

@@ -90,7 +90,7 @@ export function useProfileSetup({
           error instanceof Error &&
             /ExponentImagePicker|native module/i.test(error.message)
             ? "사진 선택을 사용하려면 개발 앱을 다시 빌드·설치해 주세요."
-            : "이미지 선택을 열지 못했어요. 잠시 후 다시 시도해 주세요."
+            : "사진 선택을 열지 못했어요."
         );
     } finally {
       busy.current = false;
@@ -115,16 +115,14 @@ export function useProfileSetup({
         try {
           await uploadProfileImage(image);
         } catch {
-          setSaveError(
-            "기본 정보는 저장했어요. 사진을 다시 올리거나 사진 없이 시작할 수 있어요."
-          );
+          setSaveError("사진을 올리지 못했어요.");
           return;
         }
       }
       allowExit();
       session.completeProfile(profile);
     } catch {
-      setSaveError("프로필 설정을 저장하지 못했어요. 다시 시도해 주세요.");
+      setSaveError("프로필을 저장하지 못했어요.");
     } finally {
       busy.current = false;
       if (mounted.current) setSaving(false);
@@ -139,8 +137,7 @@ export function useProfileSetup({
       allowExit();
       await session.logout();
     } catch {
-      if (mounted.current)
-        setLogoutError("로그아웃하지 못했어요. 다시 시도해 주세요.");
+      if (mounted.current) setLogoutError("로그아웃하지 못했어요.");
     } finally {
       busy.current = false;
       if (mounted.current) setLoggingOut(false);

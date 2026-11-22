@@ -11,7 +11,7 @@ export function SessionRecovery() {
       {status === "error" ? (
         <>
           <AppText style={styles.text} accessibilityRole="alert">
-            로그인 정보를 확인하지 못했어요. 다시 시도해 주세요.
+            로그인 정보를 확인하지 못했어요.
           </AppText>
           <Pressable
             style={styles.button}

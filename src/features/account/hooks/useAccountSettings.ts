@@ -67,7 +67,7 @@ export function useAccountSettings() {
       setAccount({ ...account, ...body });
       setSheet(null);
     } catch {
-      setSaveError("계정 정보를 저장하지 못했어요. 다시 시도해 주세요.");
+      setSaveError("계정 정보를 저장하지 못했어요.");
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -82,9 +82,7 @@ export function useAccountSettings() {
     try {
       await session.logout();
     } catch {
-      setLogoutError(
-        "로그아웃하지 못했어요. 연결을 확인하고 다시 시도해 주세요."
-      );
+      setLogoutError("로그아웃하지 못했어요.");
     } finally {
       logoutRef.current = false;
       setLogoutPending(false);
@@ -93,10 +91,6 @@ export function useAccountSettings() {
   return {
     loading: !account && !loadError,
     loadError,
-    retry: () => {
-      setLoadError(false);
-      load();
-    },
     saving,
     saveError,
     linkedProviders: account
