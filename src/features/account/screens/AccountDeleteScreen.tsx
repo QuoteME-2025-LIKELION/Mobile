@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AppText } from "@/components/AppText";
 import { colors } from "@/styles/theme";
 import { AccountHeader } from "../components/AccountHeader";
@@ -37,18 +38,13 @@ export function AccountDeleteScreen() {
                 "계정을 삭제하면 모든 계정 정보와\n작성한 글이 삭제되며 복구가 불가능 합니다."
               }
             </AppText>
-            {/* 완료 화면 검토만을 위한 개발용 진입. 실제 삭제 버튼과 분리한다. */}
-            <Pressable
-              accessible={false}
-              onLongPress={__DEV__ ? form.previewComplete : undefined}
-            >
-              <AppText accessibilityRole="header" style={styles.reasonTitle}>
-                서비스 탈퇴 사유
-              </AppText>
-            </Pressable>
+            <AppText accessibilityRole="header" style={styles.reasonTitle}>
+              서비스 탈퇴 사유
+            </AppText>
             {DELETE_REASONS.map((reason) => (
               <Pressable
                 key={reason}
+                disabled={form.pending}
                 accessibilityRole="checkbox"
                 accessibilityState={{
                   checked: form.selectedReasons.includes(reason),
@@ -75,27 +71,43 @@ export function AccountDeleteScreen() {
                 onChangeText={form.setOtherReason}
                 placeholder="탈퇴 사유를 작성해 주세요"
                 placeholderTextColor={colors["grey-400"]}
+                editable={!form.pending}
                 multiline
                 style={styles.otherInput}
               />
             )}
           </View>
-          {/* 서버 삭제 미연동. 입력 검증과 실제 요청 가능 여부를 구분한다. */}
+          {form.error ? (
+            <AppText accessibilityRole="alert">{form.error}</AppText>
+          ) : null}
           <Pressable
-            disabled
+            disabled={!form.validReasons || form.pending}
+            onPress={form.openConfirm}
             accessibilityRole="button"
             accessibilityLabel="계정 삭제"
-            accessibilityState={{ disabled: true }}
+            accessibilityState={{
+              disabled: !form.validReasons || form.pending,
+              busy: form.pending,
+            }}
             style={styles.deleteButton}
           >
             <AppText
               style={[styles.deleteLabel, !form.validReasons && styles.invalid]}
             >
-              계정 삭제
+              {form.pending ? "계정 삭제 중…" : "계정 삭제"}
             </AppText>
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
+      <ConfirmDialog
+        visible={form.confirmOpen}
+        title="계정을 삭제할까요?"
+        description="삭제한 계정은 복구할 수 없어요."
+        dismissLabel="돌아가기"
+        confirmLabel="계정 삭제"
+        onClose={form.closeConfirm}
+        onConfirm={() => void form.confirmDelete()}
+      />
     </SafeAreaView>
   );
 }

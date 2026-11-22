@@ -7,6 +7,7 @@ import { StatusBar } from "expo-status-bar";
 import { session } from "@/features/auth/services/session";
 import { useSession } from "@/features/auth/stores/useSession";
 import { SessionRecovery } from "@/features/auth/components/SessionRecovery";
+import { AccountDeleteCompleteScreen } from "@/features/account/screens/AccountDeleteCompleteScreen";
 import { colors, fontSources } from "@/styles/theme";
 
 SplashScreen.preventAutoHideAsync();
@@ -41,6 +42,8 @@ export default function RootLayout() {
       <StatusBar style="light" />
       {auth.status === "loading" || auth.status === "error" ? (
         <SessionRecovery />
+      ) : auth.accountDeleted ? (
+        <AccountDeleteCompleteScreen onDone={session.dismissAccountDeletion} />
       ) : (
         <Stack
           screenOptions={{
@@ -77,7 +80,6 @@ export default function RootLayout() {
             <Stack.Screen name="blocked-members" />
             <Stack.Screen name="account-setting" />
             <Stack.Screen name="account-delete" />
-            <Stack.Screen name="account-delete-complete" />
           </Stack.Protected>
         </Stack>
       )}

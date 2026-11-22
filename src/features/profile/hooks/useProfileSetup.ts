@@ -26,6 +26,8 @@ export function useProfileSetup({
   const [image, setImage] = useState<ProfileImage | null>(null);
   const [imageError, setImageError] = useState("");
   const [picking, setPicking] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [savedProfile, setSavedProfile] = useState<Profile | null>(null);
@@ -44,7 +46,7 @@ export function useProfileSetup({
         : `${field.label}${step === 0 ? "을" : "를"} 입력해 주세요.`
       : "";
   const allowExit = usePreventRemove(
-    (step > 0 && !savedProfile) || picking || saving,
+    (step > 0 && !savedProfile) || picking || saving || loggingOut,
     () => {
       if (busy.current) return;
       Keyboard.dismiss();
@@ -63,7 +65,7 @@ export function useProfileSetup({
     if (step > 0 && step < 3) inputRef.current?.focus();
   }, [step]);
   const next = () => {
-    if (step >= 3 || !valid) return;
+    if (step >= 3 || !valid || busy.current) return;
     Keyboard.dismiss();
     setFocused(false);
     setStep((current) => current + 1);
@@ -128,6 +130,22 @@ export function useProfileSetup({
       if (mounted.current) setSaving(false);
     }
   };
+  const logout = async () => {
+    if (busy.current) return;
+    busy.current = true;
+    setLoggingOut(true);
+    setLogoutError("");
+    try {
+      allowExit();
+      await session.logout();
+    } catch {
+      if (mounted.current)
+        setLogoutError("로그아웃하지 못했어요. 다시 시도해 주세요.");
+    } finally {
+      busy.current = false;
+      if (mounted.current) setLoggingOut(false);
+    }
+  };
   const handleChangeText = (text: string) =>
     setValues((current) =>
       current.map((previous, index) =>
@@ -152,6 +170,9 @@ export function useProfileSetup({
     setImageError,
     picking,
     saving,
+    loggingOut,
+    logoutError,
+    logout,
     saveError,
     canSkipImage: savedProfile !== null && saveError !== "",
     submit,

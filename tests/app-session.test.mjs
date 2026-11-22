@@ -376,6 +376,9 @@ test("root navigator protects every development screen behind the real session",
     "@/features/auth/stores/useSession": url(
       "export const useSession=()=>globalThis.__rootSession;"
     ),
+    "@/features/account/screens/AccountDeleteCompleteScreen": url(
+      "export const AccountDeleteCompleteScreen='AccountDeleteComplete';"
+    ),
     "@/features/auth/components/SessionRecovery": url(
       "export const SessionRecovery='Recovery';"
     ),
@@ -548,4 +551,27 @@ test("restore recovery retries without invoking credential cleanup", async () =>
     .find((n) => n.type === "Pressable")
     .props.onPress();
   assert.deepEqual(calls, ["restore", "cleanup"]);
+});
+
+test("account deletion clears saved tokens once and exposes completion only after server success", async () => {
+  const pending = deferred();
+  const { manager, state } = await signedIn(() => pending.promise);
+  const first = manager.deleteAccount();
+  const second = manager.deleteAccount();
+  assert.equal(manager.getSnapshot().status, "authenticated");
+  pending.resolve();
+  await Promise.all([first, second]);
+  const deletes = state.calls.filter(
+    ([path]) => path === "/api/profile/account"
+  );
+  assert.equal(deletes.length, 1);
+  assert.equal(deletes[0][1].method, "DELETE");
+  assert.equal(state.saved, null);
+  assert.equal(manager.getSnapshot().accountDeleted, true);
+  manager.dismissAccountDeletion();
+  assert.deepEqual(manager.getSnapshot(), {
+    status: "anonymous",
+    member: null,
+    busy: false,
+  });
 });

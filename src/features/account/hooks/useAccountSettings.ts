@@ -27,16 +27,11 @@ export function useAccountSettings() {
   const [logoutOpen, setLogoutOpen] = useState(false);
   const { blocked } = useModerationState();
   const years = getBirthYears();
-  async function load() {
-    setLoadError(false);
-    try {
-      setAccount(await getAccount());
-    } catch {
-      setLoadError(true);
-    }
+  function load() {
+    void getAccount().then(setAccount, () => setLoadError(true));
   }
   useEffect(() => {
-    void load();
+    load();
   }, []);
   const openSheet = (next: Exclude<Sheet, null>) => {
     if (!account || savingRef.current) return;
@@ -98,7 +93,10 @@ export function useAccountSettings() {
   return {
     loading: !account && !loadError,
     loadError,
-    retry: load,
+    retry: () => {
+      setLoadError(false);
+      load();
+    },
     saving,
     saveError,
     linkedProviders: account

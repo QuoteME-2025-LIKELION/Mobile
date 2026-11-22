@@ -25,6 +25,9 @@ export function ProfileSetupScreen(
     setImageError,
     picking,
     saving,
+    loggingOut,
+    logoutError,
+    logout,
     saveError,
     canSkipImage,
     submit,
@@ -41,6 +44,7 @@ export function ProfileSetupScreen(
     handleChangeText,
     handleBlur,
   } = useProfileSetup(options);
+  const pending = picking || saving || loggingOut;
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar style="dark" />
@@ -134,10 +138,10 @@ export function ProfileSetupScreen(
                 <Pressable
                   accessibilityRole="button"
                   accessibilityState={{
-                    disabled: picking || saving,
+                    disabled: pending,
                     busy: picking,
                   }}
-                  disabled={picking || saving}
+                  disabled={pending}
                   onPress={chooseImage}
                   style={styles.upload}
                 >
@@ -163,7 +167,7 @@ export function ProfileSetupScreen(
             {canSkipImage ? (
               <Pressable
                 accessibilityRole="button"
-                disabled={saving}
+                disabled={pending}
                 onPress={() => void submit(true)}
               >
                 <AppText style={styles.buttonText}>사진 없이 시작하기</AppText>
@@ -172,22 +176,20 @@ export function ProfileSetupScreen(
             <Pressable
               accessibilityRole="button"
               accessibilityState={{
-                disabled: saving || picking || (step < 3 && !valid),
+                disabled: pending || (step < 3 && !valid),
               }}
-              disabled={saving || picking || (step < 3 && !valid)}
+              disabled={pending || (step < 3 && !valid)}
               onPress={step === 3 ? () => void submit() : next}
               style={({ pressed }) => [
                 styles.button,
-                (saving || picking || (step < 3 && !valid)) &&
-                  styles.disabledButton,
+                (pending || (step < 3 && !valid)) && styles.disabledButton,
                 pressed && styles.pressed,
               ]}
             >
               <AppText
                 style={[
                   styles.buttonText,
-                  (saving || picking || (step < 3 && !valid)) &&
-                    styles.disabledText,
+                  (pending || (step < 3 && !valid)) && styles.disabledText,
                 ]}
               >
                 {saving
@@ -197,6 +199,20 @@ export function ProfileSetupScreen(
                     : "다음으로"}
               </AppText>
             </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              disabled={pending}
+              onPress={() => void logout()}
+            >
+              <AppText style={styles.buttonText}>
+                {loggingOut ? "로그아웃 중…" : "로그아웃"}
+              </AppText>
+            </Pressable>
+            {logoutError ? (
+              <AppText style={styles.error} accessibilityRole="alert">
+                {logoutError}
+              </AppText>
+            ) : null}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

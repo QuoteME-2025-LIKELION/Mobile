@@ -20,7 +20,7 @@ const theme = url(
 );
 const imports = {
   "@/features/auth/services/session": url(
-    "export const session={logout:async()=>{globalThis.__account.logoutCalls=(globalThis.__account.logoutCalls??0)+1;}};"
+    "export const session={deleteAccount:async()=>{globalThis.__account.deleteCalls=(globalThis.__account.deleteCalls??0)+1;},logout:async()=>{globalThis.__account.logoutCalls=(globalThis.__account.logoutCalls??0)+1;}};"
   ),
   "@/features/auth/stores/useSession": url(
     'export const useSession=()=>({status:globalThis.__account.authenticated?"authenticated":"anonymous",busy:false});'
@@ -36,7 +36,7 @@ const imports = {
     `export const useEffect=fn=>{const h=globalThis.__account;if(!h.mounted){h.mounted=true;fn();}};export const useState=initial=>{const h=globalThis.__account;const i=h.next++;if(!(i in h.values))h.values[i]=typeof initial==='function'?initial():initial;return [h.values[i],value=>h.values[i]=typeof value==='function'?value(h.values[i]):value];};export const useRef=initial=>{const h=globalThis.__account;const i=h.next++;return h.values[i]??=( {current:initial} );};`
   ),
   "expo-router": url(
-    `export const Redirect='Redirect';export const router={canGoBack:()=>globalThis.__account.canGoBack,back:()=>globalThis.__account.routes.push('back'),replace:path=>globalThis.__account.routes.push(['replace',path]),push:path=>globalThis.__account.routes.push(['push',path]),dismissTo:path=>globalThis.__account.routes.push(['dismissTo',path])};`
+    `export const usePreventRemove=()=>{};export const Redirect='Redirect';export const router={canGoBack:()=>globalThis.__account.canGoBack,back:()=>globalThis.__account.routes.push('back'),replace:path=>globalThis.__account.routes.push(['replace',path]),push:path=>globalThis.__account.routes.push(['push',path]),dismissTo:path=>globalThis.__account.routes.push(['dismissTo',path])};`
   ),
   "react-native": url(
     `export const View='View',Pressable='Pressable',ScrollView='ScrollView',TextInput='TextInput',Modal='Modal',KeyboardAvoidingView='KeyboardAvoidingView',Platform={OS:'android'},StyleSheet={create:value=>value,absoluteFill:{position:'absolute'}};`
@@ -221,26 +221,27 @@ test("deletion reason validation handles multiple selection and blank other reas
   h = render();
   assert.equal(h.validReasons, false);
 });
-test("delete screen reveals other input but never submits deletion; completion shortcut is development-only", () => {
+test("delete screen requires a reason and confirmation before calling the session", async () => {
   const { state, render } = harness(AccountDeleteScreen);
   let tree = render();
-  assert.equal(nodes(tree).filter((n) => n.type === "TextInput").length, 0);
   nodes(tree)
     .find((n) => n.type === "Pressable" && text(n) === "기타")
     .props.onPress();
   tree = render();
-  assert.equal(nodes(tree).filter((n) => n.type === "TextInput").length, 1);
-  const submit = nodes(tree).find(
-    (n) => n.props.accessibilityLabel === "계정 삭제"
-  );
-  assert.equal(submit.props.disabled, true);
-  assert.equal(submit.props.onPress, undefined);
-  const shortcut = nodes(tree).find((n) => n.props.onLongPress);
-  shortcut.props.onLongPress();
-  assert.deepEqual(state.routes, [["push", "/account-delete-complete"]]);
-  globalThis.__DEV__ = false;
-  shortcut.props.onLongPress();
-  assert.equal(state.routes.length, 1);
+  const input = nodes(tree).find((n) => n.type === "TextInput");
+  const submit = (t) =>
+    nodes(t).find((n) => n.props.accessibilityLabel === "계정 삭제");
+  assert.equal(submit(tree).props.disabled, true);
+  input.props.onChangeText("테스트 사유");
+  tree = render();
+  assert.equal(submit(tree).props.disabled, false);
+  submit(tree).props.onPress();
+  const dialog = nodes(render()).find((n) => n.type === "ConfirmDialog");
+  assert.equal(dialog.props.visible, true);
+  assert.equal(state.deleteCalls, undefined);
+  dialog.props.onConfirm();
+  await Promise.resolve();
+  assert.equal(state.deleteCalls, 1);
 });
 test("native picker back/outside cancels and selected year centers on opening", () => {
   let closed = 0,
@@ -278,20 +279,21 @@ test("native picker back/outside cancels and selected year centers on opening", 
     .props.onPress();
   assert.equal(done, 1);
 });
-test("completion returns to root even when opened directly", () => {
-  const { state, render } = harness(AccountDeleteCompleteScreen);
-  const tree = render();
-  nodes(tree)
+test("completion closes through the supplied action", () => {
+  let done = 0;
+  const { render } = harness(AccountDeleteCompleteScreen, {
+    onDone: () => done++,
+  });
+  nodes(render())
     .find((n) => n.type === "Pressable")
     .props.onPress();
-  assert.deepEqual(state.routes, [["dismissTo", "/"]]);
+  assert.equal(done, 1);
 });
 
 test("all account routes redirect outside development builds", async () => {
   for (const [route, screen] of [
     ["account-setting", "AccountSettingsScreen"],
     ["account-delete", "AccountDeleteScreen"],
-    ["account-delete-complete", "AccountDeleteCompleteScreen"],
   ]) {
     const specifier = `@/features/account/screens/${screen}`;
     imports[specifier] = url(`export const ${screen}='${screen}';`);

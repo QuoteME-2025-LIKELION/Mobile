@@ -48,18 +48,19 @@ export function useProfileCenter({
     image !== null ||
     removeImage;
   const dirty = editing && changed;
-  async function load() {
-    setLoadError(false);
-    try {
-      const profile = await getProfile();
-      if (mounted.current) setProfile(profile);
-    } catch {
-      if (mounted.current) setLoadError(true);
-    }
+  function load() {
+    void getProfile().then(
+      (profile) => {
+        if (mounted.current) setProfile(profile);
+      },
+      () => {
+        if (mounted.current) setLoadError(true);
+      }
+    );
   }
   useEffect(() => {
     mounted.current = true;
-    void load();
+    load();
     return () => {
       mounted.current = false;
     };
@@ -171,7 +172,10 @@ export function useProfileCenter({
   return {
     loading: !initialProfile && !loadError,
     loadError,
-    retry: load,
+    retry: () => {
+      setLoadError(false);
+      load();
+    },
     saving,
     saveError,
     saveDisabled: !dirty || nicknameEmpty || Boolean(image && imageFailed),

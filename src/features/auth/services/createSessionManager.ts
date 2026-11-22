@@ -10,6 +10,7 @@ export type SessionSnapshot = {
   member: SessionMember | null;
   busy: boolean;
   retryable?: boolean;
+  accountDeleted?: boolean;
 };
 type AuthResponse = {
   data?: { accessToken?: unknown; refreshToken?: unknown; item?: unknown };
@@ -66,6 +67,7 @@ export function createSessionManager(
   let storageQueue: Promise<unknown> = Promise.resolve();
   let initializeTask: Promise<void> | null = null;
   let loginTask: Promise<void> | null = null;
+  let deleteTask: Promise<void> | null = null;
   let logoutTask: Promise<void> | null = null;
   let refreshTask: { generation: number; task: Promise<void> } | null = null;
   const listeners = new Set<() => void>();
@@ -81,7 +83,7 @@ export function createSessionManager(
     storageQueue = task.catch(() => {});
     return task;
   };
-  async function clear(version: number) {
+  async function clear(version: number, accountDeleted = false) {
     check(version);
     generation++;
     accessToken = refreshToken = null;
@@ -89,9 +91,19 @@ export function createSessionManager(
     emit({ status: "loading", member: null, busy: false });
     try {
       await stored(() => storage.remove());
-      emit({ status: "anonymous", member: null, busy: false });
+      emit({
+        status: "anonymous",
+        member: null,
+        busy: false,
+        ...(accountDeleted ? { accountDeleted } : {}),
+      });
     } catch {
-      emit({ status: "error", member: null, busy: false });
+      emit({
+        status: "error",
+        member: null,
+        busy: false,
+        ...(accountDeleted ? { accountDeleted } : {}),
+      });
       throw new Error("로그인 정보를 지우지 못했어요. 다시 시도해 주세요.");
     }
   }
@@ -241,6 +253,7 @@ export function createSessionManager(
     }
   }
   async function logout() {
+    if (deleteTask) throw new SessionChangedError();
     if (logoutTask) return logoutTask;
     if (snapshot.status !== "authenticated") return;
     const version = ++generation;
@@ -266,6 +279,22 @@ export function createSessionManager(
     })();
     return logoutTask;
   }
+  async function deleteAccount() {
+    if (deleteTask) return deleteTask;
+    if (snapshot.status !== "authenticated" || logoutTask)
+      throw new SessionChangedError();
+    const version = generation;
+    deleteTask = (async () => {
+      await request<void>("/api/profile/account", {
+        method: "DELETE",
+        ignoreResponseBody: true,
+      });
+      await clear(version, true);
+    })().finally(() => {
+      deleteTask = null;
+    });
+    return deleteTask;
+  }
   return {
     getSnapshot: () => snapshot,
     subscribe(listener: () => void) {
@@ -287,6 +316,11 @@ export function createSessionManager(
         throw new SessionChangedError();
       emit({ ...snapshot, member: member(profile) });
     },
-    retryStorageCleanup: () => clear(generation),
+    deleteAccount,
+    dismissAccountDeletion() {
+      if (snapshot.status === "anonymous" && snapshot.accountDeleted)
+        emit({ status: "anonymous", member: null, busy: false });
+    },
+    retryStorageCleanup: () => clear(generation, snapshot.accountDeleted),
   };
 }
