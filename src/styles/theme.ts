@@ -1,4 +1,3 @@
-// 웹 Frontend/src/styles/theme.ts의 색상 키와 값을 동일하게 유지한다.
 export const colors = {
   primary: "#143858",
   secondary: "#e9eaec",

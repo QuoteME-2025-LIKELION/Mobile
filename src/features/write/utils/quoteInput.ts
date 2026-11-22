@@ -1,4 +1,4 @@
-// 현재 웹의 입력 규칙을 유지한다. 직접 게시 문자 제한의 서버 정책 차이는 협의 중이다.
+// 직접 게시의 문자 제한은 현재 서버 정책과 차이가 있다.
 export const countCodePoints = (value: string) => Array.from(value).length;
 export const limitQuoteInput = (value: string) =>
   Array.from(value).slice(0, 50).join("");
