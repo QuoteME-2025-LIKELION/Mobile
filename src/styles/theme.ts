@@ -66,7 +66,7 @@ export const fonts = {
   date: "HSBombaram",
 } as const;
 
-// 기존 개발 앱에서도 사용할 수 있도록 config plugin 대신 런타임에 로드한다.
+// 기존 개발 앱에서도 사용할 수 있도록 설정 플러그인 대신 실행 중에 불러온다.
 export const fontSources = {
   [fonts.body]: require("@/assets/fonts/PretendardVariable.ttf"),
   [fonts.quote]: require("@/assets/fonts/KoPubWorld-Batang-Medium.ttf"),

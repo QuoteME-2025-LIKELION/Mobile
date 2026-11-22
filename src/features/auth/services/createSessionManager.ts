@@ -50,7 +50,7 @@ function member(value: unknown): SessionMember {
   };
 }
 
-/** access는 메모리, refresh만 보안 저장. 모든 비동기 결과는 세션 세대로 검증한다. */
+/** 접근 토큰은 메모리에 유지하고 갱신 토큰만 보안 저장소에 저장한다. 비동기 결과는 세션 세대로 검증한다. */
 export function createSessionManager(
   transport: Transport,
   storage: Storage,
@@ -234,7 +234,7 @@ export function createSessionManager(
         throw error;
       }
       if (error.code !== "401-5") throw error;
-      // 늦게 도착한 옛 토큰의 실패는 이미 갱신된 access로 재시도한다.
+      // 이전 접근 토큰의 실패 응답이 늦게 도착하면 이미 갱신된 토큰으로 재시도한다.
       if (accessToken === currentAccess) await refresh(version);
       check(version);
       try {
@@ -262,7 +262,7 @@ export function createSessionManager(
     emit({ ...snapshot, busy: true });
     logoutTask = (async () => {
       try {
-        // access가 만료돼도 본문 refresh로 로그아웃할 수 있다. 재발급하지 않는다.
+        // 접근 토큰이 만료돼도 요청 본문의 갱신 토큰으로 로그아웃한다. 토큰 재발급은 하지 않는다.
         await transport("/api/auth/logout", {
           method: "POST",
           token: currentAccess,

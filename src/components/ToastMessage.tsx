@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppText } from "./AppText";
 import { styles } from "./ToastMessage.styles";
 
-// Frontend ToastModal의 기본 snackbar: 0.3초 등장 + 0.9초 유지 + 0.3초 퇴장.
+// 0.3초 동안 나타나고, 0.9초 유지한 뒤 0.3초 동안 사라진다.
 export function ToastMessage({
   message,
   onClose,
