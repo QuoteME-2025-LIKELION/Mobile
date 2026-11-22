@@ -7,6 +7,7 @@ import { StatusBar } from "expo-status-bar";
 import { session } from "@/features/auth/services/session";
 import { useSession } from "@/features/auth/stores/useSession";
 import { SessionRecovery } from "@/features/auth/components/SessionRecovery";
+import { AccountDeleteCompleteScreen } from "@/features/account/screens/AccountDeleteCompleteScreen";
 import { colors, fontSources } from "@/styles/theme";
 
 SplashScreen.preventAutoHideAsync();
@@ -39,10 +40,10 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={navigationTheme}>
       <StatusBar style="light" />
-      {auth.status === "loading" ||
-      auth.status === "error" ||
-      auth.member?.profileCompleted === false ? (
+      {auth.status === "loading" || auth.status === "error" ? (
         <SessionRecovery />
+      ) : auth.accountDeleted ? (
+        <AccountDeleteCompleteScreen onDone={session.dismissAccountDeletion} />
       ) : (
         <Stack
           screenOptions={{
@@ -53,11 +54,25 @@ export default function RootLayout() {
           <Stack.Protected guard={auth.status !== "authenticated" || !__DEV__}>
             <Stack.Screen name="index" />
           </Stack.Protected>
-          <Stack.Protected guard={auth.status === "authenticated" && __DEV__}>
+          <Stack.Protected
+            guard={
+              auth.status === "authenticated" &&
+              __DEV__ &&
+              auth.member?.profileCompleted === false
+            }
+          >
+            <Stack.Screen name="profile" />
+          </Stack.Protected>
+          <Stack.Protected
+            guard={
+              auth.status === "authenticated" &&
+              __DEV__ &&
+              auth.member?.profileCompleted === true
+            }
+          >
             <Stack.Screen name="home" />
             <Stack.Screen name="archive" />
             <Stack.Screen name="write" />
-            <Stack.Screen name="profile" />
             <Stack.Screen name="profile-center" />
             <Stack.Screen name="notice/index" />
             <Stack.Screen name="notification-setting" />
@@ -65,7 +80,6 @@ export default function RootLayout() {
             <Stack.Screen name="blocked-members" />
             <Stack.Screen name="account-setting" />
             <Stack.Screen name="account-delete" />
-            <Stack.Screen name="account-delete-complete" />
           </Stack.Protected>
         </Stack>
       )}

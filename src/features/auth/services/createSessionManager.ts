@@ -10,6 +10,7 @@ export type SessionSnapshot = {
   member: SessionMember | null;
   busy: boolean;
   retryable?: boolean;
+  accountDeleted?: boolean;
 };
 type AuthResponse = {
   data?: { accessToken?: unknown; refreshToken?: unknown; item?: unknown };
@@ -49,7 +50,7 @@ function member(value: unknown): SessionMember {
   };
 }
 
-/** access는 메모리, refresh만 보안 저장. 모든 비동기 결과는 세션 세대로 검증한다. */
+/** 접근 토큰은 메모리에 유지하고 갱신 토큰만 보안 저장소에 저장한다. 비동기 결과는 세션 세대로 검증한다. */
 export function createSessionManager(
   transport: Transport,
   storage: Storage,
@@ -66,6 +67,7 @@ export function createSessionManager(
   let storageQueue: Promise<unknown> = Promise.resolve();
   let initializeTask: Promise<void> | null = null;
   let loginTask: Promise<void> | null = null;
+  let deleteTask: Promise<void> | null = null;
   let logoutTask: Promise<void> | null = null;
   let refreshTask: { generation: number; task: Promise<void> } | null = null;
   const listeners = new Set<() => void>();
@@ -81,7 +83,7 @@ export function createSessionManager(
     storageQueue = task.catch(() => {});
     return task;
   };
-  async function clear(version: number) {
+  async function clear(version: number, accountDeleted = false) {
     check(version);
     generation++;
     accessToken = refreshToken = null;
@@ -89,10 +91,20 @@ export function createSessionManager(
     emit({ status: "loading", member: null, busy: false });
     try {
       await stored(() => storage.remove());
-      emit({ status: "anonymous", member: null, busy: false });
+      emit({
+        status: "anonymous",
+        member: null,
+        busy: false,
+        ...(accountDeleted ? { accountDeleted } : {}),
+      });
     } catch {
-      emit({ status: "error", member: null, busy: false });
-      throw new Error("로그인 정보를 지우지 못했어요. 다시 시도해 주세요.");
+      emit({
+        status: "error",
+        member: null,
+        busy: false,
+        ...(accountDeleted ? { accountDeleted } : {}),
+      });
+      throw new Error("로그인 정보를 지우지 못했어요.");
     }
   }
   async function refresh(version: number) {
@@ -110,6 +122,9 @@ export function createSessionManager(
         check(version);
         const nextAccess = token(response.data?.accessToken);
         const nextMember = member(response.data?.item);
+        // 로그인 중 첫 설정 분기는 사진 저장까지 끝낸 뒤 완료 처리에서 전환한다.
+        if (snapshot.member?.id === nextMember.id)
+          nextMember.profileCompleted = snapshot.member.profileCompleted;
         if (snapshot.status !== "authenticated") resetSessionData();
         accessToken = nextAccess;
         emit({ status: "authenticated", member: nextMember, busy: false });
@@ -217,7 +232,7 @@ export function createSessionManager(
         throw error;
       }
       if (error.code !== "401-5") throw error;
-      // 늦게 도착한 옛 토큰의 실패는 이미 갱신된 access로 재시도한다.
+      // 이전 접근 토큰의 실패 응답이 늦게 도착하면 이미 갱신된 토큰으로 재시도한다.
       if (accessToken === currentAccess) await refresh(version);
       check(version);
       try {
@@ -236,6 +251,7 @@ export function createSessionManager(
     }
   }
   async function logout() {
+    if (deleteTask) throw new SessionChangedError();
     if (logoutTask) return logoutTask;
     if (snapshot.status !== "authenticated") return;
     const version = ++generation;
@@ -244,7 +260,7 @@ export function createSessionManager(
     emit({ ...snapshot, busy: true });
     logoutTask = (async () => {
       try {
-        // access가 만료돼도 본문 refresh로 로그아웃할 수 있다. 재발급하지 않는다.
+        // 접근 토큰이 만료돼도 요청 본문의 갱신 토큰으로 로그아웃한다. 토큰 재발급은 하지 않는다.
         await transport("/api/auth/logout", {
           method: "POST",
           token: currentAccess,
@@ -261,6 +277,22 @@ export function createSessionManager(
     })();
     return logoutTask;
   }
+  async function deleteAccount() {
+    if (deleteTask) return deleteTask;
+    if (snapshot.status !== "authenticated" || logoutTask)
+      throw new SessionChangedError();
+    const version = generation;
+    deleteTask = (async () => {
+      await request<void>("/api/profile/account", {
+        method: "DELETE",
+        ignoreResponseBody: true,
+      });
+      await clear(version, true);
+    })().finally(() => {
+      deleteTask = null;
+    });
+    return deleteTask;
+  }
   return {
     getSnapshot: () => snapshot,
     subscribe(listener: () => void) {
@@ -273,6 +305,20 @@ export function createSessionManager(
     login,
     logout,
     request,
-    retryStorageCleanup: () => clear(generation),
+    completeProfile(profile: SessionMember) {
+      if (
+        !profile.profileCompleted ||
+        snapshot.status !== "authenticated" ||
+        snapshot.member?.id !== profile.id
+      )
+        throw new SessionChangedError();
+      emit({ ...snapshot, member: member(profile) });
+    },
+    deleteAccount,
+    dismissAccountDeletion() {
+      if (snapshot.status === "anonymous" && snapshot.accountDeleted)
+        emit({ status: "anonymous", member: null, busy: false });
+    },
+    retryStorageCleanup: () => clear(generation, snapshot.accountDeleted),
   };
 }

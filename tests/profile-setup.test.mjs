@@ -68,7 +68,8 @@ test("image validation keeps web formats and 5MB boundary while rejecting unknow
 });
 
 const reactUrl = url(`
-export const useEffect=()=>{};
+export const useCallback=fn=>fn;
+export const useEffect=fn=>fn();
 export const useState=initial=>{
  const state=globalThis.__profileHarness;const index=state.next++;
  if(!(index in state.values)) state.values[index]=initial;
@@ -79,18 +80,32 @@ let code = compile(
   await read("features/profile/screens/ProfileSetupScreen.tsx")
 );
 for (const [from, to] of Object.entries({
+  "@/features/auth/services/session": url(
+    "export const session={completeProfile: () => {globalThis.__profileHarness.completed=true;}, logout:async()=>{const h=globalThis.__profileHarness;h.logouts=(h.logouts??0)+1;if(h.failLogout)throw Error();}};"
+  ),
+  "@/features/profile/services/profileApi": url(
+    "export const setupProfile=async()=>{const h=globalThis.__profileHarness;h.setups=(h.setups??0)+1;return {id:1,profileCompleted:true};},uploadProfileImage=async()=>{if(globalThis.__profileHarness.failUpload)throw Error();};"
+  ),
+  "@/api/createApiClient": url("export class ApiError extends Error {}"),
+  "@/components/ToastMessage": url("export const ToastMessage='ToastMessage';"),
+  "@/features/profile/components/RemoveProfileImageButton": url(
+    "export const RemoveProfileImageButton='RemoveProfileImageButton';"
+  ),
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: reactUrl,
   "expo-image": url("export const Image='Image';"),
   "expo-router": url(
-    "export const usePreventRemove=(enabled,callback)=>{globalThis.__profileHarness.guard=enabled;globalThis.__profileHarness.back=callback;};"
+    "export const usePreventRemove=(enabled,callback)=>{globalThis.__profileHarness.guard=enabled;globalThis.__profileHarness.back=callback;return ()=>{};};"
   ),
   "expo-status-bar": url("export const StatusBar='StatusBar';"),
   "react-native": url(
-    "export const Keyboard={dismiss:()=>{}},Platform={OS:'android'},StyleSheet={create:value=>value};export const KeyboardAvoidingView='KeyboardAvoidingView',Pressable='Pressable',ScrollView='ScrollView',TextInput='TextInput',View='View';"
+    "export const BackHandler={addEventListener:(name,callback)=>{globalThis.__profileHarness.hardwareBack=callback;return {remove(){}};}},Keyboard={dismiss:()=>{}},Platform={OS:'android'},StyleSheet={create:value=>value};export const KeyboardAvoidingView='KeyboardAvoidingView',Pressable='Pressable',ScrollView='ScrollView',TextInput='TextInput',View='View';"
   ),
   "react-native-safe-area-context": url(
     "export const SafeAreaView='SafeAreaView';"
+  ),
+  "@/components/ConfirmDialog": url(
+    "export const ConfirmDialog='ConfirmDialog';"
   ),
   "@/components/AppText": url("export const AppText='AppText';"),
   "@/styles/theme": themeUrl,
@@ -125,6 +140,7 @@ function harness(props = {}) {
   const render = () => {
     state.next = 0;
     globalThis.__profileHarness = state;
+    globalThis.__DEV__ = false;
     return ProfileSetupScreen(props);
   };
   const fill = (value) => {
@@ -140,7 +156,7 @@ function harness(props = {}) {
   return { state, render, fill, advance };
 }
 
-test("four-step profile requires inputs, preserves them on back, and never completes signup", () => {
+test("four-step profile accepts a blank introduction while preserving the required fields", () => {
   const h = harness();
   let tree = h.render();
   assert.equal(button(tree, "다음으로").props.disabled, true);
@@ -157,13 +173,14 @@ test("four-step profile requires inputs, preserves them on back, and never compl
   tree = h.render();
   assert.equal(field(tree).props.value, "😀".repeat(10));
   tree = h.advance("듀랄라");
-  tree = h.advance("오늘도 좋은 하루");
+  assert.equal(button(tree, "다음으로").props.disabled, false);
+  tree = h.advance("   ");
   tree = h.fill("1899");
   assert.equal(button(tree, "다음으로").props.disabled, true);
   tree = h.fill(String(new Date().getFullYear() + 1));
   assert.equal(button(tree, "다음으로").props.disabled, true);
   tree = h.advance("2000");
-  assert.equal(button(tree, "쿼트미 시작하기").props.disabled, true);
+  assert.equal(button(tree, "이미지 없이 시작하기").props.disabled, false);
   assert.ok(
     find(
       tree,
@@ -202,7 +219,8 @@ test("photo cancel and invalid selections preserve current image; double selecti
   resolve(result);
   await pick;
   tree = h.render();
-  const photo = () => find(tree, (node) => node.type === "Image");
+  const photo = () =>
+    find(tree, (node) => node.type === "Image" && node.props.source?.uri);
   assert.equal(photo().props.source.uri, result.uri);
   for (const next of [null, { ...result, fileSize: 6 * 1024 * 1024 }]) {
     const pending = button(tree, "이미지 업로드하기").props.onPress();
@@ -219,7 +237,7 @@ test("photo cancel and invalid selections preserve current image; double selecti
       (node) => node.props?.accessibilityLabel === "기본 프로필 이미지"
     )
   );
-  assert.equal(button(tree, "쿼트미 시작하기").props.disabled, true);
+  assert.equal(button(tree, "이미지 없이 시작하기").props.disabled, false);
 });
 
 test("photo picker failure shows retryable error and releases the busy state", async () => {
@@ -242,4 +260,113 @@ test("photo picker failure shows retryable error and releases the busy state", a
         node.props.children.includes("다시 빌드")
     )
   );
+});
+
+test("setup only exits through the confirmed close action and hardware back stays within setup", async () => {
+  const h = harness();
+  const dialog = (tree) => find(tree, (node) => node.type === "ConfirmDialog");
+  const close = (tree) =>
+    find(tree, (node) => node.props?.accessibilityLabel === "닫기");
+  let tree = h.render();
+  assert.equal(h.state.hardwareBack(), true);
+  assert.equal(field(h.render()).props.accessibilityLabel, "닉네임");
+  assert.equal(dialog(h.render()).props.visible, false);
+  tree = h.advance("닉네임");
+  assert.equal(h.state.hardwareBack(), true);
+  tree = h.render();
+  assert.equal(field(tree).props.accessibilityLabel, "닉네임");
+  close(tree).props.onPress();
+  let modal = dialog(h.render());
+  assert.equal(modal.props.visible, true);
+  assert.equal(modal.props.title, "첫 화면으로 돌아갈까요?");
+  assert.equal(modal.props.cancelLabel, "머무르기");
+  assert.equal(modal.props.confirmLabel, "돌아가기");
+  modal.props.onClose();
+  assert.equal(dialog(h.render()).props.visible, false);
+  assert.equal(h.state.logouts, undefined);
+  close(h.render()).props.onPress();
+  h.state.failLogout = true;
+  dialog(h.render()).props.onConfirm();
+  await Promise.resolve();
+  assert.equal(h.state.logouts, 1);
+  assert.ok(
+    find(
+      h.render(),
+      (node) => node.props?.children === "첫 화면으로 돌아가지 못했어요."
+    )
+  );
+});
+
+test("removing or failing to upload a photo restores the default image and no-image action", async () => {
+  const h = harness({
+    selectImage: async () => ({
+      uri: "file:///profile.jpg",
+      fileSize: 1024,
+      mimeType: "image/jpeg",
+    }),
+  });
+  h.advance("닉네임");
+  h.advance("자기소개");
+  let tree = h.advance("2000");
+  const select = async () => {
+    await button(h.render(), "이미지 업로드하기").props.onPress();
+    return h.render();
+  };
+  const remove = (view) =>
+    find(view, (node) => node.type === "RemoveProfileImageButton");
+  assert.equal(remove(tree), undefined);
+  tree = await select();
+  assert.ok(button(tree, "쿼트미 시작하기"));
+  remove(tree).props.onPress();
+  assert.ok(button(h.render(), "이미지 없이 시작하기"));
+  h.state.failUpload = true;
+  tree = await select();
+  button(tree, "쿼트미 시작하기").props.onPress();
+  await Promise.resolve();
+  await Promise.resolve();
+  tree = h.render();
+  assert.equal(remove(tree), undefined);
+  assert.ok(
+    find(
+      tree,
+      (node) => node.props?.accessibilityLabel === "기본 프로필 이미지"
+    )
+  );
+  assert.equal(
+    find(tree, (node) => node.type === "ToastMessage").props.message,
+    "이미지 업로드에 실패했어요."
+  );
+  assert.equal(h.state.completed, undefined);
+  button(tree, "이미지 없이 시작하기").props.onPress();
+  assert.equal(h.state.setups, 1);
+  assert.equal(h.state.completed, true);
+});
+
+test("profile requests send image files and a typed JSON part", async () => {
+  const sessionUrl = url(
+    "export const session={request:async(path,options)=>({path,...options})};"
+  );
+  const fileSystemUrl = url(
+    'export class File extends globalThis.File {constructor(uri){super(["image"],uri.split("/").pop(),{type:"image/jpeg"});}}'
+  );
+  const api = await import(
+    url(
+      compile(await read("features/profile/services/profileApi.ts"))
+        .replaceAll("'expo-file-system'", JSON.stringify(fileSystemUrl))
+        .replaceAll(
+          "'@/features/auth/services/session'",
+          JSON.stringify(sessionUrl)
+        )
+    )
+  );
+  const image = { uri: "file:///profile.jpg" };
+  const upload = await api.uploadProfileImage(image);
+  assert.equal(upload.path, "/api/profile");
+  assert.equal(upload.method, "PUT");
+  assert.equal(upload.multipart.get("image").name, "profile.jpg");
+  const update = await api.updateProfile({ nickname: "닉네임" }, image);
+  assert.equal(update.multipart.get("image").type, "image/jpeg");
+  const data = update.multipart.get("data");
+  assert.equal(data.type, "application/json");
+  assert.deepEqual(JSON.parse(await data.text()), { nickname: "닉네임" });
 });

@@ -837,7 +837,7 @@ test("removed friend and failed list block posting; no fake success or navigatio
   assert.match(
     find(tree, (n) => n.type?.name?.includes("Toast") || n.props?.message)
       ?.props.message ?? "",
-    /친구 목록이 변경/
+    /해제된 태그를 확인해 주세요/
   );
   state.friends.refresh = async () => null;
   await action(tree, "게시하기").props.onPress();

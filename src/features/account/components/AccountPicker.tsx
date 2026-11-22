@@ -7,13 +7,15 @@ import { styles } from "./AccountPicker.styles";
 
 type Props = {
   sheet: "gender" | "birth" | null;
-  gender: Gender;
-  birthYear: number;
+  gender: Gender | null;
+  birthYear: number | null;
   years: number[];
   onGender: (value: Gender) => void;
   onBirthYear: (value: number) => void;
   onClose: () => void;
   onDone: () => void;
+  saving?: boolean;
+  error?: string;
 };
 export function AccountPicker({
   sheet,
@@ -24,11 +26,13 @@ export function AccountPicker({
   onBirthYear,
   onClose,
   onDone,
+  saving = false,
+  error,
 }: Props) {
   const insets = useSafeAreaInsets();
   const yearList = useRef<ComponentRef<typeof ScrollView>>(null);
-  const centerYear = (year: number, animated = false) => {
-    const index = years.indexOf(year);
+  const centerYear = (year: number | null, animated = false) => {
+    const index = year === null ? -1 : years.indexOf(year);
     if (index >= 0) yearList.current?.scrollTo({ y: index * 44, animated });
   };
   return (
@@ -66,6 +70,7 @@ export function AccountPicker({
                     key={option.value}
                     accessibilityRole="radio"
                     accessibilityState={{ selected: gender === option.value }}
+                    disabled={saving}
                     onPress={() => onGender(option.value)}
                     style={styles.genderRow}
                   >
@@ -87,7 +92,11 @@ export function AccountPicker({
                   <Pressable
                     key={year}
                     accessibilityRole="radio"
-                    accessibilityState={{ selected: year === birthYear }}
+                    accessibilityState={{
+                      selected: year === birthYear,
+                      disabled: saving,
+                    }}
+                    disabled={saving}
                     onPress={() => {
                       onBirthYear(year);
                       centerYear(year, true);
@@ -106,12 +115,18 @@ export function AccountPicker({
                 ))}
               </ScrollView>
             )}
+            {error ? (
+              <AppText accessibilityRole="alert">{error}</AppText>
+            ) : null}
             <Pressable
               accessibilityRole="button"
+              disabled={saving}
               onPress={onDone}
               style={styles.done}
             >
-              <AppText style={styles.doneLabel}>완료</AppText>
+              <AppText style={styles.doneLabel}>
+                {saving ? "저장 중…" : "완료"}
+              </AppText>
             </Pressable>
           </ScrollView>
         </View>

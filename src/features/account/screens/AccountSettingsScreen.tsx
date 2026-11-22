@@ -5,7 +5,6 @@ import { AppText } from "@/components/AppText";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AccountHeader } from "../components/AccountHeader";
 import { AccountPicker } from "../components/AccountPicker";
-import { accountFixture } from "../fixtures/accountFixture";
 import { GENDER_OPTIONS } from "../constants/accountOptions";
 import { useAccountSettings } from "../hooks/useAccountSettings";
 import { styles } from "./AccountSettingsScreen.styles";
@@ -20,7 +19,16 @@ export function AccountSettingsScreen() {
           <AppText accessibilityRole="header" style={styles.sectionTitle}>
             계정 정보
           </AppText>
+          {account.loading ? (
+            <AppText>계정 정보를 불러오는 중이에요.</AppText>
+          ) : null}
+          {account.loadError ? (
+            <AppText accessibilityRole="alert">
+              계정 정보를 불러오지 못했습니다.
+            </AppText>
+          ) : null}
           <Pressable
+            disabled={account.loading || account.loadError || account.saving}
             accessibilityRole="button"
             accessibilityLabel="성별 변경"
             accessibilityState={{ expanded: account.sheet === "gender" }}
@@ -29,21 +37,22 @@ export function AccountSettingsScreen() {
           >
             <AppText style={styles.label}>성별</AppText>
             <AppText style={styles.value}>
-              {
-                GENDER_OPTIONS.find((option) => option.value === account.gender)
-                  ?.label
-              }
+              {GENDER_OPTIONS.find((option) => option.value === account.gender)
+                ?.label ?? "—"}
             </AppText>
           </Pressable>
           <Pressable
             accessibilityRole="button"
+            disabled={account.loading || account.loadError || account.saving}
             accessibilityLabel="출생연도 변경"
             accessibilityState={{ expanded: account.sheet === "birth" }}
             onPress={() => account.openSheet("birth")}
             style={styles.infoRow}
           >
             <AppText style={styles.label}>출생연도</AppText>
-            <AppText style={styles.value}>{account.birthYear}년</AppText>
+            <AppText style={styles.value}>
+              {account.birthYear ? `${account.birthYear}년` : "—"}
+            </AppText>
           </Pressable>
           <Pressable
             onPress={account.openBlocked}
@@ -83,9 +92,9 @@ export function AccountSettingsScreen() {
                   />
                 </View>
                 <AppText style={styles.providerName}>{item.label}</AppText>
-                {accountFixture.linkedProviders.includes(item.provider) ? (
+                {account.linkedProviders?.includes(item.provider) ? (
                   <AppText style={styles.value}>연동됨</AppText>
-                ) : (
+                ) : account.linkedProviders ? (
                   <Pressable
                     disabled
                     accessibilityRole="button"
@@ -95,7 +104,7 @@ export function AccountSettingsScreen() {
                   >
                     <AppText style={styles.value}>연동하기</AppText>
                   </Pressable>
-                )}
+                ) : null}
               </View>
             ))}
           </View>
@@ -134,7 +143,9 @@ export function AccountSettingsScreen() {
         onGender={account.setDraftGender}
         onBirthYear={account.setDraftBirthYear}
         onClose={account.closeSheet}
-        onDone={account.finishSheet}
+        onDone={() => void account.finishSheet()}
+        error={account.saveError}
+        saving={account.saving}
       />
       <ConfirmDialog
         visible={account.logoutOpen}

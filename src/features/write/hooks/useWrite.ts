@@ -117,7 +117,7 @@ export function useWrite() {
     const cached = ai.status === "success" && ai.content === text.trim();
     if (!cached && ai.usageStatus !== "success") {
       if (ai.usageStatus === "error") void ai.loadUsage();
-      setMessage("AI 사용량을 확인한 뒤 다시 시도해 주세요.");
+      setMessage("AI 사용량을 확인하지 못했어요.");
       return;
     }
     if (!cached && ai.usage?.remaining === 0) {
@@ -126,7 +126,7 @@ export function useWrite() {
       return;
     }
     if (ai.status === "loading" && ai.content !== text.trim()) {
-      setMessage("진행 중인 AI 추천을 받은 뒤 다시 시도해 주세요.");
+      setMessage("AI 추천을 만드는 중이에요.");
       return;
     }
     setStep("recommend");
@@ -226,11 +226,11 @@ export function useWrite() {
   const publish = async () => {
     if (publishingRef.current || step !== "tag") return;
     if (friends.status !== "success" || !friends.memberId) {
-      setMessage("친구 목록을 확인한 뒤 다시 게시해 주세요.");
+      setMessage("친구 목록을 확인해 주세요.");
       return;
     }
     if (source === "ai" && ai.content !== text.trim()) {
-      setMessage("AI 추천 원문이 변경됐어요. 다시 확인해 주세요.");
+      setMessage("AI 추천 원문이 바뀌었어요.");
       return;
     }
     publishingRef.current = true;
@@ -242,7 +242,7 @@ export function useWrite() {
       const latest = await friends.refresh();
       if (!mounted.current || controller.signal.aborted) return;
       if (!latest) {
-        setMessage("친구 목록을 불러오지 못했어요. 다시 시도해 주세요.");
+        setMessage("친구 목록을 불러오지 못했어요.");
         return;
       }
       const validIds = new Set(
@@ -252,9 +252,7 @@ export function useWrite() {
       );
       if (selected.some((id) => !validIds.has(id))) {
         setSelected((current) => current.filter((id) => validIds.has(id)));
-        setMessage(
-          "친구 목록이 변경됐어요. 태그를 확인하고 다시 게시해 주세요."
-        );
+        setMessage("해제된 태그를 확인해 주세요.");
         return;
       }
       const payload = createQuotePayload({
@@ -275,10 +273,10 @@ export function useWrite() {
       if (!mounted.current || controller.signal.aborted) return;
       setMessage(
         error instanceof ApiError && error.status === 409
-          ? "오늘 이미 명언을 작성했어요. 홈에서 확인해 주세요."
+          ? "오늘 이미 명언을 작성했어요."
           : error instanceof ApiError && error.status === 400
-            ? "명언 내용과 친구 태그를 확인하고 다시 시도해 주세요."
-            : "게시 결과를 확인하지 못했어요. 홈을 확인한 뒤 다시 시도해 주세요."
+            ? "명언과 친구 태그를 확인해 주세요."
+            : "홈에서 게시 여부를 확인해 주세요."
       );
     } finally {
       publishingRef.current = false;

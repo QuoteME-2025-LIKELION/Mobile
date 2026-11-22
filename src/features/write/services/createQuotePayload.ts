@@ -21,9 +21,7 @@ export function createQuotePayload({
   if (error) throw new Error(error);
   const candidates = new Set(friends.map((friend) => friend.id));
   if (selectedIds.some((id) => id === myId || !candidates.has(id)))
-    throw new Error(
-      "친구 목록이 변경됐어요. 태그를 확인하고 다시 게시해 주세요."
-    );
+    throw new Error("친구 목록이 변경됐어요.");
   return {
     content: content.trim(),
     ...(source === "ai"

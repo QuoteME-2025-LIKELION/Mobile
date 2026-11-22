@@ -1,4 +1,4 @@
-/** 웹의 기존 규칙과 같이 기기의 현지 날짜를 기준으로 비교한다. */
+/** 기기의 현지 날짜를 기준으로 비교한다. */
 export function isFutureArchiveDate(date: Date, today = new Date()) {
   return (
     new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() >
@@ -50,7 +50,7 @@ export function archiveDateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
-/** 웹과 동일하게 인접 월 날짜를 포함한 최소 5주, 필요하면 6주를 표시한다. */
+/** 인접 월 날짜를 포함해 최소 5주, 필요하면 6주를 표시한다. */
 export function getCalendarDates(monthDate: Date): Date[] {
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();

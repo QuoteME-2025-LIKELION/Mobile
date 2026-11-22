@@ -84,7 +84,7 @@ export function createAiResource(api: Api) {
     )
       return null;
     if (snapshot.usageStatus !== "success")
-      return "AI 사용량을 확인한 뒤 다시 시도해 주세요.";
+      return "AI 사용량을 확인하지 못했어요.";
     if (!snapshot.usage || snapshot.usage.remaining === 0)
       return "오늘 AI 추천 횟수를 모두 사용했어요.";
     generating = true;

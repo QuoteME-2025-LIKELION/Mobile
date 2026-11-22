@@ -204,6 +204,33 @@ test("old-token failures arriving after refresh reuse new access without refresh
   );
 });
 
+test("a delayed refresh cannot return a completed profile to setup", async () => {
+  const refreshStarted = deferred();
+  const refreshResponse = deferred();
+  const incomplete = { ...item, profileCompleted: false };
+  const { manager } = fixture(async (path, options) => {
+    if (path.endsWith("refresh")) {
+      if (manager.getSnapshot().status === "loading")
+        return { data: { item: incomplete, accessToken: "access-1" } };
+      refreshStarted.resolve();
+      return refreshResponse.promise;
+    }
+    if (options.token === "access-1") throw new ApiError(401, "401-5");
+    return "ok";
+  }, "saved-refresh");
+  await manager.initialize();
+  assert.equal(manager.getSnapshot().member.profileCompleted, false);
+
+  const pending = manager.request("/api/profile");
+  await refreshStarted.promise;
+  manager.completeProfile({ ...incomplete, profileCompleted: true });
+  refreshResponse.resolve({
+    data: { item: incomplete, accessToken: "access-2" },
+  });
+  assert.equal(await pending, "ok");
+  assert.equal(manager.getSnapshot().member.profileCompleted, true);
+});
+
 test("logout invalidates in-flight refresh before completion and clears secure storage", async () => {
   const ready = deferred(),
     finish = deferred();
@@ -376,6 +403,9 @@ test("root navigator protects every development screen behind the real session",
     "@/features/auth/stores/useSession": url(
       "export const useSession=()=>globalThis.__rootSession;"
     ),
+    "@/features/account/screens/AccountDeleteCompleteScreen": url(
+      "export const AccountDeleteCompleteScreen='AccountDeleteComplete';"
+    ),
     "@/features/auth/components/SessionRecovery": url(
       "export const SessionRecovery='Recovery';"
     ),
@@ -389,13 +419,13 @@ test("root navigator protects every development screen behind the real session",
       : [node, ...[node.props?.children].flat(Infinity).flatMap(all)];
   globalThis.__DEV__ = true;
   for (const status of ["anonymous", "authenticated"]) {
-    globalThis.__rootSession = { status };
+    globalThis.__rootSession = { status, member: { profileCompleted: true } };
     const guards = all(Root())
       .filter((node) => node.type === "Protected")
       .map((node) => node.props.guard);
     assert.deepEqual(
       guards,
-      status === "anonymous" ? [true, false] : [false, true]
+      status === "anonymous" ? [true, false, false] : [false, false, true]
     );
   }
   for (const status of ["loading", "error"]) {
@@ -412,7 +442,7 @@ test("root navigator protects every development screen behind the real session",
     all(Root())
       .filter((node) => node.type === "Protected")
       .map((node) => node.props.guard),
-    [true, false]
+    [true, false, false]
   );
 });
 
@@ -548,4 +578,27 @@ test("restore recovery retries without invoking credential cleanup", async () =>
     .find((n) => n.type === "Pressable")
     .props.onPress();
   assert.deepEqual(calls, ["restore", "cleanup"]);
+});
+
+test("account deletion clears saved tokens once and exposes completion only after server success", async () => {
+  const pending = deferred();
+  const { manager, state } = await signedIn(() => pending.promise);
+  const first = manager.deleteAccount();
+  const second = manager.deleteAccount();
+  assert.equal(manager.getSnapshot().status, "authenticated");
+  pending.resolve();
+  await Promise.all([first, second]);
+  const deletes = state.calls.filter(
+    ([path]) => path === "/api/profile/account"
+  );
+  assert.equal(deletes.length, 1);
+  assert.equal(deletes[0][1].method, "DELETE");
+  assert.equal(state.saved, null);
+  assert.equal(manager.getSnapshot().accountDeleted, true);
+  manager.dismissAccountDeletion();
+  assert.deepEqual(manager.getSnapshot(), {
+    status: "anonymous",
+    member: null,
+    busy: false,
+  });
 });

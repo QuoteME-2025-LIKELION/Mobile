@@ -1,8 +1,14 @@
-import { useState } from "react";
-import { router } from "expo-router";
+import { useRef, useState } from "react";
+import { router, usePreventRemove } from "expo-router";
+import { session } from "@/features/auth/services/session";
 import type { DeleteReason } from "../constants/accountOptions";
 
 export function useAccountDelete() {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const submitting = useRef(false);
+  usePreventRemove(pending, () => {});
   const [selectedReasons, setSelectedReasons] = useState<DeleteReason[]>([]);
   const [otherReason, setOtherReason] = useState("");
   const otherSelected = selectedReasons.includes("기타");
@@ -15,18 +21,40 @@ export function useAccountDelete() {
         ? current.filter((item) => item !== reason)
         : [...current, reason]
     );
+  const confirmDelete = async () => {
+    if (!validReasons || submitting.current) return;
+    submitting.current = true;
+    setConfirmOpen(false);
+    setPending(true);
+    setError("");
+    try {
+      await session.deleteAccount();
+    } catch {
+      setError("계정을 삭제하지 못했어요.");
+    } finally {
+      submitting.current = false;
+      setPending(false);
+    }
+  };
   return {
+    pending,
+    error,
+    confirmOpen,
+    openConfirm: () => {
+      if (validReasons && !submitting.current) setConfirmOpen(true);
+    },
+    closeConfirm: () => setConfirmOpen(false),
+    confirmDelete,
     selectedReasons,
     otherReason,
     setOtherReason,
     otherSelected,
     validReasons,
     toggleReason,
-    goBack: () =>
-      router.canGoBack() ? router.back() : router.replace("/account-setting"),
-    // 실제 계정 삭제 없이 완료 화면을 점검하는 개발 전용 진입.
-    previewComplete: () => {
-      if (__DEV__) router.push("/account-delete-complete");
+    goBack: () => {
+      if (submitting.current) return;
+      if (router.canGoBack()) router.back();
+      else router.replace("/account-setting");
     },
   };
 }

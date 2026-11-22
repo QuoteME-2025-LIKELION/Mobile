@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import assert from "node:assert/strict";
 import { readSource } from "./helpers/readSource.mjs";
 import test from "node:test";
@@ -56,7 +57,11 @@ function text(tree) {
   if (Array.isArray(tree)) return tree.map(text).join("");
   return text(tree.props?.children);
 }
-function render(visible = true) {
+/**
+ * @param {boolean} [visible]
+ * @param {string | null} [introduction]
+ */
+function render(visible = true, introduction = "서버 소개") {
   const h = { animations: [], cleanups: [], stops: 0, closed: 0 };
   globalThis.__drawer = h;
   const tree = HomeDrawer({
@@ -65,7 +70,7 @@ function render(visible = true) {
     profile: {
       id: 1,
       nickname: "실제회원",
-      introduction: "서버 소개",
+      introduction,
       profileImage: "https://example.test/profile.jpg",
       profileCompleted: true,
     },
@@ -190,4 +195,19 @@ test("notice menu opens its screen after drawer dismissal", () => {
   assert.equal(h.route, undefined);
   h.animations[1].callback({ finished: true });
   assert.equal(h.route, "/notice");
+});
+
+test("drawer shows the empty-introduction message in the existing introduction style", () => {
+  const introductionIs =
+    (/** @type {string} */ value) => (/** @type {unknown} */ node) =>
+      text(node) === value;
+  const original = nodes(render().tree).find(introductionIs("서버 소개"));
+  assert.ok(original);
+  for (const value of ["", "   ", null]) {
+    const fallback = nodes(render(true, value).tree).find(
+      introductionIs("자기소개가 없습니다.")
+    );
+    assert.ok(fallback);
+    assert.deepEqual(fallback.props.style, original.props.style);
+  }
 });

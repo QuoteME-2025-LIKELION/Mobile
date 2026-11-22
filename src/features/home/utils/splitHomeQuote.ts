@@ -1,4 +1,4 @@
-/** 웹 HomeBox의 공백 우선 2줄 분리를 유지하되 이모지 코드포인트를 자르지 않는다. */
+/** 공백을 우선해 두 줄로 나누고 이모지 코드포인트를 자르지 않는다. */
 export function splitHomeQuote(content: string): [string, string] {
   const points = Array.from(content);
   if (points.length <= 10) return [content, ""];

@@ -12,12 +12,13 @@ export const isValidBirthYear = (
 
 export type ProfileImage = {
   uri: string;
+  file?: File;
   fileName?: string | null;
   mimeType?: string | null;
   fileSize?: number;
 };
 
-// 웹의 형식/5MB 검사를 재사용한다. 모바일은 크기 정보가 없으면 확인 불가로 처리한다.
+// 크기를 확인할 수 없는 이미지는 허용하지 않는다.
 export function validateProfileImage(image: ProfileImage): string | null {
   const allowed = image.mimeType
     ? [

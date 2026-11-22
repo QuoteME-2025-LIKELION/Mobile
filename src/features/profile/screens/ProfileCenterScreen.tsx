@@ -13,6 +13,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AppText } from "@/components/AppText";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { colors } from "@/styles/theme";
+import { RemoveProfileImageButton } from "../components/RemoveProfileImageButton";
+import { ToastMessage } from "@/components/ToastMessage";
 import { styles } from "./ProfileCenterScreen.styles";
 import { useProfileCenter } from "../hooks/useProfileCenter";
 
@@ -31,7 +33,13 @@ export function ProfileCenterScreen(
     image,
     imageFailed,
     imageError,
-    picking,
+    picking: selecting,
+    saving,
+    saveToast,
+    clearSaveToast,
+    saveDisabled,
+    save,
+    clearImage,
     focused,
     setFocused,
     exitOpen,
@@ -45,6 +53,8 @@ export function ProfileCenterScreen(
     cancelExit,
     beginEditing,
   } = useProfileCenter(options);
+  const picking = selecting || saving;
+  const disabled = picking || loading || loadError || (editing && saveDisabled);
   return (
     <SafeAreaView edges={["top"]} style={styles.screen}>
       <StatusBar style="dark" />
@@ -98,33 +108,41 @@ export function ProfileCenterScreen(
           }
         >
           <View style={styles.profile}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={
-                editing ? "프로필 이미지 변경" : "프로필 이미지"
-              }
-              disabled={!editing || picking}
-              accessibilityState={{
-                disabled: !editing || picking,
-                busy: picking,
-              }}
-              onPress={chooseImage}
-              style={styles.avatarBox}
-            >
-              <Image
-                source={
-                  image && !imageFailed
-                    ? { uri: image.uri }
-                    : profileImage && !imageFailed
-                      ? { uri: profileImage }
-                      : require("@/assets/images/profile/default-profile.png")
+            <View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  editing ? "프로필 이미지 변경" : "프로필 이미지"
                 }
-                contentFit="cover"
-                style={styles.avatar}
-                accessible={false}
-                onError={handleImageError}
-              />
-            </Pressable>
+                disabled={!editing || picking}
+                accessibilityState={{
+                  disabled: !editing || picking,
+                  busy: picking,
+                }}
+                onPress={chooseImage}
+                style={styles.avatarBox}
+              >
+                <Image
+                  source={
+                    image && !imageFailed
+                      ? { uri: image.uri }
+                      : profileImage && !imageFailed
+                        ? { uri: profileImage }
+                        : require("@/assets/images/profile/default-profile.png")
+                  }
+                  contentFit="cover"
+                  style={styles.avatar}
+                  accessible={false}
+                  onError={handleImageError}
+                />
+              </Pressable>
+              {editing && (image || profileImage) ? (
+                <RemoveProfileImageButton
+                  disabled={picking}
+                  onPress={clearImage}
+                />
+              ) : null}
+            </View>
             <Pressable
               disabled={!editing || picking}
               accessibilityRole="button"
@@ -213,40 +231,40 @@ export function ProfileCenterScreen(
                 <AppText style={styles.value}>{introduction}</AppText>
               </View>
             )}
+            {editing ? (
+              <View style={styles.meta}>
+                <AppText style={styles.count}>
+                  {Array.from(introduction).length}자/20자
+                </AppText>
+              </View>
+            ) : null}
           </View>
         </ScrollView>
         <View style={[styles.footer, { paddingBottom: 40 + insets.bottom }]}>
-          {/* 서버 미연동: 실제 저장/가짜 성공 처리를 하지 않는다. */}
           <Pressable
             accessibilityRole="button"
             accessibilityState={{
-              disabled: editing || picking || loading || loadError,
+              disabled: disabled,
             }}
-            disabled={editing || picking || loading || loadError}
-            onPress={editing ? undefined : beginEditing}
-            style={[
-              styles.button,
-              (editing || picking || loading || loadError) &&
-                styles.disabledButton,
-            ]}
+            disabled={disabled}
+            onPress={editing ? () => void save() : beginEditing}
+            style={[styles.button, disabled && styles.disabledButton]}
           >
             <AppText
-              style={[
-                styles.buttonText,
-                (editing || picking || loading || loadError) &&
-                  styles.disabledText,
-              ]}
+              style={[styles.buttonText, disabled && styles.disabledText]}
             >
-              {editing ? "저장하기" : "편집하기"}
+              {saving ? "저장 중…" : editing ? "저장하기" : "편집하기"}
             </AppText>
           </Pressable>
         </View>
+        <ToastMessage message={saveToast} onClose={clearSaveToast} />
       </KeyboardAvoidingView>
       <ConfirmDialog
         visible={exitOpen}
         title={"저장하지 않고\n나가시겠어요?"}
         description="변경된 정보는 저장되지 않아요."
-        dismissLabel="계속 편집하기"
+        dismissLabel="머무르기"
+        cancelLabel="머무르기"
         onClose={cancelExit}
         onConfirm={confirmExit}
       />

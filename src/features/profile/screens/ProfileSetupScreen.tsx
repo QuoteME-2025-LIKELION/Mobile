@@ -9,8 +9,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AppText } from "@/components/AppText";
+import { ToastMessage } from "@/components/ToastMessage";
 import { colors } from "@/styles/theme";
+import { RemoveProfileImageButton } from "../components/RemoveProfileImageButton";
 import { styles } from "./ProfileSetupScreen.styles";
 import { useProfileSetup } from "../hooks/useProfileSetup";
 
@@ -19,11 +22,23 @@ export function ProfileSetupScreen(
 ) {
   const {
     step,
+    exitOpen,
+    exiting,
+    exitError,
+    openExit,
+    closeExit,
+    confirmExit,
     image,
     setImage,
     imageError,
     setImageError,
     picking,
+    saving,
+    saveError,
+    clearImage,
+    uploadToast,
+    clearUploadToast,
+    submit,
     focused,
     setFocused,
     inputRef,
@@ -37,9 +52,26 @@ export function ProfileSetupScreen(
     handleChangeText,
     handleBlur,
   } = useProfileSetup(options);
+  const pending = picking || saving || exiting;
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar style="dark" />
+      <View style={styles.header}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="닫기"
+          disabled={pending}
+          onPress={openExit}
+          style={styles.closeButton}
+        >
+          <Image
+            source={require("@/assets/images/write/close.svg")}
+            tintColor={colors["grey-950"]}
+            style={styles.closeIcon}
+            accessible={false}
+          />
+        </Pressable>
+      </View>
       <KeyboardAvoidingView
         style={styles.fill}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -99,38 +131,49 @@ export function ProfileSetupScreen(
               </View>
             ) : (
               <View style={styles.profile}>
-                <View
-                  accessibilityRole="image"
-                  accessibilityLabel={
-                    image ? "선택한 프로필 이미지" : "기본 프로필 이미지"
-                  }
-                  style={styles.avatar}
-                >
-                  <Image
-                    source={
-                      image
-                        ? { uri: image.uri }
-                        : require("@/assets/images/profile/default-profile.png")
+                <View>
+                  <View
+                    accessibilityRole="image"
+                    accessibilityLabel={
+                      image ? "선택한 프로필 이미지" : "기본 프로필 이미지"
                     }
-                    style={styles.avatarImage}
-                    contentFit="cover"
-                    accessible={false}
-                    onError={
-                      image
-                        ? () => {
-                            setImage(null);
-                            setImageError(
-                              "이미지를 표시하지 못했어요. 다른 이미지를 선택해 주세요."
-                            );
-                          }
-                        : undefined
-                    }
-                  />
+                    style={styles.avatar}
+                  >
+                    <Image
+                      source={
+                        image
+                          ? { uri: image.uri }
+                          : require("@/assets/images/profile/default-profile.png")
+                      }
+                      style={styles.avatarImage}
+                      contentFit="cover"
+                      accessible={false}
+                      onError={
+                        image
+                          ? () => {
+                              setImage(null);
+                              setImageError(
+                                "이미지를 표시하지 못했어요. 다른 이미지를 선택해 주세요."
+                              );
+                            }
+                          : undefined
+                      }
+                    />
+                  </View>
+                  {image ? (
+                    <RemoveProfileImageButton
+                      disabled={pending}
+                      onPress={clearImage}
+                    />
+                  ) : null}
                 </View>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityState={{ disabled: picking, busy: picking }}
-                  disabled={picking}
+                  accessibilityState={{
+                    disabled: pending,
+                    busy: picking,
+                  }}
+                  disabled={pending}
                   onPress={chooseImage}
                   style={styles.upload}
                 >
@@ -148,29 +191,58 @@ export function ProfileSetupScreen(
             )}
           </View>
           <View style={styles.footer}>
+            {exitError ? (
+              <AppText style={styles.error} accessibilityRole="alert">
+                {exitError}
+              </AppText>
+            ) : null}
+            {saveError ? (
+              <AppText style={styles.error} accessibilityRole="alert">
+                {saveError}
+              </AppText>
+            ) : null}
             <Pressable
               accessibilityRole="button"
-              accessibilityState={{ disabled: step === 3 || !valid }}
-              disabled={step === 3 || !valid}
-              onPress={next}
+              accessibilityState={{
+                disabled: pending || (step < 3 && !valid),
+              }}
+              disabled={pending || (step < 3 && !valid)}
+              onPress={step === 3 ? () => void submit() : next}
               style={({ pressed }) => [
                 styles.button,
-                (step === 3 || !valid) && styles.disabledButton,
+                (pending || (step < 3 && !valid)) && styles.disabledButton,
                 pressed && styles.pressed,
               ]}
             >
               <AppText
                 style={[
                   styles.buttonText,
-                  (step === 3 || !valid) && styles.disabledText,
+                  (pending || (step < 3 && !valid)) && styles.disabledText,
                 ]}
               >
-                {step === 3 ? "쿼트미 시작하기" : "다음으로"}
+                {saving
+                  ? "저장 중…"
+                  : step === 3
+                    ? image
+                      ? "쿼트미 시작하기"
+                      : "이미지 없이 시작하기"
+                    : "다음으로"}
               </AppText>
             </Pressable>
           </View>
         </ScrollView>
+        <ToastMessage message={uploadToast} onClose={clearUploadToast} />
       </KeyboardAvoidingView>
+      <ConfirmDialog
+        visible={exitOpen}
+        title="첫 화면으로 돌아갈까요?"
+        description=""
+        dismissLabel="머무르기"
+        cancelLabel="머무르기"
+        confirmLabel="돌아가기"
+        onClose={closeExit}
+        onConfirm={() => void confirmExit()}
+      />
     </SafeAreaView>
   );
 }

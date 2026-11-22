@@ -11,6 +11,8 @@ export class ApiError extends Error {
 export type RequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
+  multipart?: FormData;
+  ignoreResponseBody?: boolean;
   token?: string | null;
   signal?: AbortSignal;
 };
@@ -31,7 +33,12 @@ export function createApiClient(
     const abort = () => controller.abort();
     options.signal?.addEventListener("abort", abort, { once: true });
     if (options.signal?.aborted) controller.abort();
-    const timer = setTimeout(abort, timeoutMs);
+    let timedOut = false;
+    let status: number | undefined;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      abort();
+    }, timeoutMs);
     try {
       const response = await fetcher(`${getBaseUrl()}${path}`, {
         method: options.method ?? "GET",
@@ -47,9 +54,14 @@ export function createApiClient(
             : {}),
         },
         body:
-          options.body === undefined ? undefined : JSON.stringify(options.body),
+          options.multipart ??
+          (options.body === undefined
+            ? undefined
+            : JSON.stringify(options.body)),
         signal: controller.signal,
       });
+      status = response.status;
+      if (response.ok && options.ignoreResponseBody) return undefined as T;
       const text = await response.text();
       let data: unknown;
       try {
@@ -70,6 +82,25 @@ export function createApiClient(
         throw new ApiError(response.status, messageCode ?? resultCode);
       }
       return data as T;
+    } catch (error) {
+      if (typeof __DEV__ !== "undefined" && __DEV__ && options.multipart) {
+        const code = error instanceof ApiError ? error.code : undefined;
+        const reason = timedOut
+          ? "시간 초과"
+          : options.signal?.aborted
+            ? "요청 취소"
+            : error instanceof ApiError
+              ? "HTTP 오류"
+              : status === undefined
+                ? "HTTP 응답 확인 전 실패"
+                : "응답 읽기 실패";
+        console.info("앱 파일 업로드 실패", {
+          reason,
+          status,
+          code: code && /^\d{3}(?:-\d+)?$/.test(code) ? code : undefined,
+        });
+      }
+      throw error;
     } finally {
       clearTimeout(timer);
       options.signal?.removeEventListener("abort", abort);

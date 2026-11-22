@@ -1,10 +1,12 @@
-import { router } from "expo-router";
 import { Pressable, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppText } from "@/components/AppText";
 import { styles } from "./AccountDeleteCompleteScreen.styles";
-// 개발 전용 화면 검토. 서버 삭제나 세션 초기화를 수행하지 않는다.
-export function AccountDeleteCompleteScreen() {
+export function AccountDeleteCompleteScreen({
+  onDone,
+}: {
+  onDone: () => void;
+}) {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.content}>
@@ -19,7 +21,7 @@ export function AccountDeleteCompleteScreen() {
       </View>
       <Pressable
         accessibilityRole="button"
-        onPress={() => router.dismissTo("/")}
+        onPress={onDone}
         style={styles.button}
       >
         <AppText style={styles.buttonText}>처음으로</AppText>
