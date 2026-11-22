@@ -204,6 +204,33 @@ test("old-token failures arriving after refresh reuse new access without refresh
   );
 });
 
+test("a delayed refresh cannot return a completed profile to setup", async () => {
+  const refreshStarted = deferred();
+  const refreshResponse = deferred();
+  const incomplete = { ...item, profileCompleted: false };
+  const { manager } = fixture(async (path, options) => {
+    if (path.endsWith("refresh")) {
+      if (manager.getSnapshot().status === "loading")
+        return { data: { item: incomplete, accessToken: "access-1" } };
+      refreshStarted.resolve();
+      return refreshResponse.promise;
+    }
+    if (options.token === "access-1") throw new ApiError(401, "401-5");
+    return "ok";
+  }, "saved-refresh");
+  await manager.initialize();
+  assert.equal(manager.getSnapshot().member.profileCompleted, false);
+
+  const pending = manager.request("/api/profile");
+  await refreshStarted.promise;
+  manager.completeProfile({ ...incomplete, profileCompleted: true });
+  refreshResponse.resolve({
+    data: { item: incomplete, accessToken: "access-2" },
+  });
+  assert.equal(await pending, "ok");
+  assert.equal(manager.getSnapshot().member.profileCompleted, true);
+});
+
 test("logout invalidates in-flight refresh before completion and clears secure storage", async () => {
   const ready = deferred(),
     finish = deferred();

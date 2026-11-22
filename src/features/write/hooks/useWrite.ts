@@ -252,7 +252,7 @@ export function useWrite() {
       );
       if (selected.some((id) => !validIds.has(id))) {
         setSelected((current) => current.filter((id) => validIds.has(id)));
-        setMessage("친구 목록이 변경됐어요.");
+        setMessage("해제된 태그를 확인해 주세요.");
         return;
       }
       const payload = createQuotePayload({

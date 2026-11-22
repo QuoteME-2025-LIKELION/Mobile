@@ -122,11 +122,9 @@ export function createSessionManager(
         check(version);
         const nextAccess = token(response.data?.accessToken);
         const nextMember = member(response.data?.item);
-        if (
-          snapshot.member?.id === nextMember.id &&
-          snapshot.member.profileCompleted === false
-        )
-          nextMember.profileCompleted = false;
+        // 로그인 중 첫 설정 분기는 사진 저장까지 끝낸 뒤 완료 처리에서 전환한다.
+        if (snapshot.member?.id === nextMember.id)
+          nextMember.profileCompleted = snapshot.member.profileCompleted;
         if (snapshot.status !== "authenticated") resetSessionData();
         accessToken = nextAccess;
         emit({ status: "authenticated", member: nextMember, busy: false });

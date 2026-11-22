@@ -92,7 +92,11 @@ export function AccountPicker({
                   <Pressable
                     key={year}
                     accessibilityRole="radio"
-                    accessibilityState={{ selected: year === birthYear }}
+                    accessibilityState={{
+                      selected: year === birthYear,
+                      disabled: saving,
+                    }}
+                    disabled={saving}
                     onPress={() => {
                       onBirthYear(year);
                       centerYear(year, true);

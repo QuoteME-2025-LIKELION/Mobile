@@ -274,6 +274,12 @@ test("native picker back/outside cancels and selected year centers on opening", 
     .props.onPress();
   assert.deepEqual(selected, [1999]);
   assert.equal(scrolls[1].animated, true);
+  props.saving = true;
+  const findYear = (view) =>
+    nodes(view).find((n) => n.type === "Pressable" && text(n) === "1999년");
+  assert.equal(findYear(render()).props.disabled, true);
+  props.saving = false;
+  assert.equal(findYear(render()).props.disabled, false);
   nodes(tree)
     .find((n) => n.type === "Pressable" && text(n) === "완료")
     .props.onPress();
