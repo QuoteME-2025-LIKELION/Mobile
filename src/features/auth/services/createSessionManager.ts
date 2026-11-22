@@ -110,6 +110,11 @@ export function createSessionManager(
         check(version);
         const nextAccess = token(response.data?.accessToken);
         const nextMember = member(response.data?.item);
+        if (
+          snapshot.member?.id === nextMember.id &&
+          snapshot.member.profileCompleted === false
+        )
+          nextMember.profileCompleted = false;
         if (snapshot.status !== "authenticated") resetSessionData();
         accessToken = nextAccess;
         emit({ status: "authenticated", member: nextMember, busy: false });
@@ -273,6 +278,15 @@ export function createSessionManager(
     login,
     logout,
     request,
+    completeProfile(profile: SessionMember) {
+      if (
+        !profile.profileCompleted ||
+        snapshot.status !== "authenticated" ||
+        snapshot.member?.id !== profile.id
+      )
+        throw new SessionChangedError();
+      emit({ ...snapshot, member: member(profile) });
+    },
     retryStorageCleanup: () => clear(generation),
   };
 }

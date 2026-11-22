@@ -389,13 +389,13 @@ test("root navigator protects every development screen behind the real session",
       : [node, ...[node.props?.children].flat(Infinity).flatMap(all)];
   globalThis.__DEV__ = true;
   for (const status of ["anonymous", "authenticated"]) {
-    globalThis.__rootSession = { status };
+    globalThis.__rootSession = { status, member: { profileCompleted: true } };
     const guards = all(Root())
       .filter((node) => node.type === "Protected")
       .map((node) => node.props.guard);
     assert.deepEqual(
       guards,
-      status === "anonymous" ? [true, false] : [false, true]
+      status === "anonymous" ? [true, false, false] : [false, false, true]
     );
   }
   for (const status of ["loading", "error"]) {
@@ -412,7 +412,7 @@ test("root navigator protects every development screen behind the real session",
     all(Root())
       .filter((node) => node.type === "Protected")
       .map((node) => node.props.guard),
-    [true, false]
+    [true, false, false]
   );
 });
 

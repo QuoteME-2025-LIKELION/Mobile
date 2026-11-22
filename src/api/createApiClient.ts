@@ -11,6 +11,7 @@ export class ApiError extends Error {
 export type RequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
+  multipart?: FormData;
   token?: string | null;
   signal?: AbortSignal;
 };
@@ -47,7 +48,10 @@ export function createApiClient(
             : {}),
         },
         body:
-          options.body === undefined ? undefined : JSON.stringify(options.body),
+          options.multipart ??
+          (options.body === undefined
+            ? undefined
+            : JSON.stringify(options.body)),
         signal: controller.signal,
       });
       const text = await response.text();

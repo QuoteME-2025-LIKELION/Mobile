@@ -79,11 +79,17 @@ let code = compile(
   await read("features/profile/screens/ProfileSetupScreen.tsx")
 );
 for (const [from, to] of Object.entries({
+  "@/features/auth/services/session": url(
+    "export const session={completeProfile: () => {}};"
+  ),
+  "@/features/profile/services/profileApi": url(
+    "export const setupProfile=async()=>({id:1,profileCompleted:true}),uploadProfileImage=async()=>{};"
+  ),
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: reactUrl,
   "expo-image": url("export const Image='Image';"),
   "expo-router": url(
-    "export const usePreventRemove=(enabled,callback)=>{globalThis.__profileHarness.guard=enabled;globalThis.__profileHarness.back=callback;};"
+    "export const usePreventRemove=(enabled,callback)=>{globalThis.__profileHarness.guard=enabled;globalThis.__profileHarness.back=callback;return ()=>{};};"
   ),
   "expo-status-bar": url("export const StatusBar='StatusBar';"),
   "react-native": url(
@@ -140,7 +146,7 @@ function harness(props = {}) {
   return { state, render, fill, advance };
 }
 
-test("four-step profile requires inputs, preserves them on back, and never completes signup", () => {
+test("four-step profile requires inputs, preserves them on back, and enables signup on the photo step", () => {
   const h = harness();
   let tree = h.render();
   assert.equal(button(tree, "다음으로").props.disabled, true);
@@ -163,7 +169,7 @@ test("four-step profile requires inputs, preserves them on back, and never compl
   tree = h.fill(String(new Date().getFullYear() + 1));
   assert.equal(button(tree, "다음으로").props.disabled, true);
   tree = h.advance("2000");
-  assert.equal(button(tree, "쿼트미 시작하기").props.disabled, true);
+  assert.equal(button(tree, "쿼트미 시작하기").props.disabled, false);
   assert.ok(
     find(
       tree,
@@ -219,7 +225,7 @@ test("photo cancel and invalid selections preserve current image; double selecti
       (node) => node.props?.accessibilityLabel === "기본 프로필 이미지"
     )
   );
-  assert.equal(button(tree, "쿼트미 시작하기").props.disabled, true);
+  assert.equal(button(tree, "쿼트미 시작하기").props.disabled, false);
 });
 
 test("photo picker failure shows retryable error and releases the busy state", async () => {

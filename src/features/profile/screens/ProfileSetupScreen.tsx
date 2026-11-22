@@ -24,6 +24,10 @@ export function ProfileSetupScreen(
     imageError,
     setImageError,
     picking,
+    saving,
+    saveError,
+    canSkipImage,
+    submit,
     focused,
     setFocused,
     inputRef,
@@ -129,8 +133,11 @@ export function ProfileSetupScreen(
                 </View>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityState={{ disabled: picking, busy: picking }}
-                  disabled={picking}
+                  accessibilityState={{
+                    disabled: picking || saving,
+                    busy: picking,
+                  }}
+                  disabled={picking || saving}
                   onPress={chooseImage}
                   style={styles.upload}
                 >
@@ -148,24 +155,46 @@ export function ProfileSetupScreen(
             )}
           </View>
           <View style={styles.footer}>
+            {saveError ? (
+              <AppText style={styles.error} accessibilityRole="alert">
+                {saveError}
+              </AppText>
+            ) : null}
+            {canSkipImage ? (
+              <Pressable
+                accessibilityRole="button"
+                disabled={saving}
+                onPress={() => void submit(true)}
+              >
+                <AppText style={styles.buttonText}>사진 없이 시작하기</AppText>
+              </Pressable>
+            ) : null}
             <Pressable
               accessibilityRole="button"
-              accessibilityState={{ disabled: step === 3 || !valid }}
-              disabled={step === 3 || !valid}
-              onPress={next}
+              accessibilityState={{
+                disabled: saving || picking || (step < 3 && !valid),
+              }}
+              disabled={saving || picking || (step < 3 && !valid)}
+              onPress={step === 3 ? () => void submit() : next}
               style={({ pressed }) => [
                 styles.button,
-                (step === 3 || !valid) && styles.disabledButton,
+                (saving || picking || (step < 3 && !valid)) &&
+                  styles.disabledButton,
                 pressed && styles.pressed,
               ]}
             >
               <AppText
                 style={[
                   styles.buttonText,
-                  (step === 3 || !valid) && styles.disabledText,
+                  (saving || picking || (step < 3 && !valid)) &&
+                    styles.disabledText,
                 ]}
               >
-                {step === 3 ? "쿼트미 시작하기" : "다음으로"}
+                {saving
+                  ? "저장 중…"
+                  : step === 3
+                    ? "쿼트미 시작하기"
+                    : "다음으로"}
               </AppText>
             </Pressable>
           </View>

@@ -1,3 +1,9 @@
+import { session } from "@/features/auth/services/session";
+import {
+  setupProfile,
+  uploadProfileImage,
+  type Profile,
+} from "../services/profileApi";
 import { profileSetupSteps } from "../constants/profileSetupSteps";
 import { usePreventRemove } from "expo-router";
 import { type ComponentRef, useEffect, useRef, useState } from "react";
@@ -20,6 +26,9 @@ export function useProfileSetup({
   const [image, setImage] = useState<ProfileImage | null>(null);
   const [imageError, setImageError] = useState("");
   const [picking, setPicking] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [savedProfile, setSavedProfile] = useState<Profile | null>(null);
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
@@ -34,12 +43,15 @@ export function useProfileSetup({
         ? `1900년부터 ${new Date().getFullYear()}년 사이의 출생연도를 숫자 4자리로 입력해 주세요.`
         : `${field.label}${step === 0 ? "을" : "를"} 입력해 주세요.`
       : "";
-  usePreventRemove(step > 0 || picking, () => {
-    if (busy.current) return;
-    Keyboard.dismiss();
-    setFocused(false);
-    setStep((current) => Math.max(0, current - 1));
-  });
+  const allowExit = usePreventRemove(
+    (step > 0 && !savedProfile) || picking || saving,
+    () => {
+      if (busy.current) return;
+      Keyboard.dismiss();
+      setFocused(false);
+      setStep((current) => Math.max(0, current - 1));
+    }
+  );
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -83,6 +95,39 @@ export function useProfileSetup({
       if (mounted.current) setPicking(false);
     }
   };
+  const submit = async (skipImage = false) => {
+    if (step !== 3 || busy.current) return;
+    busy.current = true;
+    setSaving(true);
+    setSaveError("");
+    try {
+      const profile =
+        savedProfile ??
+        (await setupProfile({
+          nickname: values[0].trim(),
+          introduction: values[1].trim(),
+          birthYear: values[2],
+        }));
+      setSavedProfile(profile);
+      if (image && !skipImage) {
+        try {
+          await uploadProfileImage(image);
+        } catch {
+          setSaveError(
+            "기본 정보는 저장했어요. 사진을 다시 올리거나 사진 없이 시작할 수 있어요."
+          );
+          return;
+        }
+      }
+      allowExit();
+      session.completeProfile(profile);
+    } catch {
+      setSaveError("프로필 설정을 저장하지 못했어요. 다시 시도해 주세요.");
+    } finally {
+      busy.current = false;
+      if (mounted.current) setSaving(false);
+    }
+  };
   const handleChangeText = (text: string) =>
     setValues((current) =>
       current.map((previous, index) =>
@@ -106,6 +151,10 @@ export function useProfileSetup({
     imageError,
     setImageError,
     picking,
+    saving,
+    saveError,
+    canSkipImage: savedProfile !== null && saveError !== "",
+    submit,
     focused,
     setFocused,
     inputRef,
