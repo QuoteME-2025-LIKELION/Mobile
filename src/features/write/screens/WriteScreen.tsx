@@ -295,6 +295,8 @@ export function WriteScreen() {
       </KeyboardAvoidingView>
       <ConfirmDialog
         visible={exitOpen}
+        dismissLabel="머무르기"
+        cancelLabel="머무르기"
         onClose={cancelExit}
         onConfirm={confirmExit}
       />

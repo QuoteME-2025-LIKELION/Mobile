@@ -17,6 +17,7 @@ type Props = {
   title?: string;
   description?: string;
   dismissLabel?: string;
+  cancelLabel?: string;
   confirmLabel?: string;
   confirmDisabled?: boolean;
 };
@@ -28,6 +29,7 @@ export function ConfirmDialog({
   title = "저장하지 않고 나가시겠어요?",
   description = "작성한 글은 저장되지 않습니다.",
   dismissLabel = "계속 작성하기",
+  cancelLabel = "돌아가기",
   confirmLabel = "나가기",
   confirmDisabled = false,
 }: Props) {
@@ -114,7 +116,7 @@ export function ConfirmDialog({
                 onPress={() => dismiss(onClose)}
                 style={styles.button}
               >
-                <AppText>돌아가기</AppText>
+                <AppText>{cancelLabel}</AppText>
               </Pressable>
               <Pressable
                 accessibilityRole="button"

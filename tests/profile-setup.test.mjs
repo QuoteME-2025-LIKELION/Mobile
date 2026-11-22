@@ -68,7 +68,8 @@ test("image validation keeps web formats and 5MB boundary while rejecting unknow
 });
 
 const reactUrl = url(`
-export const useEffect=()=>{};
+export const useCallback=fn=>fn;
+export const useEffect=fn=>fn();
 export const useState=initial=>{
  const state=globalThis.__profileHarness;const index=state.next++;
  if(!(index in state.values)) state.values[index]=initial;
@@ -80,7 +81,7 @@ let code = compile(
 );
 for (const [from, to] of Object.entries({
   "@/features/auth/services/session": url(
-    "export const session={completeProfile: () => {}};"
+    "export const session={completeProfile: () => {}, logout:async()=>{const h=globalThis.__profileHarness;h.logouts=(h.logouts??0)+1;if(h.failLogout)throw Error();}};"
   ),
   "@/features/profile/services/profileApi": url(
     "export const setupProfile=async()=>({id:1,profileCompleted:true}),uploadProfileImage=async()=>{};"
@@ -93,10 +94,13 @@ for (const [from, to] of Object.entries({
   ),
   "expo-status-bar": url("export const StatusBar='StatusBar';"),
   "react-native": url(
-    "export const Keyboard={dismiss:()=>{}},Platform={OS:'android'},StyleSheet={create:value=>value};export const KeyboardAvoidingView='KeyboardAvoidingView',Pressable='Pressable',ScrollView='ScrollView',TextInput='TextInput',View='View';"
+    "export const BackHandler={addEventListener:(name,callback)=>{globalThis.__profileHarness.hardwareBack=callback;return {remove(){}};}},Keyboard={dismiss:()=>{}},Platform={OS:'android'},StyleSheet={create:value=>value};export const KeyboardAvoidingView='KeyboardAvoidingView',Pressable='Pressable',ScrollView='ScrollView',TextInput='TextInput',View='View';"
   ),
   "react-native-safe-area-context": url(
     "export const SafeAreaView='SafeAreaView';"
+  ),
+  "@/components/ConfirmDialog": url(
+    "export const ConfirmDialog='ConfirmDialog';"
   ),
   "@/components/AppText": url("export const AppText='AppText';"),
   "@/styles/theme": themeUrl,
@@ -208,7 +212,8 @@ test("photo cancel and invalid selections preserve current image; double selecti
   resolve(result);
   await pick;
   tree = h.render();
-  const photo = () => find(tree, (node) => node.type === "Image");
+  const photo = () =>
+    find(tree, (node) => node.type === "Image" && node.props.source?.uri);
   assert.equal(photo().props.source.uri, result.uri);
   for (const next of [null, { ...result, fileSize: 6 * 1024 * 1024 }]) {
     const pending = button(tree, "이미지 업로드하기").props.onPress();
@@ -246,6 +251,41 @@ test("photo picker failure shows retryable error and releases the busy state", a
       (node) =>
         typeof node.props?.children === "string" &&
         node.props.children.includes("다시 빌드")
+    )
+  );
+});
+
+test("setup only exits through the confirmed close action and hardware back stays within setup", async () => {
+  const h = harness();
+  const dialog = (tree) => find(tree, (node) => node.type === "ConfirmDialog");
+  const close = (tree) =>
+    find(tree, (node) => node.props?.accessibilityLabel === "닫기");
+  let tree = h.render();
+  assert.equal(h.state.hardwareBack(), true);
+  assert.equal(field(h.render()).props.accessibilityLabel, "닉네임");
+  assert.equal(dialog(h.render()).props.visible, false);
+  tree = h.advance("닉네임");
+  assert.equal(h.state.hardwareBack(), true);
+  tree = h.render();
+  assert.equal(field(tree).props.accessibilityLabel, "닉네임");
+  close(tree).props.onPress();
+  let modal = dialog(h.render());
+  assert.equal(modal.props.visible, true);
+  assert.equal(modal.props.title, "첫 화면으로 돌아갈까요?");
+  assert.equal(modal.props.cancelLabel, "머무르기");
+  assert.equal(modal.props.confirmLabel, "돌아가기");
+  modal.props.onClose();
+  assert.equal(dialog(h.render()).props.visible, false);
+  assert.equal(h.state.logouts, undefined);
+  close(h.render()).props.onPress();
+  h.state.failLogout = true;
+  dialog(h.render()).props.onConfirm();
+  await Promise.resolve();
+  assert.equal(h.state.logouts, 1);
+  assert.ok(
+    find(
+      h.render(),
+      (node) => node.props?.children === "첫 화면으로 돌아가지 못했어요."
     )
   );
 });

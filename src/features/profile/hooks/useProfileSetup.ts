@@ -6,8 +6,19 @@ import {
 } from "../services/profileApi";
 import { profileSetupSteps } from "../constants/profileSetupSteps";
 import { usePreventRemove } from "expo-router";
-import { type ComponentRef, useEffect, useRef, useState } from "react";
-import { Keyboard, type ScrollView, type TextInput } from "react-native";
+import {
+  type ComponentRef,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  BackHandler,
+  Keyboard,
+  type ScrollView,
+  type TextInput,
+} from "react-native";
 import { pickProfileImage } from "../services/pickProfileImage";
 import {
   isValidBirthYear,
@@ -26,8 +37,9 @@ export function useProfileSetup({
   const [image, setImage] = useState<ProfileImage | null>(null);
   const [imageError, setImageError] = useState("");
   const [picking, setPicking] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
-  const [logoutError, setLogoutError] = useState("");
+  const [exitOpen, setExitOpen] = useState(false);
+  const [exiting, setExiting] = useState(false);
+  const [exitError, setExitError] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [savedProfile, setSavedProfile] = useState<Profile | null>(null);
@@ -45,15 +57,43 @@ export function useProfileSetup({
         ? `1900년부터 ${new Date().getFullYear()}년 사이의 출생연도를 숫자 4자리로 입력해 주세요.`
         : `${field.label}${step === 0 ? "을" : "를"} 입력해 주세요.`
       : "";
-  const allowExit = usePreventRemove(
-    (step > 0 && !savedProfile) || picking || saving || loggingOut,
-    () => {
-      if (busy.current) return;
-      Keyboard.dismiss();
-      setFocused(false);
-      setStep((current) => Math.max(0, current - 1));
+  const goBackOneStep = useCallback(() => {
+    if (busy.current) return;
+    Keyboard.dismiss();
+    setFocused(false);
+    setStep((current) => Math.max(0, current - 1));
+  }, []);
+  const allowExit = usePreventRemove(true, goBackOneStep);
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        goBackOneStep();
+        return true;
+      }
+    );
+    return () => subscription.remove();
+  }, [goBackOneStep]);
+  const openExit = () => {
+    if (busy.current) return;
+    Keyboard.dismiss();
+    setExitError("");
+    setExitOpen(true);
+  };
+  const confirmExit = async () => {
+    if (busy.current) return;
+    busy.current = true;
+    setExitOpen(false);
+    setExiting(true);
+    try {
+      await session.logout();
+    } catch {
+      if (mounted.current) setExitError("첫 화면으로 돌아가지 못했어요.");
+    } finally {
+      busy.current = false;
+      if (mounted.current) setExiting(false);
     }
-  );
+  };
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -128,31 +168,18 @@ export function useProfileSetup({
       if (mounted.current) setSaving(false);
     }
   };
-  const logout = async () => {
-    if (busy.current) return;
-    busy.current = true;
-    setLoggingOut(true);
-    setLogoutError("");
-    try {
-      allowExit();
-      await session.logout();
-    } catch {
-      if (mounted.current) setLogoutError("로그아웃하지 못했어요.");
-    } finally {
-      busy.current = false;
-      if (mounted.current) setLoggingOut(false);
-    }
-  };
-  const handleChangeText = (text: string) =>
+  const handleChangeText = (text: string) => {
+    const nextValue =
+      step === 2
+        ? sanitizeBirthYear(text)
+        : limitProfileText(text, field.limit);
+    if (nextValue === value) return;
+    setSavedProfile(null);
+    setSaveError("");
     setValues((current) =>
-      current.map((previous, index) =>
-        index === step
-          ? step === 2
-            ? sanitizeBirthYear(text)
-            : limitProfileText(text, field.limit)
-          : previous
-      )
+      current.map((previous, index) => (index === step ? nextValue : previous))
     );
+  };
   const handleBlur = () => {
     setFocused(false);
     setTouched((current) =>
@@ -161,15 +188,18 @@ export function useProfileSetup({
   };
   return {
     step,
+    exitOpen,
+    exiting,
+    exitError,
+    openExit,
+    closeExit: () => setExitOpen(false),
+    confirmExit,
     image,
     setImage,
     imageError,
     setImageError,
     picking,
     saving,
-    loggingOut,
-    logoutError,
-    logout,
     saveError,
     canSkipImage: savedProfile !== null && saveError !== "",
     submit,

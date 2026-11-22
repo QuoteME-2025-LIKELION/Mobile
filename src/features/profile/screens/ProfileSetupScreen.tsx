@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AppText } from "@/components/AppText";
 import { colors } from "@/styles/theme";
 import { styles } from "./ProfileSetupScreen.styles";
@@ -19,15 +20,18 @@ export function ProfileSetupScreen(
 ) {
   const {
     step,
+    exitOpen,
+    exiting,
+    exitError,
+    openExit,
+    closeExit,
+    confirmExit,
     image,
     setImage,
     imageError,
     setImageError,
     picking,
     saving,
-    loggingOut,
-    logoutError,
-    logout,
     saveError,
     canSkipImage,
     submit,
@@ -44,10 +48,26 @@ export function ProfileSetupScreen(
     handleChangeText,
     handleBlur,
   } = useProfileSetup(options);
-  const pending = picking || saving || loggingOut;
+  const pending = picking || saving || exiting;
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar style="dark" />
+      <View style={styles.header}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="닫기"
+          disabled={pending}
+          onPress={openExit}
+          style={styles.closeButton}
+        >
+          <Image
+            source={require("@/assets/images/write/close.svg")}
+            tintColor={colors["grey-950"]}
+            style={styles.closeIcon}
+            accessible={false}
+          />
+        </Pressable>
+      </View>
       <KeyboardAvoidingView
         style={styles.fill}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -159,6 +179,11 @@ export function ProfileSetupScreen(
             )}
           </View>
           <View style={styles.footer}>
+            {exitError ? (
+              <AppText style={styles.error} accessibilityRole="alert">
+                {exitError}
+              </AppText>
+            ) : null}
             {saveError ? (
               <AppText style={styles.error} accessibilityRole="alert">
                 {saveError}
@@ -201,23 +226,19 @@ export function ProfileSetupScreen(
                     : "다음으로"}
               </AppText>
             </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              disabled={pending}
-              onPress={() => void logout()}
-            >
-              <AppText style={styles.buttonText}>
-                {loggingOut ? "로그아웃 중…" : "로그아웃"}
-              </AppText>
-            </Pressable>
-            {logoutError ? (
-              <AppText style={styles.error} accessibilityRole="alert">
-                {logoutError}
-              </AppText>
-            ) : null}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <ConfirmDialog
+        visible={exitOpen}
+        title="첫 화면으로 돌아갈까요?"
+        description=""
+        dismissLabel="머무르기"
+        cancelLabel="머무르기"
+        confirmLabel="돌아가기"
+        onClose={closeExit}
+        onConfirm={() => void confirmExit()}
+      />
     </SafeAreaView>
   );
 }

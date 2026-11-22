@@ -256,7 +256,8 @@ export function ProfileCenterScreen(
         visible={exitOpen}
         title={"저장하지 않고\n나가시겠어요?"}
         description="변경된 정보는 저장되지 않아요."
-        dismissLabel="계속 편집하기"
+        dismissLabel="머무르기"
+        cancelLabel="머무르기"
         onClose={cancelExit}
         onConfirm={confirmExit}
       />

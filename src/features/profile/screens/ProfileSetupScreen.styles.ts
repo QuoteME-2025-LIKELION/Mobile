@@ -5,7 +5,20 @@ export const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.secondary },
   fill: { flex: 1 },
   content: { flexGrow: 1 },
-  fields: { paddingTop: 80, paddingHorizontal: 24, gap: 32 },
+  fields: { paddingTop: 24, paddingHorizontal: 24, gap: 32 },
+  header: {
+    height: 56,
+    alignItems: "flex-end",
+    paddingRight: 12,
+    justifyContent: "center",
+  },
+  closeButton: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  closeIcon: { width: 24, height: 24 },
   step: {
     fontFamily: fonts.quote,
     fontSize: 20,
