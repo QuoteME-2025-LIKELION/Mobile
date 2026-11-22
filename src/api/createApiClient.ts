@@ -12,6 +12,7 @@ export type RequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
   multipart?: FormData;
+  ignoreResponseBody?: boolean;
   token?: string | null;
   signal?: AbortSignal;
 };
@@ -54,6 +55,7 @@ export function createApiClient(
             : JSON.stringify(options.body)),
         signal: controller.signal,
       });
+      if (response.ok && options.ignoreResponseBody) return undefined as T;
       const text = await response.text();
       let data: unknown;
       try {

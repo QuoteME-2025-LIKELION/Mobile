@@ -28,9 +28,12 @@ const imports = {
   "@/features/moderation/stores/moderationStore": url(
     "export const useModerationState=()=>({blocked:[],formerFriendIds:[]});"
   ),
+  "@/features/account/services/accountApi": url(
+    'export const getAccount=async()=>({email:"member@example.test",birthYear:"2000",gender:"FEMALE",provider:"GOOGLE",linkedAccounts:[]});export const updateAccount=async(body)=>globalThis.__account.saved=body;'
+  ),
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: url(
-    `export const useState=initial=>{const h=globalThis.__account;const i=h.next++;if(!(i in h.values))h.values[i]=typeof initial==='function'?initial():initial;return [h.values[i],value=>h.values[i]=typeof value==='function'?value(h.values[i]):value];};export const useRef=initial=>{const h=globalThis.__account;const i=h.next++;return h.values[i]??=( {current:initial} );};`
+    `export const useEffect=fn=>{const h=globalThis.__account;if(!h.mounted){h.mounted=true;fn();}};export const useState=initial=>{const h=globalThis.__account;const i=h.next++;if(!(i in h.values))h.values[i]=typeof initial==='function'?initial():initial;return [h.values[i],value=>h.values[i]=typeof value==='function'?value(h.values[i]):value];};export const useRef=initial=>{const h=globalThis.__account;const i=h.next++;return h.values[i]??=( {current:initial} );};`
   ),
   "expo-router": url(
     `export const Redirect='Redirect';export const router={canGoBack:()=>globalThis.__account.canGoBack,back:()=>globalThis.__account.routes.push('back'),replace:path=>globalThis.__account.routes.push(['replace',path]),push:path=>globalThis.__account.routes.push(['push',path]),dismissTo:path=>globalThis.__account.routes.push(['dismissTo',path])};`
@@ -111,8 +114,10 @@ const text = (tree) =>
         ? tree.map(text).join("")
         : text(tree.props?.children);
 
-test("account picker commits only Done and discards a dismissed draft on reopen", () => {
+test("account picker commits only Done and discards a dismissed draft on reopen", async () => {
   const { render } = harness(useAccountSettings);
+  render();
+  await Promise.resolve();
   let h = render();
   assert.equal(h.gender, "FEMALE");
   assert.equal(h.birthYear, 2000);
@@ -128,7 +133,7 @@ test("account picker commits only Done and discards a dismissed draft on reopen"
   assert.equal(h.draftGender, "FEMALE");
   h.setDraftGender("ETC");
   h = render();
-  h.finishSheet();
+  await h.finishSheet();
   h = render();
   assert.equal(h.gender, "ETC");
   assert.equal(h.sheet, null);
@@ -136,7 +141,7 @@ test("account picker commits only Done and discards a dismissed draft on reopen"
   h = render();
   h.setDraftBirthYear(1998);
   h = render();
-  h.finishSheet();
+  await h.finishSheet();
   h = render();
   assert.equal(h.birthYear, 1998);
 });
@@ -165,8 +170,10 @@ test("account navigation returns safely and logout dialog does not claim a sessi
   assert.equal(h.logoutOpen, false);
   assert.equal(state.routes.length, 3);
 });
-test("account screen opens blocked-list destination and leaves server actions disabled", () => {
+test("account screen shows fetched settings and leaves social linking disabled", async () => {
   const { render } = harness(AccountSettingsScreen);
+  render();
+  await Promise.resolve();
   let tree = render();
   assert.match(text(tree), /계정 정보/);
   assert.match(text(tree), /2000년/);
