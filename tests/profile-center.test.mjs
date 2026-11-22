@@ -24,9 +24,10 @@ let code = compile(
 for (const [from, to] of Object.entries({
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: reactUrl,
-  "@/features/home/stores/useHomeData": url(
-    'export const useHomeData=()=>globalThis.__profileData??({status:"success",data:{profile:{nickname:"듀가나다",introduction:"매일 한 문장씩 남겨요",profileImage:null}}});'
-  ),
+  "@/features/profile/services/profileApi": url(`
+    export const getProfile=async()=>{if(globalThis.__profileData?.status==="error") throw Error(); return {nickname:"듀가나다",introduction:"매일 한 문장씩 남겨요",profileImage:null};};
+    export const updateProfile=async (data)=>data;
+  `),
   "@/features/home/stores/homeResource": url(
     "export const homeResource={load:async()=>{}};"
   ),
@@ -86,6 +87,7 @@ function harness(props = {}) {
     values: [],
     effects: [],
     cleanups: [],
+    mounted: false,
     writes: 0,
     backs: 0,
     disabled: 0,
@@ -96,16 +98,19 @@ function harness(props = {}) {
     h.effects = [];
     globalThis.__profileCenter = h;
     const tree = ProfileCenterScreen(props);
-    h.effects.forEach((fn) => {
-      const cleanup = fn();
-      if (cleanup) h.cleanups.push(cleanup);
-    });
+    if (!h.mounted)
+      h.effects.forEach((fn) => {
+        const cleanup = fn();
+        if (cleanup) h.cleanups.push(cleanup);
+      });
+    h.mounted = true;
     return tree;
   };
   const edit = () => {
     button(render(), "편집하기").props.onPress();
     return render();
   };
+  render();
   return { h, render, edit, unmount: () => h.cleanups.forEach((fn) => fn()) };
 }
 const image = {
@@ -115,8 +120,9 @@ const image = {
   fileSize: 1024,
 };
 
-test("existing profile starts in view mode, then exposes bounded editing without pretending to save", () => {
+test("existing profile starts in view mode, then exposes bounded editing with a guarded save", async () => {
   const { h, render, edit } = harness();
+  await Promise.resolve();
   let tree = render();
   assert.match(text(tree), /듀가나다/);
   assert.match(text(tree), /매일 한 문장씩 남겨요/);
@@ -136,19 +142,21 @@ test("existing profile starts in view mode, then exposes bounded editing without
   tree = render();
   assert.match(text(tree), /닉네임을 비워둘 수 없어요/);
   assert.ok(button(tree, "저장하기").props.disabled);
-  assert.equal(button(tree, "저장하기").props.onPress, undefined);
+
   label(tree, "자기소개").props.onChangeText("");
   tree = render();
   assert.equal(label(tree, "자기소개").props.value, "");
 });
 
-test("unchanged exit is immediate; dirty close/back can cancel or confirm preserving the native back action", () => {
+test("unchanged exit is immediate; dirty close/back can cancel or confirm preserving the native back action", async () => {
   let { h, render, edit } = harness();
+  await Promise.resolve();
   let tree = edit();
   label(tree, "프로필 관리 닫기").props.onPress();
   assert.equal(h.backs, 1);
   assert.equal(dialog(render()).props.visible, false);
   ({ h, render, edit } = harness());
+  await Promise.resolve();
   tree = edit();
   label(tree, "닉네임").props.onChangeText("바뀐닉네임");
   tree = render();
@@ -179,6 +187,7 @@ test("unchanged exit is immediate; dirty close/back can cancel or confirm preser
 test("image cancellation and validation failure retain the selected preview; rendering failure falls back safely", async () => {
   let next = image;
   const { h, render, edit } = harness({ selectImage: async () => next });
+  await Promise.resolve();
   let tree = edit();
   await label(tree, "이미지 바꾸기").props.onPress();
   tree = render();
@@ -223,6 +232,7 @@ test("photo picker locks duplicate opens and exit while pending, then unlocks on
       return new Promise((_, fail) => (reject = fail));
     },
   });
+  await Promise.resolve();
   let tree = edit();
   const pending = label(tree, "이미지 바꾸기").props.onPress();
   label(tree, "이미지 바꾸기").props.onPress();
@@ -248,6 +258,7 @@ test("late image selection after unmount does not update the abandoned screen", 
   const { h, render, edit, unmount } = harness({
     selectImage: () => new Promise((done) => (resolve = done)),
   });
+  await Promise.resolve();
   const tree = edit();
   const pending = label(tree, "이미지 바꾸기").props.onPress();
   render();
@@ -258,9 +269,10 @@ test("late image selection after unmount does not update the abandoned screen", 
   assert.equal(h.writes, writes);
 });
 
-test("profile query failure exposes retry and disables editing without a sample identity", () => {
+test("profile query failure exposes retry and disables editing without a sample identity", async () => {
   globalThis.__profileData = { status: "error", data: null };
   const { render } = harness();
+  await Promise.resolve();
   const tree = render();
   assert.match(text(tree), /프로필을 불러오지 못했어요/);
   assert.doesNotMatch(text(tree), /듀가나다/);

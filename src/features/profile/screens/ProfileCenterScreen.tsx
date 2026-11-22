@@ -31,7 +31,12 @@ export function ProfileCenterScreen(
     image,
     imageFailed,
     imageError,
-    picking,
+    picking: selecting,
+    saving,
+    saveError,
+    saveDisabled,
+    save,
+    clearImage,
     focused,
     setFocused,
     exitOpen,
@@ -45,6 +50,8 @@ export function ProfileCenterScreen(
     cancelExit,
     beginEditing,
   } = useProfileCenter(options);
+  const picking = selecting || saving;
+  const disabled = picking || loading || loadError || (editing && saveDisabled);
   return (
     <SafeAreaView edges={["top"]} style={styles.screen}>
       <StatusBar style="dark" />
@@ -216,28 +223,31 @@ export function ProfileCenterScreen(
           </View>
         </ScrollView>
         <View style={[styles.footer, { paddingBottom: 40 + insets.bottom }]}>
-          {/* 서버 미연동: 실제 저장/가짜 성공 처리를 하지 않는다. */}
+          {saveError ? (
+            <AppText accessibilityRole="alert">{saveError}</AppText>
+          ) : null}
+          {editing && (image || profileImage) ? (
+            <Pressable
+              accessibilityRole="button"
+              disabled={picking}
+              onPress={clearImage}
+            >
+              <AppText>사진 삭제</AppText>
+            </Pressable>
+          ) : null}
           <Pressable
             accessibilityRole="button"
             accessibilityState={{
-              disabled: editing || picking || loading || loadError,
+              disabled: disabled,
             }}
-            disabled={editing || picking || loading || loadError}
-            onPress={editing ? undefined : beginEditing}
-            style={[
-              styles.button,
-              (editing || picking || loading || loadError) &&
-                styles.disabledButton,
-            ]}
+            disabled={disabled}
+            onPress={editing ? () => void save() : beginEditing}
+            style={[styles.button, disabled && styles.disabledButton]}
           >
             <AppText
-              style={[
-                styles.buttonText,
-                (editing || picking || loading || loadError) &&
-                  styles.disabledText,
-              ]}
+              style={[styles.buttonText, disabled && styles.disabledText]}
             >
-              {editing ? "저장하기" : "편집하기"}
+              {saving ? "저장 중…" : editing ? "저장하기" : "편집하기"}
             </AppText>
           </Pressable>
         </View>

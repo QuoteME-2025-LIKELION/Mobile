@@ -3,7 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import { Keyboard } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { homeResource } from "@/features/home/stores/homeResource";
-import { useHomeData } from "@/features/home/stores/useHomeData";
+import {
+  getProfile,
+  updateProfile,
+  type Profile,
+} from "../services/profileApi";
 import { pickProfileImage } from "../services/pickProfileImage";
 import {
   validateProfileImage,
@@ -14,11 +18,11 @@ import {
 export function useProfileCenter({
   selectImage = pickProfileImage,
 }: { selectImage?: () => Promise<ProfileImage | null> } = {}) {
-  const home = useHomeData();
-  const initialProfile = home.data?.profile;
-  useEffect(() => {
-    if (home.status === "idle") void homeResource.load();
-  }, [home.status]);
+  const [initialProfile, setProfile] = useState<Profile | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [removeImage, setRemoveImage] = useState(false);
   const insets = useSafeAreaInsets();
   const [editing, setEditing] = useState(false);
   const [nicknameDraft, setNickname] = useState<string | null>(null);
@@ -41,16 +45,27 @@ export function useProfileCenter({
   const changed =
     nickname.trim() !== (initialProfile?.nickname ?? "") ||
     introduction !== (initialProfile?.introduction ?? "") ||
-    image !== null;
+    image !== null ||
+    removeImage;
   const dirty = editing && changed;
+  async function load() {
+    setLoadError(false);
+    try {
+      const profile = await getProfile();
+      if (mounted.current) setProfile(profile);
+    } catch {
+      if (mounted.current) setLoadError(true);
+    }
+  }
   useEffect(() => {
     mounted.current = true;
+    void load();
     return () => {
       mounted.current = false;
     };
   }, []);
   const disablePrevention = usePreventRemove(
-    !allowExit && (dirty || picking),
+    !allowExit && (dirty || picking || saving),
     ({ repeat }) => {
       if (busy.current) return;
       Keyboard.dismiss();
@@ -88,6 +103,7 @@ export function useProfileCenter({
         return;
       }
       setImage(selected);
+      setRemoveImage(false);
       setImageFailed(false);
     } catch {
       if (mounted.current)
@@ -115,18 +131,58 @@ export function useProfileCenter({
     setIntroduction(limitProfileText(value, 20));
   const cancelExit = () => setExitOpen(false);
   const beginEditing = () => {
-    if (!initialProfile || home.status !== "success") return;
+    if (!initialProfile) return;
     setNickname(initialProfile.nickname);
-    setIntroduction(initialProfile.introduction);
+    setIntroduction(initialProfile.introduction ?? "");
     setEditing(true);
   };
-  return {
-    loading: !initialProfile && home.status !== "error",
-    loadError: home.status === "error",
-    retry: () => {
+  async function save() {
+    if (!dirty || nicknameEmpty || busy.current) return;
+    busy.current = true;
+    setSaving(true);
+    setSaveError("");
+    try {
+      const profile = await updateProfile(
+        {
+          nickname: nickname.trim(),
+          introduction,
+          ...(removeImage ? { profileImage: "" as const } : {}),
+        },
+        image ?? undefined
+      );
+      if (!mounted.current) return;
+      setProfile(profile);
+      setNickname(null);
+      setIntroduction(null);
+      setImage(null);
+      setRemoveImage(false);
+      setImageFailed(false);
+      setImageError("");
+      setEditing(false);
       void homeResource.load();
+    } catch {
+      if (mounted.current)
+        setSaveError("프로필을 저장하지 못했어요. 다시 시도해 주세요.");
+    } finally {
+      busy.current = false;
+      if (mounted.current) setSaving(false);
+    }
+  }
+  return {
+    loading: !initialProfile && !loadError,
+    loadError,
+    retry: load,
+    saving,
+    saveError,
+    saveDisabled: !dirty || nicknameEmpty || Boolean(image && imageFailed),
+    save,
+    clearImage: () => {
+      setImage(null);
+      setRemoveImage(Boolean(initialProfile?.profileImage));
+      setImageFailed(false);
+      setImageError("");
     },
-    profileImage: initialProfile?.profileImage,
+    profileImage: removeImage ? null : initialProfile?.profileImage,
     insets,
     editing,
     nickname,
