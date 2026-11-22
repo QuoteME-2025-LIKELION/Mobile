@@ -144,7 +144,10 @@ export function HomeDrawer({ visible, onClose, profile }: Props) {
                 {profile?.nickname ?? ""}
               </AppText>
               <AppText style={styles.introduction}>
-                {profile?.introduction ?? ""}
+                {profile &&
+                  (profile.introduction?.trim()
+                    ? profile.introduction
+                    : "자기소개가 없습니다.")}
               </AppText>
             </View>
             <View style={styles.menu}>

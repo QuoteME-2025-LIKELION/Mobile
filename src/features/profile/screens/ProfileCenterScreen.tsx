@@ -231,6 +231,13 @@ export function ProfileCenterScreen(
                 <AppText style={styles.value}>{introduction}</AppText>
               </View>
             )}
+            {editing ? (
+              <View style={styles.meta}>
+                <AppText style={styles.count}>
+                  {Array.from(introduction).length}자/20자
+                </AppText>
+              </View>
+            ) : null}
           </View>
         </ScrollView>
         <View style={[styles.footer, { paddingBottom: 40 + insets.bottom }]}>
