@@ -35,9 +35,8 @@ export function ProfileCenterScreen(
     imageError,
     picking: selecting,
     saving,
-    saveError,
-    uploadToast,
-    clearUploadToast,
+    saveToast,
+    clearSaveToast,
     saveDisabled,
     save,
     clearImage,
@@ -235,9 +234,6 @@ export function ProfileCenterScreen(
           </View>
         </ScrollView>
         <View style={[styles.footer, { paddingBottom: 40 + insets.bottom }]}>
-          {saveError ? (
-            <AppText accessibilityRole="alert">{saveError}</AppText>
-          ) : null}
           <Pressable
             accessibilityRole="button"
             accessibilityState={{
@@ -254,7 +250,7 @@ export function ProfileCenterScreen(
             </AppText>
           </Pressable>
         </View>
-        <ToastMessage message={uploadToast} onClose={clearUploadToast} />
+        <ToastMessage message={saveToast} onClose={clearSaveToast} />
       </KeyboardAvoidingView>
       <ConfirmDialog
         visible={exitOpen}

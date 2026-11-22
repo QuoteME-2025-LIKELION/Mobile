@@ -311,3 +311,25 @@ test("failed profile image save restores the saved image and displays a toast", 
   );
   assert.ok(button(tree, "저장하기"));
 });
+
+test("profile text save shows failure and success through the toast", async () => {
+  const { h, render, edit } = harness();
+  await Promise.resolve();
+  label(edit(), "닉네임").props.onChangeText("새 닉네임");
+
+  const toast = (tree) =>
+    nodes(tree).find((n) => n.type === "ToastMessage").props.message;
+  h.failSave = true;
+  button(render(), "저장하기").props.onPress();
+  await Promise.resolve();
+  let tree = render();
+  assert.equal(toast(tree), "프로필 저장에 실패했습니다.");
+  assert.equal(label(tree, "닉네임").props.value, "새 닉네임");
+
+  h.failSave = false;
+  button(tree, "저장하기").props.onPress();
+  await Promise.resolve();
+  tree = render();
+  assert.equal(toast(tree), "변경사항이 저장되었습니다.");
+  assert.ok(button(tree, "편집하기"));
+});
