@@ -81,11 +81,13 @@ let code = compile(
 );
 for (const [from, to] of Object.entries({
   "@/features/auth/services/session": url(
-    "export const session={completeProfile: () => {}, logout:async()=>{const h=globalThis.__profileHarness;h.logouts=(h.logouts??0)+1;if(h.failLogout)throw Error();}};"
+    "export const session={completeProfile: () => {globalThis.__profileHarness.completed=true;}, logout:async()=>{const h=globalThis.__profileHarness;h.logouts=(h.logouts??0)+1;if(h.failLogout)throw Error();}};"
   ),
   "@/features/profile/services/profileApi": url(
-    "export const setupProfile=async()=>({id:1,profileCompleted:true}),uploadProfileImage=async()=>{};"
+    "export const setupProfile=async()=>{const h=globalThis.__profileHarness;h.setups=(h.setups??0)+1;return {id:1,profileCompleted:true};},uploadProfileImage=async()=>{if(globalThis.__profileHarness.failUpload)throw Error();};"
   ),
+  "@/api/createApiClient": url("export class ApiError extends Error {}"),
+  "@/components/ToastMessage": url("export const ToastMessage='ToastMessage';"),
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: reactUrl,
   "expo-image": url("export const Image='Image';"),
@@ -135,6 +137,7 @@ function harness(props = {}) {
   const render = () => {
     state.next = 0;
     globalThis.__profileHarness = state;
+    globalThis.__DEV__ = false;
     return ProfileSetupScreen(props);
   };
   const fill = (value) => {
@@ -173,7 +176,7 @@ test("four-step profile requires inputs, preserves them on back, and enables sig
   tree = h.fill(String(new Date().getFullYear() + 1));
   assert.equal(button(tree, "다음으로").props.disabled, true);
   tree = h.advance("2000");
-  assert.equal(button(tree, "쿼트미 시작하기").props.disabled, false);
+  assert.equal(button(tree, "이미지 없이 시작하기").props.disabled, false);
   assert.ok(
     find(
       tree,
@@ -230,7 +233,7 @@ test("photo cancel and invalid selections preserve current image; double selecti
       (node) => node.props?.accessibilityLabel === "기본 프로필 이미지"
     )
   );
-  assert.equal(button(tree, "쿼트미 시작하기").props.disabled, false);
+  assert.equal(button(tree, "이미지 없이 시작하기").props.disabled, false);
 });
 
 test("photo picker failure shows retryable error and releases the busy state", async () => {
@@ -288,4 +291,52 @@ test("setup only exits through the confirmed close action and hardware back stay
       (node) => node.props?.children === "첫 화면으로 돌아가지 못했어요."
     )
   );
+});
+
+test("removing or failing to upload a photo restores the default image and no-image action", async () => {
+  const h = harness({
+    selectImage: async () => ({
+      uri: "file:///profile.jpg",
+      fileSize: 1024,
+      mimeType: "image/jpeg",
+    }),
+  });
+  h.advance("닉네임");
+  h.advance("자기소개");
+  let tree = h.advance("2000");
+  const select = async () => {
+    await button(h.render(), "이미지 업로드하기").props.onPress();
+    return h.render();
+  };
+  const remove = (view) =>
+    find(
+      view,
+      (node) => node.props?.accessibilityLabel === "선택한 이미지 제거"
+    );
+  assert.equal(remove(tree), undefined);
+  tree = await select();
+  assert.ok(button(tree, "쿼트미 시작하기"));
+  remove(tree).props.onPress();
+  assert.ok(button(h.render(), "이미지 없이 시작하기"));
+  h.state.failUpload = true;
+  tree = await select();
+  button(tree, "쿼트미 시작하기").props.onPress();
+  await Promise.resolve();
+  await Promise.resolve();
+  tree = h.render();
+  assert.equal(remove(tree), undefined);
+  assert.ok(
+    find(
+      tree,
+      (node) => node.props?.accessibilityLabel === "기본 프로필 이미지"
+    )
+  );
+  assert.equal(
+    find(tree, (node) => node.type === "ToastMessage").props.message,
+    "이미지 업로드에 실패했어요."
+  );
+  assert.equal(h.state.completed, undefined);
+  button(tree, "이미지 없이 시작하기").props.onPress();
+  assert.equal(h.state.setups, 1);
+  assert.equal(h.state.completed, true);
 });

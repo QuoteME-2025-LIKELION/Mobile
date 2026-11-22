@@ -1,3 +1,4 @@
+import { ApiError } from "@/api/createApiClient";
 import { session } from "@/features/auth/services/session";
 import {
   setupProfile,
@@ -35,6 +36,7 @@ export function useProfileSetup({
   const [values, setValues] = useState(["", "", ""]);
   const [touched, setTouched] = useState([false, false, false]);
   const [image, setImage] = useState<ProfileImage | null>(null);
+  const [uploadToast, setUploadToast] = useState("");
   const [imageError, setImageError] = useState("");
   const [picking, setPicking] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
@@ -137,7 +139,11 @@ export function useProfileSetup({
       if (mounted.current) setPicking(false);
     }
   };
-  const submit = async (skipImage = false) => {
+  const clearImage = () => {
+    setImage(null);
+    setImageError("");
+  };
+  const submit = async () => {
     if (step !== 3 || busy.current) return;
     busy.current = true;
     setSaving(true);
@@ -151,11 +157,24 @@ export function useProfileSetup({
           birthYear: values[2],
         }));
       setSavedProfile(profile);
-      if (image && !skipImage) {
+      if (image) {
         try {
           await uploadProfileImage(image);
-        } catch {
-          setSaveError("사진을 올리지 못했어요.");
+        } catch (error) {
+          if (__DEV__) {
+            const status =
+              error instanceof ApiError ? error.status : "확인 불가";
+            const code =
+              error instanceof ApiError &&
+              /^\d{3}(?:-\d+)?$/.test(error.code ?? "")
+                ? error.code
+                : undefined;
+            console.info("프로필 이미지 업로드 실패", { status, code });
+          }
+          if (mounted.current) {
+            clearImage();
+            setUploadToast("이미지 업로드에 실패했어요.");
+          }
           return;
         }
       }
@@ -201,7 +220,9 @@ export function useProfileSetup({
     picking,
     saving,
     saveError,
-    canSkipImage: savedProfile !== null && saveError !== "",
+    clearImage,
+    uploadToast,
+    clearUploadToast: () => setUploadToast(""),
     submit,
     focused,
     setFocused,

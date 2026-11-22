@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AppText } from "@/components/AppText";
+import { ToastMessage } from "@/components/ToastMessage";
 import { colors } from "@/styles/theme";
 import { styles } from "./ProfileSetupScreen.styles";
 import { useProfileSetup } from "../hooks/useProfileSetup";
@@ -33,7 +34,9 @@ export function ProfileSetupScreen(
     picking,
     saving,
     saveError,
-    canSkipImage,
+    clearImage,
+    uploadToast,
+    clearUploadToast,
     submit,
     focused,
     setFocused,
@@ -127,33 +130,54 @@ export function ProfileSetupScreen(
               </View>
             ) : (
               <View style={styles.profile}>
-                <View
-                  accessibilityRole="image"
-                  accessibilityLabel={
-                    image ? "선택한 프로필 이미지" : "기본 프로필 이미지"
-                  }
-                  style={styles.avatar}
-                >
-                  <Image
-                    source={
-                      image
-                        ? { uri: image.uri }
-                        : require("@/assets/images/profile/default-profile.png")
+                <View>
+                  <View
+                    accessibilityRole="image"
+                    accessibilityLabel={
+                      image ? "선택한 프로필 이미지" : "기본 프로필 이미지"
                     }
-                    style={styles.avatarImage}
-                    contentFit="cover"
-                    accessible={false}
-                    onError={
-                      image
-                        ? () => {
-                            setImage(null);
-                            setImageError(
-                              "이미지를 표시하지 못했어요. 다른 이미지를 선택해 주세요."
-                            );
-                          }
-                        : undefined
-                    }
-                  />
+                    style={styles.avatar}
+                  >
+                    <Image
+                      source={
+                        image
+                          ? { uri: image.uri }
+                          : require("@/assets/images/profile/default-profile.png")
+                      }
+                      style={styles.avatarImage}
+                      contentFit="cover"
+                      accessible={false}
+                      onError={
+                        image
+                          ? () => {
+                              setImage(null);
+                              setImageError(
+                                "이미지를 표시하지 못했어요. 다른 이미지를 선택해 주세요."
+                              );
+                            }
+                          : undefined
+                      }
+                    />
+                  </View>
+                  {image ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="선택한 이미지 제거"
+                      disabled={pending}
+                      onPress={clearImage}
+                      hitSlop={12}
+                      style={styles.removeImage}
+                    >
+                      <View style={styles.removeCross} pointerEvents="none">
+                        <View
+                          style={[styles.removeStroke, styles.removeForward]}
+                        />
+                        <View
+                          style={[styles.removeStroke, styles.removeBackward]}
+                        />
+                      </View>
+                    </Pressable>
+                  ) : null}
                 </View>
                 <Pressable
                   accessibilityRole="button"
@@ -189,15 +213,6 @@ export function ProfileSetupScreen(
                 {saveError}
               </AppText>
             ) : null}
-            {canSkipImage ? (
-              <Pressable
-                accessibilityRole="button"
-                disabled={pending}
-                onPress={() => void submit(true)}
-              >
-                <AppText style={styles.buttonText}>사진 없이 시작하기</AppText>
-              </Pressable>
-            ) : null}
             <Pressable
               accessibilityRole="button"
               accessibilityState={{
@@ -220,14 +235,15 @@ export function ProfileSetupScreen(
                 {saving
                   ? "저장 중…"
                   : step === 3
-                    ? canSkipImage
-                      ? "사진 다시 올리기"
-                      : "쿼트미 시작하기"
+                    ? image
+                      ? "쿼트미 시작하기"
+                      : "이미지 없이 시작하기"
                     : "다음으로"}
               </AppText>
             </Pressable>
           </View>
         </ScrollView>
+        <ToastMessage message={uploadToast} onClose={clearUploadToast} />
       </KeyboardAvoidingView>
       <ConfirmDialog
         visible={exitOpen}
