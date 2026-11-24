@@ -1,6 +1,7 @@
 export const quoteMetrics = {
   archive: { markWidth: 11, markHeight: 10, gap: 20, minHeight: 50 },
   feed: { markWidth: 16, markHeight: 14, gap: 16, minHeight: 24 },
+  groupMessage: { markWidth: 11, markHeight: 10, gap: 16, minHeight: 44 },
 } as const;
 
 export type QuoteVariant = keyof typeof quoteMetrics;

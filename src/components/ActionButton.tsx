@@ -9,6 +9,7 @@ type Props = {
   backgroundColor?: string;
   icon?: ReactNode;
   bordered?: boolean;
+  variant?: "default" | "ruled";
 };
 
 export function ActionButton({
@@ -16,6 +17,7 @@ export function ActionButton({
   onPress,
   icon,
   bordered = false,
+  variant = "default",
   backgroundColor = colors.white,
 }: Props) {
   return (
@@ -29,6 +31,8 @@ export function ActionButton({
         styles.button,
         { backgroundColor },
         bordered && styles.bordered,
+        variant === "ruled" && styles.ruled,
+        variant === "ruled" && !onPress && styles.disabled,
         pressed && styles.pressed,
       ]}
     >

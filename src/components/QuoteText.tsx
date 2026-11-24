@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { useState } from "react";
+import { useState, type ReactElement } from "react";
 import { View } from "react-native";
 import { AppText } from "@/components/AppText";
 import { colors } from "@/styles/theme";
@@ -9,13 +9,23 @@ import {
   type QuoteVariant,
 } from "../utils/quoteLayout";
 import { styles } from "./QuoteText.styles";
-type Props = { content: string; variant?: QuoteVariant; muted?: boolean };
+type Props = {
+  content: string;
+  variant?: QuoteVariant;
+  muted?: boolean;
+  contentColor?: string;
+  markColor?: string;
+  input?: ReactElement;
+};
 
 /** 본문은 항상 가용 폭 전체를 사용하고 따옴표만 실제 글자 폭을 따른다. */
 export function QuoteText({
   content,
   variant = "archive",
   muted = false,
+  contentColor,
+  markColor,
+  input,
 }: Props) {
   const [rowWidth, setRowWidth] = useState(0);
   const [textWidth, setTextWidth] = useState<number | null>(null);
@@ -23,15 +33,15 @@ export function QuoteText({
   const positions = getQuoteMarkPositions(rowWidth, textWidth ?? 0, variant);
   const color = muted
     ? colors.territory
-    : variant === "archive"
-      ? colors.white
-      : colors.black;
+    : variant === "feed"
+      ? colors.black
+      : colors.white;
   const markStyle = {
     position: "absolute" as const,
     top: "50%" as const,
     width: metrics.markWidth,
     height: metrics.markHeight,
-    marginTop: -metrics.markHeight / 2 - 2,
+    marginTop: -metrics.markHeight / 2 - (variant === "groupMessage" ? 0 : 2),
     ...(variant === "feed" ? { transform: [{ scale: 10 / 14 }] } : {}),
     opacity: rowWidth > 0 && textWidth !== null ? 1 : 0,
   };
@@ -48,6 +58,8 @@ export function QuoteText({
       ]}
     >
       <AppText
+        aria-hidden={input ? true : undefined}
+        numberOfLines={input ? 1 : undefined}
         onTextLayout={(event) => {
           const width = Math.max(
             0,
@@ -57,26 +69,37 @@ export function QuoteText({
         }}
         style={[
           styles.content,
-          variant === "archive" ? styles.archive : styles.feed,
-          { color },
+          styles[variant],
+          { color: contentColor ?? color },
+          input && styles.measurement,
         ]}
       >
         {content}
       </AppText>
       <Image
         source={require("@/assets/images/write/quote-open.svg")}
-        tintColor={color}
+        tintColor={markColor ?? color}
         contentFit="contain"
         accessible={false}
         style={[markStyle, { left: positions.left }]}
       />
       <Image
         source={require("@/assets/images/write/quote-close.svg")}
-        tintColor={color}
+        tintColor={markColor ?? color}
         contentFit="contain"
         accessible={false}
         style={[markStyle, { left: positions.right }]}
       />
+      {input && (
+        <View
+          style={[
+            styles.input,
+            { marginHorizontal: metrics.markWidth + metrics.gap + 4 },
+          ]}
+        >
+          {input}
+        </View>
+      )}
     </View>
   );
 }
