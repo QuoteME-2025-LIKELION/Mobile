@@ -40,7 +40,7 @@ export type GroupRequest = {
 };
 export type GroupInvitation = GroupRequest & { inviterNickname: string };
 
-const get = <T>(path: string, signal: AbortSignal) =>
+const get = <T>(path: string, signal?: AbortSignal) =>
   session.request<T>(path, { signal });
 
 const change = (path: string, method: "POST" | "DELETE", body?: unknown) =>
@@ -57,6 +57,8 @@ export function getJoinRequestErrorMessage(error: unknown) {
 }
 
 export const friendGroupApi = {
+  friends: (signal: AbortSignal) =>
+    get<Member[]>("/api/settings/friends-list", signal),
   async lists(signal: AbortSignal) {
     const [members, groups] = await Promise.all([
       get<Member[]>("/api/settings/friends-list", signal),
@@ -70,7 +72,7 @@ export const friendGroupApi = {
     get<GroupInvitation[]>("/api/groups/invitations", signal),
   sentJoinRequests: (signal: AbortSignal) =>
     get<GroupRequest[]>("/api/groups/join-requests/sent", signal),
-  search(keyword: string, signal: AbortSignal) {
+  search(keyword: string, signal?: AbortSignal) {
     const encoded = encodeURIComponent(keyword).replace(/\./g, "%2E");
     return get<{ members: Member[]; groups: Group[] }>(
       `/api/settings/search?keyword=${encoded}`,
@@ -90,5 +92,10 @@ export const friendGroupApi = {
   respondInvitation: (id: number, answer: "accept" | "reject") =>
     change(`/api/groups/invitations/${id}/${answer}`, "POST"),
   createGroup: (name: string, motto: string) =>
-    change("/api/groups", "POST", { name, motto }),
+    session.request<Group>("/api/groups", {
+      method: "POST",
+      body: { name, motto },
+    }),
+  inviteMember: (groupId: number, memberId: number) =>
+    change(`/api/groups/${groupId}/invite/${memberId}`, "POST"),
 };

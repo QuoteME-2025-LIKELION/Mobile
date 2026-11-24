@@ -21,6 +21,7 @@ export const styles = StyleSheet.create({
     borderColor: colors["grey-950"],
     transform: [{ rotate: "45deg" }],
   },
+  closeIcon: { width: 24, height: 24 },
   spacer: { width: 24 },
   lightChevron: { borderColor: colors.white },
   lightTitle: { color: colors.white },

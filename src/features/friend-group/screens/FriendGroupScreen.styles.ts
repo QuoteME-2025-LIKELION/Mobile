@@ -78,7 +78,6 @@ export const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", minHeight: 65, gap: 11 },
   avatar: { width: 45, height: 45, borderRadius: 23 },
   description: { flex: 1, minWidth: 0, gap: 8 },
-  name: { fontSize: 14, color: colors["grey-950"] },
   rowName: {
     fontSize: 14,
     fontWeight: "500",
