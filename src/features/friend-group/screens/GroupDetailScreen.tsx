@@ -7,10 +7,7 @@ import { AppText } from "@/components/AppText";
 import { ToastMessage } from "@/components/ToastMessage";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { ListRow } from "../components/FriendGroupRows";
-import {
-  useFriendGroupData,
-  useLookupErrorToast,
-} from "../hooks/useFriendGroupData";
+import { useFriendGroupData } from "../hooks/useFriendGroupData";
 import { friendGroupApi } from "../services/friendGroupApi";
 import { styles } from "./FriendGroupScreen.styles";
 
@@ -21,10 +18,6 @@ export function GroupDetailScreen({ id }: { id: number }) {
   );
   const valid = Number.isSafeInteger(id) && id > 0;
   const { data, status } = useFriendGroupData(load, valid);
-  const lookupToast = useLookupErrorToast(
-    status === "error",
-    "그룹을 불러오지 못했어요."
-  );
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -65,8 +58,7 @@ export function GroupDetailScreen({ id }: { id: number }) {
         )}
       </ScrollView>
       <ToastMessage
-        message={lookupToast.message}
-        onClose={lookupToast.dismiss}
+        errorMessage={status === "error" ? "그룹을 불러오지 못했어요." : ""}
       />
     </SafeAreaView>
   );

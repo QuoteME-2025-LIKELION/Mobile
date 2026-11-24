@@ -14,20 +14,20 @@ export function ToastMessage({
   errorMessage?: string;
   onClose?: () => void;
 }) {
-  const [dismissedError, setDismissedError] = useState(false);
-  if (!errorMessage && dismissedError) setDismissedError(false);
-  const message = actionMessage || (!dismissedError ? errorMessage : "");
+  const [dismissedError, setDismissedError] = useState("");
+  if (dismissedError && dismissedError !== errorMessage) setDismissedError("");
+  const displayedError =
+    !actionMessage && errorMessage !== dismissedError ? errorMessage : "";
+  const message = actionMessage || displayedError;
   const insets = useSafeAreaInsets();
   const [progress] = useState(() => new Animated.Value(0));
   const closeRef = useRef<() => void>(() => {});
   useEffect(() => {
-    closeRef.current = () => {
-      if (errorMessage) setDismissedError(true);
-      onClose?.();
-    };
-  }, [errorMessage, onClose]);
+    closeRef.current = onClose ?? (() => {});
+  }, [onClose]);
   useEffect(() => {
     if (!message) return;
+    let active = true;
     progress.setValue(0);
     const animation = Animated.sequence([
       Animated.timing(progress, {
@@ -47,10 +47,15 @@ export function ToastMessage({
       }),
     ]);
     animation.start(({ finished }) => {
-      if (finished) closeRef.current();
+      if (!active || !finished) return;
+      if (displayedError) setDismissedError(displayedError);
+      else closeRef.current();
     });
-    return () => animation.stop();
-  }, [message, progress]);
+    return () => {
+      active = false;
+      animation.stop();
+    };
+  }, [displayedError, message, progress]);
   if (!message) return null;
   return (
     <View

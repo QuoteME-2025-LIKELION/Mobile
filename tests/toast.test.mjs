@@ -142,3 +142,31 @@ test("lookup failures share one toast until the error clears", () => {
   assert.ok(render(props));
   assert.equal(h.animations.length, 2);
 });
+
+test("a different lookup error is displayed after dismissing the previous one", () => {
+  const { h, render } = harness();
+  render({ errorMessage: "첫 오류" });
+  h.animations[0].callback({ finished: true });
+  assert.equal(render({ errorMessage: "첫 오류" }), null);
+  const next = render({ errorMessage: "다음 오류" });
+  assert.equal(next.props.children.props.children.props.children, "다음 오류");
+  assert.equal(h.animations.length, 2);
+});
+
+test("closing an action toast leaves the pending lookup error visible next", () => {
+  const { h, render } = harness();
+  const errorMessage = "목록을 불러오지 못했어요.";
+  let actionCloses = 0;
+  const onClose = () => actionCloses++;
+  render({ message: "저장했어요.", errorMessage, onClose });
+  h.animations[0].callback({ finished: true });
+  assert.equal(actionCloses, 1);
+  const error = render({ errorMessage, onClose });
+  assert.equal(
+    error.props.children.props.children.props.children,
+    errorMessage
+  );
+  h.animations[1].callback({ finished: true });
+  assert.equal(actionCloses, 1);
+  assert.equal(render({ errorMessage, onClose }), null);
+});

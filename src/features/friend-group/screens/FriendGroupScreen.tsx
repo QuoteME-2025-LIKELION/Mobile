@@ -20,7 +20,6 @@ import {
   useFriendGroupActions,
   useFriendGroupData,
   useFriendGroupSearch,
-  useLookupErrorToast,
 } from "../hooks/useFriendGroupData";
 import { friendGroupApi, type Member } from "../services/friendGroupApi";
 import { FriendGroupRequests } from "../components/FriendGroupRequests";
@@ -75,10 +74,6 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
     lists.status === "error" ||
     (searching && Boolean(query) && results.status === "error") ||
     (!searching && adding && requests.status === "error");
-  const lookupToast = useLookupErrorToast(
-    lookupError,
-    "목록을 불러오지 못했어요."
-  );
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -342,11 +337,11 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
         />
       )}
       <ToastMessage
-        message={notice || toast || lookupToast.message}
+        message={notice || toast}
+        errorMessage={lookupError ? "목록을 불러오지 못했어요." : ""}
         onClose={() => {
           setNotice("");
           closeToast();
-          if (lookupError) lookupToast.dismiss();
         }}
       />
     </SafeAreaView>

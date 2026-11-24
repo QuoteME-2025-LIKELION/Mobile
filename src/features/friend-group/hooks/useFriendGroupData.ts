@@ -80,13 +80,3 @@ export function useFriendGroupActions(refresh: () => void) {
   };
   return { busy, toast, closeToast: () => setToast(""), run };
 }
-
-export function useLookupErrorToast(error: boolean, message: string) {
-  const [dismissed, setDismissed] = useState(false);
-  if (!error && dismissed) setDismissed(false);
-
-  return {
-    message: error && !dismissed ? message : "",
-    dismiss: () => setDismissed(true),
-  };
-}
