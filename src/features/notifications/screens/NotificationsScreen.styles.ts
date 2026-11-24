@@ -93,5 +93,4 @@ export const styles = StyleSheet.create({
     color: colors["grey-400"],
     textAlign: "center",
   },
-  retry: { minHeight: 44, justifyContent: "center" },
 });

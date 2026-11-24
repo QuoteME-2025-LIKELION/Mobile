@@ -24,7 +24,6 @@ export function ProfileCenterScreen(
   const {
     loading,
     loadError,
-    retry,
     profileImage,
     insets,
     editing,
@@ -58,22 +57,11 @@ export function ProfileCenterScreen(
   return (
     <SafeAreaView edges={["top"]} style={styles.screen}>
       <StatusBar style="dark" />
-      {loading || loadError ? (
+      {loading && (
         <View style={styles.loadState}>
-          {loading ? (
-            <ActivityIndicator accessibilityLabel="프로필 불러오는 중" />
-          ) : (
-            <>
-              <AppText accessibilityRole="alert">
-                프로필을 불러오지 못했어요.
-              </AppText>
-              <Pressable accessibilityRole="button" onPress={retry}>
-                <AppText>다시 시도</AppText>
-              </Pressable>
-            </>
-          )}
+          <ActivityIndicator accessibilityLabel="프로필 불러오는 중" />
         </View>
-      ) : null}
+      )}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.fill}
@@ -257,7 +245,11 @@ export function ProfileCenterScreen(
             </AppText>
           </Pressable>
         </View>
-        <ToastMessage message={saveToast} onClose={clearSaveToast} />
+        <ToastMessage
+          message={saveToast}
+          onClose={clearSaveToast}
+          errorMessage={loadError ? "프로필을 불러오지 못했어요." : ""}
+        />
       </KeyboardAvoidingView>
       <ConfirmDialog
         visible={exitOpen}

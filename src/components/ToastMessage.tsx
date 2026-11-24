@@ -6,18 +6,26 @@ import { styles } from "./ToastMessage.styles";
 
 // 0.3초 동안 나타나고, 0.9초 유지한 뒤 0.3초 동안 사라진다.
 export function ToastMessage({
-  message,
+  message: actionMessage,
+  errorMessage = "",
   onClose,
 }: {
-  message: string;
-  onClose: () => void;
+  message?: string;
+  errorMessage?: string;
+  onClose?: () => void;
 }) {
+  const [dismissedError, setDismissedError] = useState(false);
+  if (!errorMessage && dismissedError) setDismissedError(false);
+  const message = actionMessage || (!dismissedError ? errorMessage : "");
   const insets = useSafeAreaInsets();
   const [progress] = useState(() => new Animated.Value(0));
-  const closeRef = useRef(onClose);
+  const closeRef = useRef<() => void>(() => {});
   useEffect(() => {
-    closeRef.current = onClose;
-  }, [onClose]);
+    closeRef.current = () => {
+      if (errorMessage) setDismissedError(true);
+      onClose?.();
+    };
+  }, [errorMessage, onClose]);
   useEffect(() => {
     if (!message) return;
     progress.setValue(0);

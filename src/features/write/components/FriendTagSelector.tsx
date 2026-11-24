@@ -19,7 +19,6 @@ type Props = {
   onToggle: (id: number) => void;
   friends: WriteFriend[];
   status: "idle" | "loading" | "success" | "error";
-  onRetry: () => void;
   disabled?: boolean;
 };
 
@@ -56,7 +55,6 @@ export function FriendTagSelector({
   onToggle,
   friends,
   status,
-  onRetry,
   disabled = false,
 }: Props) {
   const [keyword, setKeyword] = useState("");
@@ -75,20 +73,7 @@ export function FriendTagSelector({
       </AppText>
       {status !== "success" ? (
         <View>
-          {status === "error" ? (
-            <>
-              <AppText accessibilityRole="alert" style={styles.empty}>
-                친구 목록을 불러오지 못했어요.
-              </AppText>
-              <Pressable
-                accessibilityRole="button"
-                onPress={onRetry}
-                disabled={disabled}
-              >
-                <AppText style={styles.empty}>다시 시도</AppText>
-              </Pressable>
-            </>
-          ) : (
+          {status === "loading" && (
             <ActivityIndicator
               accessibilityLabel="친구 목록 불러오는 중"
               color={colors.primary}

@@ -680,7 +680,7 @@ recommendCode = recommendCode.replace(
 );
 const { RecommendationList } = await import(url(recommendCode));
 
-test("recommendation panel only enables next for a current result and allows exhausted usage recheck and disables refresh while loading", () => {
+test("recommendation panel only enables next for a current result and disables refresh during loading, errors, and exhaustion", () => {
   for (const status of ["loading", "success", "empty", "error", "exhausted"]) {
     let nexts = 0;
     const selected = [];
@@ -709,7 +709,10 @@ test("recommendation panel only enables next for a current result and allows exh
         node.type === "Pressable" &&
         /AI 추천|AI 사용량/.test(node.props.accessibilityLabel ?? "")
     );
-    assert.equal(refresh.props.disabled, status === "loading");
+    assert.equal(
+      refresh.props.disabled,
+      ["loading", "error", "exhausted"].includes(status)
+    );
     const cards = nodes(tree).filter(
       (node) => node.props?.accessibilityLabel === "선택할 명언"
     );
@@ -879,30 +882,21 @@ test("double publish and hardware back are blocked while pending; 409 retains dr
 
 test("friend lookup loading/error differs from a confirmed empty list and publishing is disabled until ready", () => {
   for (const status of ["loading", "error", "success"]) {
-    let retries = 0;
     const { render } = harness(FriendTagSelector, {
       friends: [],
       status,
       selected: [],
       onToggle() {},
-      onRetry() {
-        retries++;
-      },
     });
     const tree = render();
     const empty = nodes(tree).find(
       (n) => n.props.children === "태그할 수 있는 친구가 없어요."
     );
     assert.equal(Boolean(empty), status === "success");
-    if (status === "error") {
-      find(
-        tree,
-        (n) =>
-          n.type === "Pressable" &&
-          nodes(n).some((child) => child.props.children === "다시 시도")
-      ).props.onPress();
-      assert.equal(retries, 1);
-    }
+    assert.equal(
+      nodes(tree).some((n) => n.props.children === "다시 시도"),
+      false
+    );
   }
   const { state, render } = harness();
   state.friends.status = "error";
@@ -912,6 +906,12 @@ test("friend lookup loading/error differs from a confirmed empty list and publis
   action(tree, "다음으로").props.onPress();
   tree = render();
   assert.equal(action(tree, "게시하기").props.disabled, true);
+  assert.equal(
+    nodes(tree).find(
+      (n) => n.props.errorMessage === "친구 목록을 불러오지 못했어요."
+    )?.props.errorMessage,
+    "친구 목록을 불러오지 못했어요."
+  );
 });
 
 test("exhausted recommend rechecks usage without generating until a subsequent tap", async () => {

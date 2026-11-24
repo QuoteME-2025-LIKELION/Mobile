@@ -129,3 +129,16 @@ test("clearing or replacing a toast stops the previous animation and interrupted
   assert.equal(render({ message: "", onClose }), null);
   assert.equal(h.stops, 2);
 });
+
+test("lookup failures share one toast until the error clears", () => {
+  const { h, render } = harness();
+  const props = { errorMessage: "목록을 불러오지 못했어요." };
+  assert.ok(render(props));
+  assert.ok(render(props));
+  assert.equal(h.animations.length, 1);
+  h.animations[0].callback({ finished: true });
+  assert.equal(render(props), null);
+  render({});
+  assert.ok(render(props));
+  assert.equal(h.animations.length, 2);
+});

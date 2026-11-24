@@ -273,15 +273,18 @@ test("late image selection after unmount does not update the abandoned screen", 
   assert.equal(h.writes, writes);
 });
 
-test("profile query failure exposes retry and disables editing without a sample identity", async () => {
+test("profile query failure shows a toast and disables editing without a sample identity", async () => {
   globalThis.__profileData = { status: "error", data: null };
   const { render } = harness();
   await Promise.resolve();
   const tree = render();
-  assert.match(text(tree), /프로필을 불러오지 못했어요/);
+  assert.equal(
+    nodes(tree).find((n) => n.type === "ToastMessage").props.errorMessage,
+    "프로필을 불러오지 못했어요."
+  );
   assert.doesNotMatch(text(tree), /듀가나다/);
   assert.equal(button(tree, "편집하기").props.disabled, true);
-  assert.ok(button(tree, "다시 시도"));
+  assert.equal(button(tree, "다시 시도"), undefined);
   assert.equal(label(tree, "프로필 관리 닫기").props.disabled, false);
   delete globalThis.__profileData;
 });

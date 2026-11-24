@@ -2,6 +2,7 @@ import { Image } from "expo-image";
 import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppText } from "@/components/AppText";
+import { ToastMessage } from "@/components/ToastMessage";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { AccountHeader } from "../components/AccountHeader";
 import { AccountPicker } from "../components/AccountPicker";
@@ -21,11 +22,6 @@ export function AccountSettingsScreen() {
           </AppText>
           {account.loading ? (
             <AppText>계정 정보를 불러오는 중이에요.</AppText>
-          ) : null}
-          {account.loadError ? (
-            <AppText accessibilityRole="alert">
-              계정 정보를 불러오지 못했습니다.
-            </AppText>
           ) : null}
           <Pressable
             disabled={account.loading || account.loadError || account.saving}
@@ -158,6 +154,9 @@ export function AccountSettingsScreen() {
         onConfirm={() => {
           void account.confirmLogout();
         }}
+      />
+      <ToastMessage
+        errorMessage={account.loadError ? "계정 정보를 불러오지 못했어요." : ""}
       />
     </SafeAreaView>
   );

@@ -24,7 +24,6 @@ export function HomeScreen() {
     date,
     profile,
     myQuote,
-    retry,
     drawerOpen,
     tagMenuOpen,
     setTagMenuOpen,
@@ -86,20 +85,7 @@ export function HomeScreen() {
             />
           ) : (
             <View style={styles.statusBox}>
-              {status === "error" ? (
-                <>
-                  <AppText accessibilityRole="alert" style={styles.statusText}>
-                    홈을 불러오지 못했어요.
-                  </AppText>
-                  <Pressable
-                    accessibilityRole="button"
-                    style={styles.addFriend}
-                    onPress={retry}
-                  >
-                    <AppText style={styles.statusText}>다시 시도</AppText>
-                  </Pressable>
-                </>
-              ) : (
+              {status !== "error" && (
                 <ActivityIndicator accessibilityLabel="홈 불러오는 중" />
               )}
             </View>
@@ -196,6 +182,7 @@ export function HomeScreen() {
       />
       <ToastMessage
         message={moderation.toast}
+        errorMessage={status === "error" ? "홈을 불러오지 못했어요." : ""}
         onClose={moderation.closeToast}
       />
     </SafeAreaView>
