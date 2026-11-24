@@ -216,12 +216,34 @@ test("group filter uses server groups and delegates selection without local memb
     selectedId: null,
     open: true,
     onToggle() {},
+    onCreate() {},
     onSelect: (id) => (selected = id),
   });
   all(tree)
     .find((n) => n.type === "Pressable" && text(n) === "서버그룹")
     .props.onPress();
   assert.equal(selected, 4);
+});
+test("the empty home group filter opens group creation and closes", () => {
+  globalThis.__homeSnapshot = {
+    ...snapshot,
+    data: { ...snapshot.data, groups: [] },
+  };
+  const { state, render } = harness(HomeScreen);
+  try {
+    const filter = (tree) => all(tree).find((n) => n.type === "GroupFilter");
+    filter(render()).props.onToggle();
+    const menu = filter(render());
+    const create = all(GroupFilter(menu.props)).find(
+      (n) => n.type === "Pressable" && text(n) === "그룹 만들기"
+    );
+    assert.equal(Boolean(create.props.disabled), false);
+    create.props.onPress();
+    assert.deepEqual(state.routes, ["/friend-group/create"]);
+    assert.equal(filter(render()).props.open, false);
+  } finally {
+    globalThis.__homeSnapshot = snapshot;
+  }
 });
 test("home loading and errors do not show fabricated quotes or the empty-feed message", () => {
   for (const status of ["loading", "error"]) {

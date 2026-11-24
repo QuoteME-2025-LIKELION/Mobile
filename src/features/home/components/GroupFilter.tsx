@@ -7,6 +7,7 @@ type Props = {
   groups: FeedGroup[];
   selectedId: number | null;
   open: boolean;
+  onCreate: () => void;
   onToggle: () => void;
   onSelect: (id: number | null) => void;
 };
@@ -16,6 +17,7 @@ export function GroupFilter({
   selectedId,
   open,
   onToggle,
+  onCreate,
   onSelect,
 }: Props) {
   return (
@@ -63,9 +65,8 @@ export function GroupFilter({
             ))}
             {groups.length === 0 && (
               <Pressable
-                disabled
                 accessibilityRole="button"
-                accessibilityState={{ disabled: true }}
+                onPress={onCreate}
                 style={[styles.option, styles.last]}
               >
                 <AppText style={styles.create}>그룹 만들기</AppText>

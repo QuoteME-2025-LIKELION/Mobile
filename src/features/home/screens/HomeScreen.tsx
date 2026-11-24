@@ -34,6 +34,7 @@ export function HomeScreen() {
     closeMenus,
     openArchive,
     openDrawer,
+    openCreateGroup,
     closeDrawer,
     closeFilter,
     closeTags,
@@ -105,6 +106,7 @@ export function HomeScreen() {
             selectedId={selectedGroupId}
             open={filterOpen}
             onToggle={toggleFilter}
+            onCreate={openCreateGroup}
             onSelect={selectGroup}
           />
           {status !== "success" ? null : items.length === 0 ? (
