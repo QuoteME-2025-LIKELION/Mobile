@@ -21,7 +21,12 @@ import {
   useFriendGroupData,
   useFriendGroupSearch,
 } from "../hooks/useFriendGroupData";
-import { friendGroupApi, type Member } from "../services/friendGroupApi";
+import {
+  friendGroupApi,
+  getJoinRequestErrorMessage,
+  JOIN_REQUEST_PENDING_MESSAGE,
+  type Member,
+} from "../services/friendGroupApi";
 import { FriendGroupRequests } from "../components/FriendGroupRequests";
 import { styles } from "./FriendGroupScreen.styles";
 
@@ -45,11 +50,21 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
     [query]
   );
   const lists = useFriendGroupData(friendGroupApi.lists);
-  const requests = useFriendGroupData(friendGroupApi.requests, adding);
+  const friendRequests = useFriendGroupData(
+    friendGroupApi.friendRequests,
+    adding
+  );
+  const groupInvitations = useFriendGroupData(
+    friendGroupApi.groupInvitations,
+    adding
+  );
+  const sentJoinRequests = useFriendGroupData(friendGroupApi.sentJoinRequests);
   const results = useFriendGroupData(loadSearch, Boolean(query));
   const { busy, toast, run, closeToast } = useFriendGroupActions(() => {
     lists.reload();
-    requests.reload();
+    friendRequests.reload();
+    groupInvitations.reload();
+    sentJoinRequests.reload();
     results.reload();
   });
 
@@ -69,11 +84,20 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
     : (lists.data?.groups ?? []);
   const friendIds = new Set(lists.data?.members.map(({ id }) => id));
   const groupIds = new Set(lists.data?.groups.map(({ id }) => id));
-  const activeLookup = searching ? results : adding ? requests : lists;
+  const requestStatuses = [
+    friendRequests.status,
+    groupInvitations.status,
+    sentJoinRequests.status,
+  ];
+  const lookupLoading = searching
+    ? !query || results.status === "loading"
+    : adding
+      ? requestStatuses.includes("loading")
+      : lists.status === "loading";
   const lookupError =
     lists.status === "error" ||
     (searching && Boolean(query) && results.status === "error") ||
-    (!searching && adding && requests.status === "error");
+    (adding && !searching && requestStatuses.includes("error"));
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -137,14 +161,16 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
                 가입해 보세요
               </AppText>
             </View>
-            {requests.data && (
-              <FriendGroupRequests
-                requests={requests.data}
-                busy={busy}
-                confirm={setConfirmation}
-                run={run}
-              />
-            )}
+            <FriendGroupRequests
+              requests={{
+                friends: friendRequests.data ?? [],
+                invitations: groupInvitations.data ?? [],
+                sentGroups: sentJoinRequests.data ?? [],
+              }}
+              busy={busy}
+              confirm={setConfirmation}
+              run={run}
+            />
           </>
         )}
         {(searching || !adding) && (
@@ -183,6 +209,14 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
                           goToGroup(group.id);
                           return;
                         }
+                        if (
+                          sentJoinRequests.data?.some(
+                            (request) => request.groupId === group.id
+                          )
+                        ) {
+                          setNotice(JOIN_REQUEST_PENDING_MESSAGE);
+                          return;
+                        }
                         setConfirmation({
                           title: `${group.name} 그룹에\n가입 요청을 보내시겠어요?`,
                           label: "보내기",
@@ -190,8 +224,8 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
                           action: () =>
                             void run(
                               () => friendGroupApi.joinGroup(group.id),
-                              "참여 요청을 보냈습니다.",
-                              "그룹 참여 요청에 실패했습니다."
+                              "가입 요청을 보냈습니다.",
+                              getJoinRequestErrorMessage
                             ),
                         });
                       }}
@@ -282,7 +316,7 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
             </View>
           </>
         )}
-        {(activeLookup.status === "loading" || (searching && !query)) && (
+        {lookupLoading && (
           <AppText accessibilityLiveRegion="polite" style={styles.message}>
             불러오는 중…
           </AppText>

@@ -61,7 +61,7 @@ export function useFriendGroupActions(refresh: () => void) {
   const run = async (
     action: () => Promise<unknown>,
     success: string,
-    failure: string
+    failure: string | ((error: unknown) => string)
   ) => {
     if (lock.current) return;
     lock.current = true;
@@ -70,9 +70,9 @@ export function useFriendGroupActions(refresh: () => void) {
       await action();
       refresh();
       setToast(success);
-    } catch {
+    } catch (error) {
       refresh();
-      setToast(failure);
+      setToast(typeof failure === "string" ? failure : failure(error));
     } finally {
       lock.current = false;
       setBusy(false);

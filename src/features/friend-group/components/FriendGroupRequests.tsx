@@ -1,5 +1,10 @@
 import { ListRow, RequestTabs, RowAction } from "./FriendGroupRows";
-import { friendGroupApi } from "../services/friendGroupApi";
+import {
+  friendGroupApi,
+  type FriendRequest,
+  type GroupInvitation,
+  type GroupRequest,
+} from "../services/friendGroupApi";
 import type { useFriendGroupActions } from "../hooks/useFriendGroupData";
 
 export type RequestConfirmation = {
@@ -16,7 +21,11 @@ export function FriendGroupRequests({
   confirm,
   run,
 }: {
-  requests: Awaited<ReturnType<typeof friendGroupApi.requests>>;
+  requests: {
+    friends: FriendRequest[];
+    invitations: GroupInvitation[];
+    sentGroups: GroupRequest[];
+  };
   busy: boolean;
   confirm: (confirmation: RequestConfirmation) => void;
   run: ReturnType<typeof useFriendGroupActions>["run"];

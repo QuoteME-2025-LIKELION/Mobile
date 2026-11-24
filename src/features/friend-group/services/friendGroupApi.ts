@@ -1,3 +1,4 @@
+import { ApiError } from "@/api/createApiClient";
 import { session } from "@/features/auth/services/session";
 
 export type Member = {
@@ -32,7 +33,11 @@ export type FriendRequest = {
   receiverProfileImage?: string | null;
 };
 
-export type GroupRequest = { requestId: number; groupName: string };
+export type GroupRequest = {
+  requestId: number;
+  groupId: number;
+  groupName: string;
+};
 export type GroupInvitation = GroupRequest & { inviterNickname: string };
 
 const get = <T>(path: string, signal: AbortSignal) =>
@@ -40,6 +45,16 @@ const get = <T>(path: string, signal: AbortSignal) =>
 
 const change = (path: string, method: "POST" | "DELETE", body?: unknown) =>
   session.request(path, { method, body, ignoreResponseBody: true });
+
+export const JOIN_REQUEST_PENDING_MESSAGE = "이미 가입 요청 중인 그룹입니다.";
+
+export function getJoinRequestErrorMessage(error: unknown) {
+  return error instanceof ApiError &&
+    error.status === 400 &&
+    error.code === "400-4"
+    ? JOIN_REQUEST_PENDING_MESSAGE
+    : "그룹 가입 요청에 실패했습니다.";
+}
 
 export const friendGroupApi = {
   async lists(signal: AbortSignal) {
@@ -49,14 +64,12 @@ export const friendGroupApi = {
     ]);
     return { members, groups };
   },
-  async requests(signal: AbortSignal) {
-    const [friends, invitations, sentGroups] = await Promise.all([
-      get<FriendRequest[]>("/api/friends/requests", signal),
-      get<GroupInvitation[]>("/api/groups/invitations", signal),
-      get<GroupRequest[]>("/api/groups/join-requests/sent", signal),
-    ]);
-    return { friends, invitations, sentGroups };
-  },
+  friendRequests: (signal: AbortSignal) =>
+    get<FriendRequest[]>("/api/friends/requests", signal),
+  groupInvitations: (signal: AbortSignal) =>
+    get<GroupInvitation[]>("/api/groups/invitations", signal),
+  sentJoinRequests: (signal: AbortSignal) =>
+    get<GroupRequest[]>("/api/groups/join-requests/sent", signal),
   search(keyword: string, signal: AbortSignal) {
     const encoded = encodeURIComponent(keyword).replace(/\./g, "%2E");
     return get<{ members: Member[]; groups: Group[] }>(
