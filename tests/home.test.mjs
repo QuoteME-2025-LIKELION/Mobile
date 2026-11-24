@@ -216,12 +216,34 @@ test("group filter uses server groups and delegates selection without local memb
     selectedId: null,
     open: true,
     onToggle() {},
+    onCreate() {},
     onSelect: (id) => (selected = id),
   });
   all(tree)
     .find((n) => n.type === "Pressable" && text(n) === "서버그룹")
     .props.onPress();
   assert.equal(selected, 4);
+});
+test("the empty home group filter opens group creation and closes", () => {
+  globalThis.__homeSnapshot = {
+    ...snapshot,
+    data: { ...snapshot.data, groups: [] },
+  };
+  const { state, render } = harness(HomeScreen);
+  try {
+    const filter = (tree) => all(tree).find((n) => n.type === "GroupFilter");
+    filter(render()).props.onToggle();
+    const menu = filter(render());
+    const create = all(GroupFilter(menu.props)).find(
+      (n) => n.type === "Pressable" && text(n) === "그룹 만들기"
+    );
+    assert.equal(Boolean(create.props.disabled), false);
+    create.props.onPress();
+    assert.deepEqual(state.routes, ["/friend-group/create"]);
+    assert.equal(filter(render()).props.open, false);
+  } finally {
+    globalThis.__homeSnapshot = snapshot;
+  }
 });
 test("home loading and errors do not show fabricated quotes or the empty-feed message", () => {
   for (const status of ["loading", "error"]) {
@@ -236,7 +258,7 @@ test("home loading and errors do not show fabricated quotes or the empty-feed me
       all(tree).some((n) => n.type === "TodayQuote"),
       false
     );
-    assert.doesNotMatch(text(tree), /친구를 추가하면/);
+    assert.doesNotMatch(text(tree), /태그할 수 있는 친구가 없어요/);
     const toast = all(tree).find((n) => n.type === "ToastMessage");
     assert.equal(
       toast.props.errorMessage,
@@ -245,6 +267,40 @@ test("home loading and errors do not show fabricated quotes or the empty-feed me
     assert.doesNotMatch(text(tree), /다시 시도/);
   }
   globalThis.__homeSnapshot = snapshot;
+});
+test("home uses the same empty layout for friends and a selected group", () => {
+  const renderEmpty = (groupId, title) => {
+    globalThis.__homeSnapshot = {
+      ...snapshot,
+      groupId,
+      data: { ...snapshot.data, items: [] },
+    };
+    const tree = harness(HomeScreen).render();
+    const nodes = all(tree);
+    assert.equal(
+      nodes.some(
+        (node) => node.type === "Pressable" && text(node) === "친구 추가"
+      ),
+      false
+    );
+    const heading = nodes.find(
+      (node) => node.type === "AppText" && text(node) === title
+    );
+    assert.ok(heading);
+    const container = nodes.find(
+      (node) => node.type === "View" && node.props.children?.[0] === heading
+    );
+    assert.ok(container);
+    return [container.props.style, heading.props.style];
+  };
+  try {
+    assert.deepEqual(
+      renderEmpty(null, "태그할 수 있는 친구가 없어요"),
+      renderEmpty(4, "아직 함께 볼 그룹 멤버가 없어요.")
+    );
+  } finally {
+    globalThis.__homeSnapshot = snapshot;
+  }
 });
 test("home uses server data, keeps drawer profile and group changes request new data", () => {
   const { state, render } = harness(HomeScreen);

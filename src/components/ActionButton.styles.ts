@@ -21,5 +21,13 @@ export const styles = StyleSheet.create({
     textAlign: "center",
   },
   bordered: { borderWidth: 1, borderColor: colors["grey-200"] },
+  ruled: {
+    minHeight: 46,
+    borderRadius: 0,
+    borderColor: colors.primary,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  disabled: { opacity: 0.45 },
   pressed: { opacity: 0.7 },
 });

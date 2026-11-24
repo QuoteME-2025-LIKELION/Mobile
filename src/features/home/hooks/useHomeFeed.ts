@@ -53,6 +53,10 @@ export function useHomeFeed() {
         params: { written: state.data?.myQuote ? "1" : "0" },
       });
     },
+    openCreateGroup: () => {
+      closeMenus();
+      router.push("/friend-group/create");
+    },
     openDrawer: () => {
       closeMenus();
       setDrawerOpen(true);

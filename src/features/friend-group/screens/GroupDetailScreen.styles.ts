@@ -1,0 +1,83 @@
+import { StyleSheet } from "react-native";
+import { colors, fonts, withOpacity } from "@/styles/theme";
+
+export const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.secondary },
+  hero: { backgroundColor: colors.primary },
+  summary: {
+    minHeight: 210,
+    paddingTop: 34,
+    paddingHorizontal: 24,
+    paddingBottom: 28,
+    justifyContent: "space-between",
+  },
+  summaryTop: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
+  groupName: { flex: 1 },
+  heroTitle: {
+    fontFamily: fonts.quoteBold,
+    color: colors.white,
+    fontSize: 20,
+    letterSpacing: -0.4,
+  },
+  stats: { gap: 12, marginTop: 26 },
+  stat: { flexDirection: "row", alignItems: "center", gap: 8 },
+  statText: {
+    color: colors.white,
+    fontSize: 14,
+    lineHeight: 17,
+    letterSpacing: -0.28,
+  },
+  statLabel: { fontWeight: "700" },
+  countBackground: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: "flex-end",
+    alignItems: "flex-end",
+    paddingRight: 24,
+    paddingBottom: 28,
+  },
+  count: {
+    fontFamily: fonts.date,
+    fontSize: 96,
+    includeFontPadding: false,
+    // 숫자 글꼴의 하단 여백을 보정해 통계의 마지막 줄과 맞춘다.
+    transform: [{ translateY: 8 }],
+    color: withOpacity(colors.white, 0.22),
+  },
+  body: { flex: 1 },
+  content: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 34,
+    paddingBottom: 32,
+    gap: 42,
+  },
+  section: { gap: 15 },
+  title: {
+    fontFamily: fonts.quoteBold,
+    color: colors.black,
+    fontSize: 16,
+    letterSpacing: -0.32,
+  },
+  mottoBox: {
+    minHeight: 46,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.primary,
+    borderTopLeftRadius: 12,
+    borderBottomRightRadius: 12,
+  },
+  actions: { marginTop: "auto" },
+  button: { minHeight: 46, alignItems: "center", justifyContent: "center" },
+  buttonPressed: { backgroundColor: withOpacity(colors.primary, 0.08) },
+  buttonText: {
+    color: colors["grey-950"],
+    fontSize: 14,
+    fontWeight: "500",
+    letterSpacing: -0.28,
+  },
+  muted: { color: colors["grey-200"] },
+  danger: { color: colors.red },
+});

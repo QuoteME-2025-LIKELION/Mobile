@@ -16,7 +16,7 @@ export function RowAction({
   accessibilityLabel?: string;
   onPress: () => void;
   disabled?: boolean;
-  tone?: "danger";
+  tone?: "danger" | "primary";
 }) {
   return (
     <Pressable
@@ -28,7 +28,11 @@ export function RowAction({
       style={[styles.action, disabled && styles.disabled]}
     >
       <AppText
-        style={[styles.actionLabel, tone === "danger" && styles.actionDanger]}
+        style={[
+          styles.actionLabel,
+          tone === "danger" && styles.actionDanger,
+          tone === "primary" && styles.actionPrimary,
+        ]}
       >
         {label}
       </AppText>

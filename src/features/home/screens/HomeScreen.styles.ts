@@ -43,15 +43,18 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: -0.28,
   },
-  empty: { marginTop: 176, alignItems: "center", gap: 12 },
-  emptyText: {
-    fontFamily: fonts.quote,
-    color: colors.territory,
-    textAlign: "center",
-    fontSize: 16,
-    lineHeight: 28.8,
-    letterSpacing: -0.28,
+  empty: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
   },
-  addFriend: { minHeight: 44, justifyContent: "center", paddingHorizontal: 12 },
-  addFriendText: { color: colors.primary, fontSize: 14, fontWeight: "600" },
+  emptyTitle: {
+    fontFamily: fonts.quoteBold,
+    color: colors["grey-400"],
+    textAlign: "center",
+    fontSize: 18,
+    lineHeight: 22,
+    letterSpacing: -0.36,
+  },
 });

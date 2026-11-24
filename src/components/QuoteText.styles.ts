@@ -1,8 +1,19 @@
 import { StyleSheet } from "react-native";
 import { colors, fonts } from "@/styles/theme";
 
+export const groupMessageText = {
+  fontFamily: fonts.quote,
+  fontWeight: "500",
+  fontSize: 16,
+  lineHeight: 22,
+  letterSpacing: -0.28,
+  textAlign: "center",
+} as const;
+
 export const styles = StyleSheet.create({
   row: { width: "100%", justifyContent: "center" },
+  measurement: { opacity: 0 },
+  input: { ...StyleSheet.absoluteFill },
   content: {
     alignSelf: "stretch",
     paddingHorizontal: 4,
@@ -22,4 +33,5 @@ export const styles = StyleSheet.create({
     lineHeight: 24,
     textAlign: "left",
   },
+  groupMessage: groupMessageText,
 });

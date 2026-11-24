@@ -34,6 +34,7 @@ export function HomeScreen() {
     closeMenus,
     openArchive,
     openDrawer,
+    openCreateGroup,
     closeDrawer,
     closeFilter,
     closeTags,
@@ -105,29 +106,21 @@ export function HomeScreen() {
             selectedId={selectedGroupId}
             open={filterOpen}
             onToggle={toggleFilter}
+            onCreate={openCreateGroup}
             onSelect={selectGroup}
           />
           {status !== "success" ? null : items.length === 0 ? (
             <View style={styles.empty}>
-              <AppText style={styles.emptyText}>
+              <AppText style={styles.emptyTitle}>
                 {selectedGroupId === null
-                  ? "친구를 추가하면 매일 피드에서\n명언을 확인할 수 있어요"
+                  ? "태그할 수 있는 친구가 없어요"
                   : "아직 함께 볼 그룹 멤버가 없어요."}
               </AppText>
-              {selectedGroupId === null ? (
-                <Pressable
-                  accessibilityRole="button"
-                  disabled
-                  accessibilityState={{ disabled: true }}
-                  style={styles.addFriend}
-                >
-                  <AppText style={styles.addFriendText}>친구 추가</AppText>
-                </Pressable>
-              ) : (
-                <AppText style={styles.emptySubText}>
-                  다른 멤버가 참여하면 서로의 명언을 이곳에서 볼 수 있어요.
-                </AppText>
-              )}
+              <AppText style={styles.emptySubText}>
+                {selectedGroupId === null
+                  ? "친구를 추가하고 나중에 태그를 추가할 수 있어요"
+                  : "다른 멤버가 참여하면 서로의 명언을 이곳에서 볼 수 있어요."}
+              </AppText>
             </View>
           ) : (
             items.map((item) => (
