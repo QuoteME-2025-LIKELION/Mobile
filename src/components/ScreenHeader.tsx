@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { AppText } from "@/components/AppText";
 import { styles } from "./ScreenHeader.styles";
@@ -6,11 +7,13 @@ export function ScreenHeader({
   title,
   light = false,
   onTitleLongPress,
+  rightElement,
 }: {
   onBack: () => void;
   title: string;
   light?: boolean;
   onTitleLongPress?: () => void;
+  rightElement?: ReactNode;
 }) {
   return (
     <View style={styles.header}>
@@ -30,7 +33,7 @@ export function ScreenHeader({
       >
         {title}
       </AppText>
-      <View style={styles.spacer} />
+      <View style={styles.spacer}>{rightElement}</View>
     </View>
   );
 }

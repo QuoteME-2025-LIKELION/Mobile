@@ -20,7 +20,7 @@ export function getQuoteInputError(
   const text = value.trim();
   const length = countCodePoints(text);
   if (!hasQuoteText(text))
-    return "초성·숫자·특수문자·이모지만으로는 작성할 수 없어요. 글자를 함께 입력해 주세요.";
+    return "초성·숫자·특수문자·이모지만으로는 작성할 수 없어요.";
   if (mode === "ai" && length < 16) return "16자 이상부터 추천받을 수 있어요.";
   if (length > (mode === "ai" ? 50 : 30)) {
     return mode === "ai"

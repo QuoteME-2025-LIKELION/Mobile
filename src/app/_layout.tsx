@@ -71,6 +71,10 @@ export default function RootLayout() {
             }
           >
             <Stack.Screen name="home" />
+            <Stack.Screen name="friend-group/index" />
+            <Stack.Screen name="friend-group/add" />
+            <Stack.Screen name="friend-group/create" />
+            <Stack.Screen name="friend-group/detail" />
             <Stack.Screen name="archive" />
             <Stack.Screen name="write" />
             <Stack.Screen name="profile-center" />

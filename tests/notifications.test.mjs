@@ -194,18 +194,18 @@ test("group invitation shows group/leader/member information, full group uses th
   assert.equal(state.invitation, null);
   state.openItem(state.notifications.find((item) => item.id === 6));
   state = render();
-  assert.equal(state.toast, "최대 인원 5명이 가득 차 들어갈 수 없어요");
+  assert.equal(state.toast, "최대 인원 5명이 찼어요.");
   assert.equal(state.invitation, null);
   assert.equal(h.routes.length, 0);
 });
-test("unimplemented group/friend/tag targets provide guidance instead of invented routes", async () => {
+test("friend and group notifications open requests while tag targets provide guidance", async () => {
   const { load } = await environment();
   const { useNotifications } = (
     await load("features/notifications/hooks/useNotifications.ts")
   ).module;
   const { h, render } = harness(useNotifications);
   let state = render();
-  for (const id of [3, 4, 7, 11]) {
+  for (const id of [3, 4]) {
     state.openItem(state.notifications.find((item) => item.id === id));
     state = render();
     assert.ok(state.toast.length > 0);
@@ -213,7 +213,13 @@ test("unimplemented group/friend/tag targets provide guidance instead of invente
     state = render();
     assert.equal(state.toast, "");
   }
-  assert.equal(h.routes.length, 0);
+  for (const id of [7, 11]) {
+    state.openItem(state.notifications.find((item) => item.id === id));
+  }
+  assert.deepEqual(h.routes, [
+    ["push", "/friend-group/add"],
+    ["push", "/friend-group/add"],
+  ]);
 });
 test("list header exposes four filters and close, invitation acceptance stays disabled before API integration", async () => {
   const { load } = await environment();

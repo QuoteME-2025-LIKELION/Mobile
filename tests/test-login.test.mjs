@@ -88,7 +88,7 @@ test("bad credentials show a controlled message and erase password without expos
   await h.submit();
   h = render();
   assert.equal(h.password, "");
-  assert.equal(h.error, "이메일 또는 비밀번호를 확인해 주세요.");
+  assert.equal(h.error, "로그인에 실패했습니다.");
 });
 test("repeated submit while pending creates one login and production mode cannot submit", async () => {
   let release;

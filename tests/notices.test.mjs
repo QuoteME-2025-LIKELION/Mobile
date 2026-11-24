@@ -48,7 +48,7 @@ test("notice development scenarios expose empty/loading/error and retry returns 
   notices = render();
   assert.equal(notices.important.length, 2);
 });
-test("notice screen preserves inline news bodies and displays empty/error retry screens", () => {
+test("notice screen preserves inline news bodies and shows lookup failures through a toast", () => {
   const { render } = harness(NoticesScreen);
   let tree = render();
   assert.match(text(tree), /중요 공지/);
@@ -74,12 +74,11 @@ test("notice screen preserves inline news bodies and displays empty/error retry 
     .find((n) => n.type === "ScreenHeader")
     .props.onTitleLongPress();
   tree = render();
-  assert.match(text(tree), /불러오지 못했습니다/);
-  nodes(tree)
-    .find((n) => n.type === "Pressable" && text(n) === "다시 시도")
-    .props.onPress();
-  tree = render();
-  assert.match(text(tree), /쿼트미 이용 안내/);
+  assert.equal(
+    nodes(tree).find((n) => n.type === "ToastMessage").props.errorMessage,
+    "공지사항을 불러오지 못했어요."
+  );
+  assert.doesNotMatch(text(tree), /다시 시도/);
 });
 test("notice routes stay gated outside development", async () => {
   for (const [route, screen] of [["notice/index", "NoticesScreen"]]) {

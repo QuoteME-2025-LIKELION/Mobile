@@ -111,7 +111,4 @@ export const styles = StyleSheet.create({
     lineHeight: 20,
     color: colors["grey-400"],
   },
-  errorBox: { padding: 32 },
-  errorText: { fontSize: 14, lineHeight: 20, color: colors["grey-500"] },
-  retry: { marginTop: 16, minHeight: 44, justifyContent: "center" },
 });

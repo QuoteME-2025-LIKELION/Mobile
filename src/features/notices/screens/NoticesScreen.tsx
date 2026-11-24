@@ -1,3 +1,4 @@
+import { ToastMessage } from "@/components/ToastMessage";
 import { Pressable, ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppText } from "@/components/AppText";
@@ -19,20 +20,7 @@ export function NoticesScreen() {
           <AppText accessibilityRole="progressbar" style={styles.loading}>
             공지사항을 불러오는 중입니다.
           </AppText>
-        ) : notices.error ? (
-          <View style={styles.errorBox}>
-            <AppText accessibilityRole="alert" style={styles.errorText}>
-              공지사항을 불러오지 못했습니다.
-            </AppText>
-            <Pressable
-              accessibilityRole="button"
-              onPress={notices.retry}
-              style={styles.retry}
-            >
-              <AppText style={styles.errorText}>다시 시도</AppText>
-            </Pressable>
-          </View>
-        ) : (
+        ) : notices.error ? null : (
           <>
             <View style={styles.top}>
               <AppText
@@ -94,6 +82,9 @@ export function NoticesScreen() {
           </>
         )}
       </ScrollView>
+      <ToastMessage
+        errorMessage={notices.error ? "공지사항을 불러오지 못했어요." : ""}
+      />
     </SafeAreaView>
   );
 }

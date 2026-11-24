@@ -70,20 +70,7 @@ export function NotificationsScreen({
             알림을 불러오는 중이에요
           </AppText>
         </View>
-      ) : state.error ? (
-        <View style={styles.empty}>
-          <AppText accessibilityRole="alert" style={styles.emptyTitle}>
-            알림을 불러오지 못했어요
-          </AppText>
-          <Pressable
-            accessibilityRole="button"
-            onPress={state.retry}
-            style={styles.retry}
-          >
-            <AppText style={styles.emptySub}>다시 시도</AppText>
-          </Pressable>
-        </View>
-      ) : (
+      ) : state.error ? null : (
         <FlatList
           key={state.filter ?? "all"}
           style={styles.list}
@@ -121,7 +108,11 @@ export function NotificationsScreen({
         onClose={state.closeInvitation}
         onConfirm={state.closeInvitation}
       />
-      <ToastMessage message={state.toast} onClose={state.closeToast} />
+      <ToastMessage
+        message={state.toast}
+        onClose={state.closeToast}
+        errorMessage={state.error ? "알림을 불러오지 못했어요." : ""}
+      />
     </SafeAreaView>
   );
 }

@@ -27,7 +27,6 @@ export function WriteScreen() {
     publish,
     friends,
     friendsStatus,
-    retryFriends,
     step,
     setStep,
     recommendationStatus,
@@ -244,7 +243,7 @@ export function WriteScreen() {
                   <WriteAction
                     title="AI 추천 받기"
                     onPress={recommend}
-                    disabled={trimmedLength === 0}
+                    disabled={trimmedLength === 0 || aiUsageStatus === "error"}
                   />
                   <WriteAction
                     title="다음으로"
@@ -270,7 +269,6 @@ export function WriteScreen() {
                 <FriendTagSelector
                   friends={friends}
                   status={friendsStatus}
-                  onRetry={retryFriends}
                   disabled={publishing}
                   selected={selected}
                   onToggle={toggleFriendTag}
@@ -291,7 +289,19 @@ export function WriteScreen() {
             )}
           </View>
         </ScrollView>
-        <ToastMessage message={message} onClose={clearMessage} />
+        <ToastMessage
+          message={message}
+          onClose={clearMessage}
+          errorMessage={
+            step === "tag" && friendsStatus === "error"
+              ? "친구 목록을 불러오지 못했어요."
+              : aiUsageStatus === "error" &&
+                  step !== "tag" &&
+                  !(step === "recommend" && recommendationStatus === "error")
+                ? "AI 사용량을 확인하지 못했어요."
+                : ""
+          }
+        />
       </KeyboardAvoidingView>
       <ConfirmDialog
         visible={exitOpen}

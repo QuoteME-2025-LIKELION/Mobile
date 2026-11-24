@@ -237,12 +237,12 @@ test("home loading and errors do not show fabricated quotes or the empty-feed me
       false
     );
     assert.doesNotMatch(text(tree), /친구를 추가하면/);
-    if (status === "error") {
-      all(tree)
-        .find((n) => n.type === "Pressable" && text(n) === "다시 시도")
-        .props.onPress();
-      assert.equal(state.loads.length, 1);
-    }
+    const toast = all(tree).find((n) => n.type === "ToastMessage");
+    assert.equal(
+      toast.props.errorMessage,
+      status === "error" ? "홈을 불러오지 못했어요." : ""
+    );
+    assert.doesNotMatch(text(tree), /다시 시도/);
   }
   globalThis.__homeSnapshot = snapshot;
 });

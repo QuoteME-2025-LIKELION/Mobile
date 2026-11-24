@@ -31,6 +31,7 @@ const imports = {
   "@/features/account/services/accountApi": url(
     'export const getAccount=async()=>({email:"member@example.test",birthYear:"2000",gender:"FEMALE",provider:"GOOGLE",linkedAccounts:[]});export const updateAccount=async(body)=>globalThis.__account.saved=body;'
   ),
+  "@/components/ToastMessage": url("export const ToastMessage='ToastMessage';"),
   "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
   react: url(
     `export const useEffect=fn=>{const h=globalThis.__account;if(!h.mounted){h.mounted=true;fn();}};export const useState=initial=>{const h=globalThis.__account;const i=h.next++;if(!(i in h.values))h.values[i]=typeof initial==='function'?initial():initial;return [h.values[i],value=>h.values[i]=typeof value==='function'?value(h.values[i]):value];};export const useRef=initial=>{const h=globalThis.__account;const i=h.next++;return h.values[i]??=( {current:initial} );};`

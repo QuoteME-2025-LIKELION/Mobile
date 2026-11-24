@@ -62,6 +62,7 @@ export const overlays = {
 export const fonts = {
   body: "Pretendard",
   quote: "KoPubWorldBatang-Medium",
+  quoteBold: "KoPubWorldBatang-Bold",
   date: "HSBombaram",
 } as const;
 
@@ -69,5 +70,6 @@ export const fonts = {
 export const fontSources = {
   [fonts.body]: require("@/assets/fonts/PretendardVariable.ttf"),
   [fonts.quote]: require("@/assets/fonts/KoPubWorld-Batang-Medium.ttf"),
+  [fonts.quoteBold]: require("@/assets/fonts/KoPubWorld-Batang-Bold.ttf"),
   [fonts.date]: require("@/assets/fonts/HSBombaram5.0-Bold.ttf"),
 };

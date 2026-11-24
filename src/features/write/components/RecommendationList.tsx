@@ -36,7 +36,8 @@ export function RecommendationList({
   onNext,
 }: Props) {
   const busy = status === "loading";
-  const refreshDisabled = busy || usageStatus === "loading";
+  const refreshDisabled =
+    busy || usageStatus !== "success" || !usage || usage.remaining === 0;
   const canContinue =
     status === "success" &&
     selectedIndex !== null &&
@@ -48,13 +49,7 @@ export function RecommendationList({
       </AppText>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={
-          usageStatus === "success" && usage?.remaining === 0
-            ? "AI 사용량 다시 확인"
-            : usageStatus === "error"
-              ? "AI 사용량 다시 확인"
-              : "AI 추천 다시 받기"
-        }
+        accessibilityLabel="AI 추천 다시 받기"
         accessibilityState={{ disabled: refreshDisabled, busy }}
         disabled={refreshDisabled}
         onPress={onRefresh}

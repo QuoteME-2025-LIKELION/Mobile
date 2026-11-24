@@ -1,4 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { AppState } from "react-native";
 import { createAiResource } from "../services/createAiResource";
 import { aiApi } from "../services/aiApi";
 export function useAiRecommendations() {
@@ -10,7 +11,17 @@ export function useAiRecommendations() {
   );
   useEffect(() => {
     void resource.loadUsage();
-    return () => resource.dispose();
+    const subscription = AppState.addEventListener("change", (appState) => {
+      if (
+        appState === "active" &&
+        resource.getSnapshot().usageStatus === "error"
+      )
+        void resource.loadUsage();
+    });
+    return () => {
+      subscription.remove();
+      resource.dispose();
+    };
   }, [resource]);
   return {
     ...state,

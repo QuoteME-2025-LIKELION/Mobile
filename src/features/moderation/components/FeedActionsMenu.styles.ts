@@ -20,6 +20,11 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
+  divider: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors["grey-100"],
+  },
+  friendLabel: { fontSize: 14, lineHeight: 20, color: colors.black },
   icon: { width: 20, height: 20 },
   label: {
     fontSize: 14,

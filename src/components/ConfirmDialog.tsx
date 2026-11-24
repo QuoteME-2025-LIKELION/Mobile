@@ -19,6 +19,7 @@ type Props = {
   dismissLabel?: string;
   cancelLabel?: string;
   confirmLabel?: string;
+  confirmTone?: "danger" | "primary" | "muted";
   confirmDisabled?: boolean;
 };
 
@@ -32,6 +33,7 @@ export function ConfirmDialog({
   cancelLabel = "돌아가기",
   confirmLabel = "나가기",
   confirmDisabled = false,
+  confirmTone = "danger",
 }: Props) {
   const insets = useSafeAreaInsets();
   const [progress] = useState(() => new Animated.Value(0));
@@ -126,7 +128,10 @@ export function ConfirmDialog({
                 style={styles.button}
               >
                 <AppText
-                  style={[styles.confirm, confirmDisabled && styles.disabled]}
+                  style={[
+                    styles[confirmTone],
+                    confirmDisabled && styles.disabled,
+                  ]}
                 >
                   {confirmLabel}
                 </AppText>

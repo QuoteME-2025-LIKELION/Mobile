@@ -14,18 +14,20 @@ export function FeedActionsMenu({
   anchor,
   canReport,
   onReport,
+  onDelete,
   onBlock,
   onClose,
 }: {
   anchor: MenuAnchor;
   canReport: boolean;
-  onReport: () => void;
+  onReport?: () => void;
+  onDelete?: () => void;
   onBlock: () => void;
   onClose: () => void;
 }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const menuHeight = canReport ? 100 : 56;
+  const menuHeight = onDelete ? 97 : canReport ? 100 : 56;
   const left = Math.max(
     16,
     Math.min(anchor.x + anchor.width - 132, width - 148)
@@ -33,7 +35,7 @@ export function FeedActionsMenu({
   const top = Math.max(
     insets.top + 8,
     Math.min(
-      anchor.y + anchor.height + 8,
+      anchor.y + anchor.height + (onDelete ? 0 : 8),
       height - insets.bottom - menuHeight - 8
     )
   );
@@ -41,7 +43,7 @@ export function FeedActionsMenu({
     <Modal
       transparent
       visible
-      animationType="fade"
+      animationType="none"
       onRequestClose={onClose}
       statusBarTranslucent
       navigationBarTranslucent
@@ -49,13 +51,14 @@ export function FeedActionsMenu({
       <View style={styles.overlay}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="명언 메뉴 닫기"
+          accessibilityLabel={onDelete ? "친구 메뉴 닫기" : "명언 메뉴 닫기"}
           onPress={onClose}
           style={StyleSheet.absoluteFill}
         />
         <View
           accessibilityViewIsModal
           onAccessibilityEscape={onClose}
+          accessibilityLabel={onDelete ? "친구 관리" : undefined}
           style={[styles.menu, { left, top }]}
         >
           {canReport && (
@@ -72,6 +75,20 @@ export function FeedActionsMenu({
               <AppText style={styles.label}>신고하기</AppText>
             </Pressable>
           )}
+          {onDelete && (
+            <Pressable
+              accessibilityRole="button"
+              onPress={onDelete}
+              style={[styles.item, styles.divider]}
+            >
+              <Image
+                source={require("@/assets/images/moderation/delete.svg")}
+                style={styles.icon}
+                accessible={false}
+              />
+              <AppText style={styles.friendLabel}>삭제하기</AppText>
+            </Pressable>
+          )}
           <Pressable
             accessibilityRole="button"
             onPress={onBlock}
@@ -82,7 +99,9 @@ export function FeedActionsMenu({
               style={styles.icon}
               accessible={false}
             />
-            <AppText style={styles.label}>차단하기</AppText>
+            <AppText style={onDelete ? styles.friendLabel : styles.label}>
+              차단하기
+            </AppText>
           </Pressable>
         </View>
       </View>

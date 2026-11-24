@@ -530,7 +530,7 @@ test("startup rejected refresh removes credentials rather than offering restore 
   assert.equal(state.saved, null);
 });
 
-test("restore recovery retries without invoking credential cleanup", async () => {
+test("restore recovery shows a toast and restores on foreground without credential cleanup", async () => {
   const calls = [];
   globalThis.__recoveryState = {
     status: "error",
@@ -544,9 +544,12 @@ test("restore recovery retries without invoking credential cleanup", async () =>
   );
   for (const [from, to] of Object.entries({
     "react/jsx-runtime": import.meta.resolve("react/jsx-runtime"),
-    react: url("export const useState=()=>['',()=>{}];"),
+    react: url("export const useEffect=fn=>fn();"),
     "react-native": url(
-      "export const ActivityIndicator='ActivityIndicator',Pressable='Pressable',View='View';"
+      "export const ActivityIndicator='ActivityIndicator',Pressable='Pressable',View='View',AppState={addEventListener:(_,callback)=>{globalThis.__recoveryForeground=callback;return {remove(){}};}};"
+    ),
+    "@/components/ToastMessage": url(
+      "export const ToastMessage='ToastMessage';"
     ),
     "@/components/AppText": url("export const AppText='AppText';"),
     "@/styles/theme": url("export const colors={white:'white'};"),
@@ -565,9 +568,15 @@ test("restore recovery retries without invoking credential cleanup", async () =>
       ? []
       : [node, ...[node.props?.children].flat(Infinity).flatMap(all)];
   let tree = SessionRecovery();
-  all(tree)
-    .find((n) => n.type === "Pressable")
-    .props.onPress();
+  assert.equal(
+    all(tree).some((n) => n.type === "Pressable"),
+    false
+  );
+  assert.equal(
+    all(tree).find((n) => n.type === "ToastMessage").props.errorMessage,
+    "로그인 정보를 확인하지 못했어요."
+  );
+  globalThis.__recoveryForeground("active");
   assert.deepEqual(calls, ["restore"]);
   globalThis.__recoveryState = {
     ...globalThis.__recoveryState,

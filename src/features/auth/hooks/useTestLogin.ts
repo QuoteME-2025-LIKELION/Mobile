@@ -1,5 +1,4 @@
 import { useRef, useState } from "react";
-import { ApiError } from "@/api/createApiClient";
 import { session } from "../services/session";
 import { useSession } from "../stores/useSession";
 export function useTestLogin() {
@@ -18,13 +17,9 @@ export function useTestLogin() {
     setError("");
     try {
       await session.login({ email: email.trim(), password });
-    } catch (e) {
+    } catch {
       setPassword("");
-      setError(
-        e instanceof ApiError && (e.status === 401 || e.status === 404)
-          ? "이메일 또는 비밀번호를 확인해 주세요."
-          : "로그인하지 못했어요."
-      );
+      setError("로그인에 실패했습니다.");
     } finally {
       submitting.current = false;
     }

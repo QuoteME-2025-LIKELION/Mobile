@@ -6,20 +6,28 @@ import { styles } from "./ToastMessage.styles";
 
 // 0.3초 동안 나타나고, 0.9초 유지한 뒤 0.3초 동안 사라진다.
 export function ToastMessage({
-  message,
+  message: actionMessage,
+  errorMessage = "",
   onClose,
 }: {
-  message: string;
-  onClose: () => void;
+  message?: string;
+  errorMessage?: string;
+  onClose?: () => void;
 }) {
+  const [dismissedError, setDismissedError] = useState("");
+  if (dismissedError && dismissedError !== errorMessage) setDismissedError("");
+  const displayedError =
+    !actionMessage && errorMessage !== dismissedError ? errorMessage : "";
+  const message = actionMessage || displayedError;
   const insets = useSafeAreaInsets();
   const [progress] = useState(() => new Animated.Value(0));
-  const closeRef = useRef(onClose);
+  const closeRef = useRef<() => void>(() => {});
   useEffect(() => {
-    closeRef.current = onClose;
+    closeRef.current = onClose ?? (() => {});
   }, [onClose]);
   useEffect(() => {
     if (!message) return;
+    let active = true;
     progress.setValue(0);
     const animation = Animated.sequence([
       Animated.timing(progress, {
@@ -39,10 +47,15 @@ export function ToastMessage({
       }),
     ]);
     animation.start(({ finished }) => {
-      if (finished) closeRef.current();
+      if (!active || !finished) return;
+      if (displayedError) setDismissedError(displayedError);
+      else closeRef.current();
     });
-    return () => animation.stop();
-  }, [message, progress]);
+    return () => {
+      active = false;
+      animation.stop();
+    };
+  }, [displayedError, message, progress]);
   if (!message) return null;
   return (
     <View

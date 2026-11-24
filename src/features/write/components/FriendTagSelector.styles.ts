@@ -109,8 +109,19 @@ export const styles = StyleSheet.create({
     color: colors.white,
   },
   user: { flex: 1, gap: 4, minWidth: 0 },
-  nickname: { fontSize: 14, lineHeight: 18, fontWeight: "700" },
-  introduction: { fontSize: 14, lineHeight: 18, color: colors.territory },
+  nickname: {
+    fontSize: 14,
+    lineHeight: 16.8,
+    fontWeight: "700",
+    letterSpacing: -0.28,
+  },
+  introduction: {
+    fontSize: 14,
+    lineHeight: 16.8,
+    fontWeight: "500",
+    letterSpacing: -0.28,
+    color: colors.territory,
+  },
   checkbox: { height: 24, width: 24 },
   empty: { paddingVertical: 24, textAlign: "center", color: colors.territory },
 });

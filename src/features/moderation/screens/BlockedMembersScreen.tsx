@@ -39,9 +39,13 @@ export function BlockedMembersScreen() {
                 accessible={false}
               />
               <View style={styles.info}>
-                <AppText style={styles.name}>{member.nickname}</AppText>
+                <AppText numberOfLines={1} style={styles.name}>
+                  {member.nickname}
+                </AppText>
                 {member.introduction ? (
-                  <AppText style={styles.bio}>{member.introduction}</AppText>
+                  <AppText numberOfLines={1} style={styles.bio}>
+                    {member.introduction}
+                  </AppText>
                 ) : null}
               </View>
               <Pressable
@@ -58,10 +62,11 @@ export function BlockedMembersScreen() {
       </ScrollView>
       <ConfirmDialog
         visible={target !== null}
-        title={`${target?.nickname ?? ""}님의 차단을 해제할까요?`}
+        title={`${target?.nickname ?? ""}님의 차단을\n해제할까요?`}
         description={"차단을 해제해도 친구 관계는\n복구되지 않습니다"}
         dismissLabel="돌아가기"
         confirmLabel="해제"
+        confirmTone="muted"
         onClose={() => setTarget(null)}
         onConfirm={() => {
           if (target && unblockFixtureMember(target.id))

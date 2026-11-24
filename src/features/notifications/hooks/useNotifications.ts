@@ -33,17 +33,18 @@ export function useNotifications({
       return;
     }
     if (item.kind === "group-invite" && item.invitation) {
-      if (item.invitation.memberCount >= 5)
-        setToast("최대 인원 5명이 가득 차 들어갈 수 없어요");
+      if (item.invitation.memberCount >= 5) setToast("최대 인원 5명이 찼어요.");
       else setInvitation(item.invitation);
       return;
     }
+    if (item.category === "GROUP" || item.category === "FRIEND") {
+      router.push("/friend-group/add");
+      return;
+    }
     setToast(
-      item.category === "GROUP" || item.category === "FRIEND"
-        ? "친구 및 그룹 관리는 준비 중이에요."
-        : item.kind === "tag-request"
-          ? "태그 요청 확인은 준비 중이에요."
-          : "해당 날짜의 명언 보기는 준비 중이에요."
+      item.kind === "tag-request"
+        ? "태그 요청 확인은 준비 중이에요."
+        : "해당 날짜의 명언 보기는 준비 중이에요."
     );
   };
   return {
