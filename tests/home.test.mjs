@@ -258,7 +258,7 @@ test("home loading and errors do not show fabricated quotes or the empty-feed me
       all(tree).some((n) => n.type === "TodayQuote"),
       false
     );
-    assert.doesNotMatch(text(tree), /친구를 추가하면/);
+    assert.doesNotMatch(text(tree), /태그할 수 있는 친구가 없어요/);
     const toast = all(tree).find((n) => n.type === "ToastMessage");
     assert.equal(
       toast.props.errorMessage,
