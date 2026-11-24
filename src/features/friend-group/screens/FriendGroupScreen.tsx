@@ -20,6 +20,7 @@ import {
   useFriendGroupActions,
   useFriendGroupData,
   useFriendGroupSearch,
+  useLookupErrorToast,
 } from "../hooks/useFriendGroupData";
 import { friendGroupApi, type Member } from "../services/friendGroupApi";
 import { FriendGroupRequests } from "../components/FriendGroupRequests";
@@ -69,11 +70,15 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
     : (lists.data?.groups ?? []);
   const friendIds = new Set(lists.data?.members.map(({ id }) => id));
   const groupIds = new Set(lists.data?.groups.map(({ id }) => id));
-  const error = searching
-    ? results.status === "error" && Boolean(query)
-    : adding
-      ? requests.status === "error"
-      : lists.status === "error";
+  const activeLookup = searching ? results : adding ? requests : lists;
+  const lookupError =
+    lists.status === "error" ||
+    (searching && Boolean(query) && results.status === "error") ||
+    (!searching && adding && requests.status === "error");
+  const lookupToast = useLookupErrorToast(
+    lookupError,
+    "목록을 불러오지 못했어요."
+  );
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -129,23 +134,6 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
             />
           ) : null}
         </View>
-        {error ? (
-          <View>
-            <AppText style={styles.message}>
-              목록을 불러오지 못했습니다.
-            </AppText>
-            <RowAction
-              label="다시 불러오기"
-              onPress={
-                searching
-                  ? results.reload
-                  : adding
-                    ? requests.reload
-                    : lists.reload
-              }
-            />
-          </View>
-        ) : null}
         {!searching && adding && (
           <>
             <View style={styles.guide}>
@@ -299,16 +287,11 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
             </View>
           </>
         )}
-        {!error &&
-          (searching
-            ? !currentResults
-            : adding
-              ? requests.status === "loading"
-              : lists.status === "loading") && (
-            <AppText accessibilityLiveRegion="polite" style={styles.message}>
-              불러오는 중…
-            </AppText>
-          )}
+        {(activeLookup.status === "loading" || (searching && !query)) && (
+          <AppText accessibilityLiveRegion="polite" style={styles.message}>
+            불러오는 중…
+          </AppText>
+        )}
       </ScrollView>
       {friendMenu && (
         <FeedActionsMenu
@@ -359,10 +342,11 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
         />
       )}
       <ToastMessage
-        message={notice || toast}
+        message={notice || toast || lookupToast.message}
         onClose={() => {
           setNotice("");
           closeToast();
+          if (lookupError) lookupToast.dismiss();
         }}
       />
     </SafeAreaView>

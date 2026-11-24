@@ -4,9 +4,13 @@ import { useCallback } from "react";
 import { ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppText } from "@/components/AppText";
+import { ToastMessage } from "@/components/ToastMessage";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { ListRow, RowAction } from "../components/FriendGroupRows";
-import { useFriendGroupData } from "../hooks/useFriendGroupData";
+import { ListRow } from "../components/FriendGroupRows";
+import {
+  useFriendGroupData,
+  useLookupErrorToast,
+} from "../hooks/useFriendGroupData";
 import { friendGroupApi } from "../services/friendGroupApi";
 import { styles } from "./FriendGroupScreen.styles";
 
@@ -16,7 +20,11 @@ export function GroupDetailScreen({ id }: { id: number }) {
     [id]
   );
   const valid = Number.isSafeInteger(id) && id > 0;
-  const { data, status, reload } = useFriendGroupData(load, valid);
+  const { data, status } = useFriendGroupData(load, valid);
+  const lookupToast = useLookupErrorToast(
+    status === "error",
+    "그룹을 불러오지 못했어요."
+  );
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -33,14 +41,6 @@ export function GroupDetailScreen({ id }: { id: number }) {
         ) : null}
         {valid && status === "loading" && (
           <AppText style={styles.message}>불러오는 중…</AppText>
-        )}
-        {status === "error" && (
-          <>
-            <AppText style={styles.message}>
-              그룹을 불러오지 못했습니다.
-            </AppText>
-            <RowAction label="다시 불러오기" onPress={reload} />
-          </>
         )}
         {data && (
           <>
@@ -64,6 +64,10 @@ export function GroupDetailScreen({ id }: { id: number }) {
           </>
         )}
       </ScrollView>
+      <ToastMessage
+        message={lookupToast.message}
+        onClose={lookupToast.dismiss}
+      />
     </SafeAreaView>
   );
 }
