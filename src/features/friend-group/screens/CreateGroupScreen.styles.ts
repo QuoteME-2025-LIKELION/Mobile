@@ -42,6 +42,11 @@ export const styles = StyleSheet.create({
   searchIcon: { width: 14, height: 14 },
   searchInput: { flex: 1, fontFamily: fonts.body, color: colors["grey-950"] },
   members: { marginTop: 20 },
+  emptyFriends: {
+    color: colors["grey-400"],
+    marginTop: 6,
+    paddingLeft: 8,
+  },
   rowBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors["grey-200"],

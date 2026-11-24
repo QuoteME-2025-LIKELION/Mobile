@@ -269,16 +269,9 @@ export function CreateGroupScreen() {
               </View>
               <View style={styles.members}>
                 {friends.data?.length === 0 && (
-                  <>
-                    <AppText style={styles.hint}>
-                      아직 추가된 친구가 없습니다.
-                    </AppText>
-                    <RowAction
-                      label="친구 추가"
-                      disabled={busy}
-                      onPress={() => router.push("/friend-group/add")}
-                    />
-                  </>
+                  <AppText style={styles.emptyFriends}>
+                    아직 추가된 친구가 없습니다.
+                  </AppText>
                 )}
                 {friends.data &&
                   friends.data.length > 0 &&
