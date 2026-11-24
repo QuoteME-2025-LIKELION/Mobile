@@ -18,6 +18,7 @@ export type Group = {
 export type GroupDetail = Group & {
   leaderNickname: string;
   totalQuoteCount: number;
+  createdAt: string;
   members: Member[];
 };
 
@@ -40,11 +41,31 @@ export type GroupRequest = {
 };
 export type GroupInvitation = GroupRequest & { inviterNickname: string };
 
+export type GroupManagedRequest = {
+  requestId: number;
+  requesterId: number;
+  requesterNickname: string;
+  requesterProfileImage?: string | null;
+  requesterIntroduction?: string | null;
+};
+
 const get = <T>(path: string, signal?: AbortSignal) =>
   session.request<T>(path, { signal });
 
-const change = (path: string, method: "POST" | "DELETE", body?: unknown) =>
-  session.request(path, { method, body, ignoreResponseBody: true });
+const change = (
+  path: string,
+  method: "POST" | "DELETE" | "PATCH",
+  body?: unknown
+) => session.request(path, { method, body, ignoreResponseBody: true });
+
+async function getLeaderRequests(path: string, signal: AbortSignal) {
+  try {
+    return await get<GroupManagedRequest[]>(path, signal);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 403) return null;
+    throw error;
+  }
+}
 
 export const JOIN_REQUEST_PENDING_MESSAGE = "이미 가입 요청 중인 그룹입니다.";
 
@@ -81,6 +102,19 @@ export const friendGroupApi = {
   },
   detail: (id: number, signal: AbortSignal) =>
     get<GroupDetail>(`/api/groups/${id}`, signal),
+  groupJoinRequests: (id: number, signal: AbortSignal) =>
+    getLeaderRequests(`/api/groups/${id}/join-requests`, signal),
+  groupSentInvitations: (id: number, signal: AbortSignal) =>
+    getLeaderRequests(`/api/groups/${id}/invitations/sent`, signal),
+  respondGroupJoin: (requestId: number, answer: "accept" | "reject") =>
+    change(`/api/groups/join-requests/${requestId}/${answer}`, "POST"),
+  cancelGroupInvitation: (id: number, requestId: number) =>
+    change(`/api/groups/${id}/invitations/${requestId}`, "DELETE"),
+  updateGroupMotto: (id: number, motto: string) =>
+    change(`/api/groups/${id}/motto`, "PATCH", { motto }),
+  removeGroupMember: (id: number, memberId: number) =>
+    change(`/api/groups/${id}/members/${memberId}`, "DELETE"),
+  deleteGroup: (id: number) => change(`/api/groups/${id}`, "DELETE"),
   sendFriend: (id: number) => change(`/api/friends/request/${id}`, "POST"),
   cancelFriend: (id: number) => change(`/api/friends/request/${id}`, "DELETE"),
   respondFriend: (id: number, answer: "accept" | "reject") =>

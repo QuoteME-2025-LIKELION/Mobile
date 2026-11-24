@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native";
-import { colors, fonts } from "@/styles/theme";
+import { colors, fonts, withOpacity } from "@/styles/theme";
 
 export const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.secondary },
@@ -56,14 +56,26 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     overflow: "hidden",
   },
-  groupCount: {
-    position: "absolute",
-    right: 18,
-    fontFamily: fonts.date,
-    fontSize: 64,
-    color: colors["indigo-700"],
+  groupCountBackground: {
+    ...StyleSheet.absoluteFill,
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingRight: 18,
   },
-  groupName: { fontFamily: fonts.quote, fontSize: 16, color: colors.white },
+  groupCount: {
+    fontFamily: fonts.date,
+    fontSize: 68,
+    color: withOpacity(colors.white, 0.18),
+  },
+  groupName: {
+    width: 64,
+    textAlign: "center",
+    fontFamily: fonts.quoteBold,
+    fontSize: 14,
+    lineHeight: 19,
+    letterSpacing: -0.28,
+    color: colors.white,
+  },
   divider: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors["grey-200"],
@@ -103,6 +115,7 @@ export const styles = StyleSheet.create({
     letterSpacing: -0.28,
     color: colors.territory,
   },
+  actionPrimary: { color: colors["grey-950"] },
   actionDanger: { color: colors.red },
   disabled: { opacity: 0.5 },
 });

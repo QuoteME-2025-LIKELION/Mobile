@@ -1,8 +1,8 @@
 import { Image } from "expo-image";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useState } from "react";
-import { Pressable, ScrollView, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AppText } from "@/components/AppText";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -33,6 +33,13 @@ import { styles } from "./FriendGroupScreen.styles";
 import type { RequestConfirmation } from "../components/FriendGroupRequests";
 
 export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
+  const { groupAction } = useLocalSearchParams<{ groupAction?: string }>();
+  const groupActionToast =
+    groupAction === "left"
+      ? "그룹에서 탈퇴하였습니다."
+      : groupAction === "disbanded"
+        ? "그룹이 해체되었습니다."
+        : "";
   const [keyword, setKeyword] = useState("");
   const [friendMenu, setFriendMenu] = useState<{
     member: Member;
@@ -231,12 +238,16 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
                       }}
                       style={styles.card}
                     >
-                      <AppText style={styles.groupCount}>
-                        {group.memberCount}
-                      </AppText>
-                      <AppText numberOfLines={2} style={styles.groupName}>
-                        {group.name}
-                      </AppText>
+                      <View
+                        aria-hidden
+                        pointerEvents="none"
+                        style={styles.groupCountBackground}
+                      >
+                        <Text style={styles.groupCount}>
+                          {group.memberCount}
+                        </Text>
+                      </View>
+                      <AppText style={styles.groupName}>{group.name}</AppText>
                     </Pressable>
                   ))}
                 </ScrollView>
@@ -371,7 +382,7 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
         />
       )}
       <ToastMessage
-        message={notice || toast}
+        message={groupActionToast || notice || toast}
         errorMessage={lookupError ? "목록을 불러오지 못했어요." : ""}
         onClose={() => {
           setNotice("");
