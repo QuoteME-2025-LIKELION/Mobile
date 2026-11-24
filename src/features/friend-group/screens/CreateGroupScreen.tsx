@@ -1,7 +1,5 @@
 import { Image } from "expo-image";
-import { router, useFocusEffect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -11,19 +9,14 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ApiError } from "@/api/createApiClient";
 import { AppText } from "@/components/AppText";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { ToastMessage } from "@/components/ToastMessage";
 import { colors } from "@/styles/theme";
 import { ListRow, RowAction } from "../components/FriendGroupRows";
-import { useFriendGroupData } from "../hooks/useFriendGroupData";
-import { friendGroupApi, type Member } from "../services/friendGroupApi";
+import { countGroupCharacters, useCreateGroup } from "../hooks/useCreateGroup";
 import { styles } from "./CreateGroupScreen.styles";
-
-const MAX_INVITES = 4;
-const count = (value: string) => Array.from(value).length;
 
 function GroupStepButton({
   label,
@@ -50,133 +43,39 @@ function GroupStepButton({
 }
 
 export function CreateGroupScreen() {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [name, setName] = useState("");
-  const [motto, setMotto] = useState("");
-  const [keyword, setKeyword] = useState("");
-  const [pendingInvites, setPendingInvites] = useState<Member[]>([]);
-  const [invitedIds, setInvitedIds] = useState<number[]>([]);
-  const [inviteTarget, setInviteTarget] = useState<Member | null>(null);
-  const [showCreateConfirm, setShowCreateConfirm] = useState(false);
-  const [createdGroupId, setCreatedGroupId] = useState<number | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [nameError, setNameError] = useState("");
-  const [toast, setToast] = useState("");
-  const focus = useRef<object | null>(null);
-  const requestLock = useRef(false);
-  useFocusEffect(
-    useCallback(() => {
-      focus.current = {};
-      return () => {
-        focus.current = null;
-      };
-    }, [])
-  );
-
-  const friends = useFriendGroupData(friendGroupApi.friends, step === 3);
-  const trimmedName = name.trim();
-  const trimmedMotto = motto.trim();
-  const trimmedKeyword = keyword.trim().toLowerCase();
-  const selectedIds = new Set([
-    ...invitedIds,
-    ...pendingInvites.map(({ id }) => id),
-  ]);
-  const availableFriends =
-    friends.data?.filter(
-      (member) =>
-        !selectedIds.has(member.id) &&
-        member.nickname.toLowerCase().includes(trimmedKeyword)
-    ) ?? [];
-
-  const close = () => {
-    focus.current = null;
-    if (router.canGoBack()) router.back();
-    else router.replace("/friend-group");
-  };
-
-  const nextFromName = async () => {
-    const submittedFocus = focus.current;
-    if (
-      !submittedFocus ||
-      !trimmedName ||
-      count(trimmedName) > 10 ||
-      requestLock.current
-    )
-      return;
-    requestLock.current = true;
-    setBusy(true);
-    setNameError("");
-    try {
-      const { groups } = await friendGroupApi.search(trimmedName);
-      if (focus.current !== submittedFocus) return;
-      if (
-        groups.some(
-          (group) =>
-            group.name.trim().toLowerCase() === trimmedName.toLowerCase()
-        )
-      ) {
-        setNameError("이미 사용 중인 그룹 이름입니다.");
-        return;
-      }
-      setName(trimmedName);
-      setStep(2);
-    } catch {
-      if (focus.current === submittedFocus)
-        setToast("그룹 이름을 확인하지 못했어요.");
-    } finally {
-      requestLock.current = false;
-      setBusy(false);
-    }
-  };
-
-  const submit = async () => {
-    const submittedFocus = focus.current;
-    if (!submittedFocus || requestLock.current) return;
-    requestLock.current = true;
-    setBusy(true);
-    try {
-      const groupId =
-        createdGroupId ??
-        (await friendGroupApi.createGroup(trimmedName, trimmedMotto)).id;
-      setCreatedGroupId(groupId);
-      const outcomes = await Promise.allSettled(
-        pendingInvites.map(({ id }) => friendGroupApi.inviteMember(groupId, id))
-      );
-      const failed = pendingInvites.filter((_, index) => {
-        const result = outcomes[index];
-        return (
-          result.status === "rejected" &&
-          !(
-            result.reason instanceof ApiError &&
-            result.reason.status === 400 &&
-            result.reason.code === "400-4"
-          )
-        );
-      });
-      const failedIds = new Set(failed.map(({ id }) => id));
-      setInvitedIds((current) => [
-        ...current,
-        ...pendingInvites
-          .filter(({ id }) => !failedIds.has(id))
-          .map(({ id }) => id),
-      ]);
-      setPendingInvites(failed);
-      if (focus.current !== submittedFocus) return;
-      if (failed.length) setToast("일부 친구 초대에 실패했어요.");
-      else close();
-    } catch (error) {
-      if (focus.current !== submittedFocus) return;
-      if (error instanceof ApiError && error.status === 409) {
-        setNameError("이미 사용 중인 그룹 이름입니다.");
-        setStep(1);
-      } else {
-        setToast("그룹을 만들지 못했어요.");
-      }
-    } finally {
-      requestLock.current = false;
-      setBusy(false);
-    }
-  };
+  const {
+    step,
+    name,
+    motto,
+    keyword,
+    trimmedName,
+    trimmedMotto,
+    trimmedKeyword,
+    nameError,
+    pendingInvites,
+    inviteTarget,
+    showCreateConfirm,
+    createdGroupId,
+    busy,
+    toast,
+    friends,
+    availableFriends,
+    close,
+    nextFromName,
+    advance,
+    stepBack,
+    changeName,
+    changeMotto,
+    setKeyword,
+    chooseInvite,
+    confirmInvite,
+    cancelInvite,
+    removeInvite,
+    cancelSubmit,
+    confirmSubmit,
+    clearToast,
+  } = useCreateGroup();
+  const hasCreatedGroup = createdGroupId !== null;
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -203,10 +102,7 @@ export function CreateGroupScreen() {
               <TextInput
                 accessibilityLabel="그룹 이름"
                 value={name}
-                onChangeText={(value) => {
-                  setName(Array.from(value).slice(0, 10).join(""));
-                  setNameError("");
-                }}
+                onChangeText={changeName}
                 editable={!busy}
                 placeholder="그룹 이름을 입력해 주세요"
                 placeholderTextColor={colors["grey-400"]}
@@ -218,7 +114,7 @@ export function CreateGroupScreen() {
                 </AppText>
               ) : (
                 <AppText style={styles.fieldLimit}>
-                  {count(name)}자/10자
+                  {countGroupCharacters(name)}자/10자
                 </AppText>
               )}
             </>
@@ -234,14 +130,14 @@ export function CreateGroupScreen() {
               <TextInput
                 accessibilityLabel="그룹 메시지"
                 value={motto}
-                onChangeText={(value) =>
-                  setMotto(Array.from(value).slice(0, 20).join(""))
-                }
+                onChangeText={changeMotto}
                 placeholder="그룹 메시지를 자유롭게 적어주세요"
                 placeholderTextColor={colors["grey-400"]}
                 style={styles.field}
               />
-              <AppText style={styles.fieldLimit}>{count(motto)}자/20자</AppText>
+              <AppText style={styles.fieldLimit}>
+                {countGroupCharacters(motto)}자/20자
+              </AppText>
             </>
           )}
           {step === 3 && (
@@ -294,11 +190,7 @@ export function CreateGroupScreen() {
                       <RowAction
                         label="초대"
                         disabled={busy}
-                        onPress={() => {
-                          if (selectedIds.size >= MAX_INVITES)
-                            setToast("친구는 최대 4명까지 초대할 수 있어요.");
-                          else setInviteTarget(member);
-                        }}
+                        onPress={() => chooseInvite(member)}
                       />
                     </ListRow>
                   </View>
@@ -321,11 +213,7 @@ export function CreateGroupScreen() {
                         <RowAction
                           label="취소"
                           disabled={busy}
-                          onPress={() =>
-                            setPendingInvites((current) =>
-                              current.filter(({ id }) => id !== member.id)
-                            )
-                          }
+                          onPress={() => removeInvite(member.id)}
                         />
                       </ListRow>
                     ))}
@@ -346,8 +234,8 @@ export function CreateGroupScreen() {
             <>
               <GroupStepButton
                 label="뒤로가기"
-                disabled={busy || createdGroupId !== null}
-                onPress={() => setStep(step === 2 ? 1 : 2)}
+                disabled={busy || hasCreatedGroup}
+                onPress={stepBack}
               />
               <GroupStepButton
                 label={
@@ -355,15 +243,16 @@ export function CreateGroupScreen() {
                     ? trimmedMotto
                       ? "다음으로"
                       : "건너뛰기"
-                    : pendingInvites.length
-                      ? "그룹 만들기"
-                      : "건너뛰기"
+                    : hasCreatedGroup
+                      ? pendingInvites.length
+                        ? "초대 다시 보내기"
+                        : "완료"
+                      : pendingInvites.length
+                        ? "그룹 만들기"
+                        : "건너뛰기"
                 }
                 disabled={busy}
-                onPress={() => {
-                  if (step === 2) setStep(3);
-                  else setShowCreateConfirm(true);
-                }}
+                onPress={advance}
               />
             </>
           )}
@@ -376,30 +265,27 @@ export function CreateGroupScreen() {
           description=""
           confirmLabel="초대하기"
           confirmTone="primary"
-          onClose={() => setInviteTarget(null)}
-          onConfirm={() => {
-            setPendingInvites((current) =>
-              current.length + invitedIds.length < MAX_INVITES &&
-              !current.some(({ id }) => id === inviteTarget.id)
-                ? [...current, inviteTarget]
-                : current
-            );
-            setInviteTarget(null);
-          }}
+          onClose={cancelInvite}
+          onConfirm={confirmInvite}
         />
       )}
       {showCreateConfirm && (
         <ConfirmDialog
           visible
-          title="이대로 그룹을 만들까요?"
-          description={`그룹 이름: ${trimmedName}${trimmedMotto ? `\n메시지: ${trimmedMotto}` : ""}`}
-          confirmLabel="만들기"
+          title={
+            hasCreatedGroup
+              ? "남은 초대를 다시 보낼까요?"
+              : "이대로 그룹을 만들까요?"
+          }
+          description={
+            hasCreatedGroup
+              ? ""
+              : `그룹 이름: ${trimmedName}${trimmedMotto ? `\n메시지: ${trimmedMotto}` : ""}`
+          }
+          confirmLabel={hasCreatedGroup ? "다시 보내기" : "만들기"}
           confirmTone="primary"
-          onClose={() => setShowCreateConfirm(false)}
-          onConfirm={() => {
-            setShowCreateConfirm(false);
-            void submit();
-          }}
+          onClose={cancelSubmit}
+          onConfirm={confirmSubmit}
         />
       )}
       <ToastMessage
@@ -409,7 +295,7 @@ export function CreateGroupScreen() {
             ? "친구 목록을 불러오지 못했어요."
             : ""
         }
-        onClose={() => setToast("")}
+        onClose={clearToast}
       />
     </SafeAreaView>
   );
