@@ -194,7 +194,7 @@ test("group invitation shows group/leader/member information, full group uses th
   assert.equal(state.invitation, null);
   state.openItem(state.notifications.find((item) => item.id === 6));
   state = render();
-  assert.equal(state.toast, "최대 인원 5명이 가득 차 들어갈 수 없어요");
+  assert.equal(state.toast, "최대 인원 5명이 찼어요.");
   assert.equal(state.invitation, null);
   assert.equal(h.routes.length, 0);
 });

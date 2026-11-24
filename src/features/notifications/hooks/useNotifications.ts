@@ -33,8 +33,7 @@ export function useNotifications({
       return;
     }
     if (item.kind === "group-invite" && item.invitation) {
-      if (item.invitation.memberCount >= 5)
-        setToast("최대 인원 5명이 가득 차 들어갈 수 없어요");
+      if (item.invitation.memberCount >= 5) setToast("최대 인원 5명이 찼어요.");
       else setInvitation(item.invitation);
       return;
     }
