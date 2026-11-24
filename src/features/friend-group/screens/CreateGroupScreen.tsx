@@ -1,6 +1,6 @@
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { ScrollView, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ApiError } from "@/api/createApiClient";
@@ -16,21 +16,36 @@ export function CreateGroupScreen() {
   const [motto, setMotto] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const focus = useRef<object | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      focus.current = {};
+      return () => {
+        focus.current = null;
+      };
+    }, [])
+  );
+
   const trimmedName = name.trim();
   const valid =
     Boolean(trimmedName) &&
     Array.from(trimmedName).length <= 10 &&
     Array.from(motto.trim()).length <= 20;
-  const back = () =>
-    router.canGoBack() ? router.back() : router.replace("/friend-group");
+  const back = () => {
+    focus.current = null;
+    if (router.canGoBack()) router.back();
+    else router.replace("/friend-group");
+  };
   const submit = async () => {
-    if (!valid || busy) return;
+    const submittedFocus = focus.current;
+    if (!valid || busy || !submittedFocus) return;
     setBusy(true);
     setError("");
     try {
       await friendGroupApi.createGroup(trimmedName, motto.trim());
-      back();
+      if (focus.current === submittedFocus) back();
     } catch (cause) {
+      if (focus.current !== submittedFocus) return;
       setError(
         cause instanceof ApiError && cause.status === 409
           ? "이미 사용 중인 그룹 이름입니다."
