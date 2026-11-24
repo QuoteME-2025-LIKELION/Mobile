@@ -38,12 +38,14 @@ export function useNotifications({
       else setInvitation(item.invitation);
       return;
     }
+    if (item.category === "GROUP" || item.category === "FRIEND") {
+      router.push("/friend-group/add");
+      return;
+    }
     setToast(
-      item.category === "GROUP" || item.category === "FRIEND"
-        ? "친구 및 그룹 관리는 준비 중이에요."
-        : item.kind === "tag-request"
-          ? "태그 요청 확인은 준비 중이에요."
-          : "해당 날짜의 명언 보기는 준비 중이에요."
+      item.kind === "tag-request"
+        ? "태그 요청 확인은 준비 중이에요."
+        : "해당 날짜의 명언 보기는 준비 중이에요."
     );
   };
   return {

@@ -99,7 +99,10 @@ test("drawer keeps profile, menu order and footer while leaving unfinished desti
         (n) =>
           !["내 메뉴 닫기", "프로필 관리"].includes(
             n.props.accessibilityLabel
-          ) && !["계정 관리", "알림 설정", "공지사항"].includes(text(n))
+          ) &&
+          !["친구 및 그룹", "계정 관리", "알림 설정", "공지사항"].includes(
+            text(n)
+          )
       )
       .every((n) => n.props.disabled && !n.props.onPress)
   );
@@ -172,6 +175,18 @@ test("account menu opens only after closing the drawer; unfinished menus stay di
   h.animations[1].callback({ finished: true });
   assert.equal(h.closed, 1);
   assert.equal(h.route, "/account-setting");
+});
+
+test("friend and group menu opens its screen after drawer dismissal", () => {
+  const { h, tree } = render();
+  const button = nodes(tree).find(
+    (n) => n.type === "Pressable" && text(n) === "친구 및 그룹"
+  );
+  assert.equal(button.props.disabled, false);
+  button.props.onPress();
+  assert.equal(h.route, undefined);
+  h.animations[1].callback({ finished: true });
+  assert.equal(h.route, "/friend-group");
 });
 
 test("notification menu opens its screen after drawer dismissal", () => {
