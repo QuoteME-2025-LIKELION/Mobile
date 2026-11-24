@@ -295,7 +295,9 @@ export function WriteScreen() {
           errorMessage={
             step === "tag" && friendsStatus === "error"
               ? "친구 목록을 불러오지 못했어요."
-              : aiUsageStatus === "error" && step !== "tag"
+              : aiUsageStatus === "error" &&
+                  step !== "tag" &&
+                  !(step === "recommend" && recommendationStatus === "error")
                 ? "AI 사용량을 확인하지 못했어요."
                 : ""
           }

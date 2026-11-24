@@ -680,9 +680,10 @@ recommendCode = recommendCode.replace(
 );
 const { RecommendationList } = await import(url(recommendCode));
 
-test("recommendation panel only enables next for a current result and disables refresh during loading, errors, and exhaustion", () => {
+test("recommendation panel allows new AI recommendations after a failed generation when usage is available", () => {
   for (const status of ["loading", "success", "empty", "error", "exhausted"]) {
     let nexts = 0;
+    let refreshes = 0;
     const selected = [];
     const props = {
       status,
@@ -695,11 +696,17 @@ test("recommendation panel only enables next for a current result and disables r
       recommendations: ["선택할 명언"],
       selectedIndex: null,
       onSelect: (index) => selected.push(index),
-      onRefresh: () => {},
+      onRefresh: () => refreshes++,
       onBack: () => {},
       onNext: () => nexts++,
     };
     let tree = RecommendationList(props);
+    assert.equal(
+      nodes(tree).some(
+        (n) => n.props.children === "AI 추천을 불러오지 못했어요."
+      ),
+      status === "error"
+    );
     assert.equal(action(tree, "다음으로").props.disabled, true);
     action(tree, "다음으로").props.onPress();
     assert.equal(nexts, 0);
@@ -711,8 +718,12 @@ test("recommendation panel only enables next for a current result and disables r
     );
     assert.equal(
       refresh.props.disabled,
-      ["loading", "error", "exhausted"].includes(status)
+      ["loading", "exhausted"].includes(status)
     );
+    if (status === "error") {
+      refresh.props.onPress();
+      assert.equal(refreshes, 1);
+    }
     const cards = nodes(tree).filter(
       (node) => node.props?.accessibilityLabel === "선택할 명언"
     );
