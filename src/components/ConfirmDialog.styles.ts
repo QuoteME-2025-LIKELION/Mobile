@@ -38,6 +38,8 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  confirm: { color: colors.red },
+  danger: { color: colors.red },
+  primary: { color: colors.primary },
+  muted: { color: colors.territory },
   disabled: { color: colors["grey-200"] },
 });

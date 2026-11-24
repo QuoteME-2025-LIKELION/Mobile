@@ -6,6 +6,7 @@ export type RequestConfirmation = {
   title: string;
   label: string;
   description?: string;
+  confirmTone?: "primary";
   action: () => void;
 };
 
@@ -45,10 +46,11 @@ export function FriendGroupRequests({
             />
             <RowAction
               label="거절"
+              tone="danger"
               disabled={busy}
               onPress={() =>
                 confirm({
-                  title: `${item.groupName} 그룹의 초대를 거절하시겠어요?`,
+                  title: `${item.groupName} 그룹의 초대를\n거절하시겠어요?`,
                   label: "거절",
                   action: () =>
                     void run(
@@ -113,10 +115,11 @@ export function FriendGroupRequests({
               />
               <RowAction
                 label="거절"
+                tone="danger"
                 disabled={busy}
                 onPress={() =>
                   confirm({
-                    title: `${item.senderNickname}님의 친구 요청을 거절하시겠어요?`,
+                    title: `${item.senderNickname}님의 친구 요청을\n거절하시겠어요?`,
                     label: "거절",
                     action: () =>
                       void run(

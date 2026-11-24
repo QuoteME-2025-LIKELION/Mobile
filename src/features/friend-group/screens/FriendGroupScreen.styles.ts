@@ -3,10 +3,14 @@ import { colors, fonts } from "@/styles/theme";
 
 export const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.secondary },
-  header: { justifyContent: "center", marginBottom: 24 },
-  add: { position: "absolute", right: 24, paddingVertical: 12 },
+  header: { marginBottom: 24 },
   addIcon: { width: 24, height: 24 },
-  friendActions: { flexDirection: "row", justifyContent: "flex-end", gap: 12 },
+  moreButton: {
+    width: 28,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   content: { paddingHorizontal: 24, paddingBottom: 24, gap: 20 },
   search: {
     minHeight: 44,
@@ -66,7 +70,7 @@ export const styles = StyleSheet.create({
   },
   tabs: { flexDirection: "row", flexWrap: "wrap", gap: 14 },
   title: {
-    fontFamily: fonts.quote,
+    fontFamily: fonts.quoteBold,
     fontSize: 16,
     color: colors["grey-950"],
   },
@@ -100,5 +104,6 @@ export const styles = StyleSheet.create({
     letterSpacing: -0.28,
     color: colors.territory,
   },
+  actionDanger: { color: colors.red },
   disabled: { opacity: 0.5 },
 });

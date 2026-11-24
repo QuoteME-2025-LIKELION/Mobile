@@ -9,13 +9,19 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { ToastMessage } from "@/components/ToastMessage";
 import { colors } from "@/styles/theme";
-import { ListRow, RowAction } from "../components/FriendGroupRows";
+import { FeedActionsMenu } from "@/features/moderation/components/FeedActionsMenu";
+import type { MenuAnchor } from "@/features/moderation/hooks/useFeedModeration";
+import {
+  FriendMoreButton,
+  ListRow,
+  RowAction,
+} from "../components/FriendGroupRows";
 import {
   useFriendGroupActions,
   useFriendGroupData,
   useFriendGroupSearch,
 } from "../hooks/useFriendGroupData";
-import { friendGroupApi } from "../services/friendGroupApi";
+import { friendGroupApi, type Member } from "../services/friendGroupApi";
 import { FriendGroupRequests } from "../components/FriendGroupRequests";
 import { styles } from "./FriendGroupScreen.styles";
 
@@ -23,7 +29,10 @@ import type { RequestConfirmation } from "../components/FriendGroupRequests";
 
 export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
   const [keyword, setKeyword] = useState("");
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [friendMenu, setFriendMenu] = useState<{
+    member: Member;
+    anchor: MenuAnchor;
+  } | null>(null);
   const [notice, setNotice] = useState("");
   const [confirmation, setConfirmation] = useState<RequestConfirmation | null>(
     null
@@ -73,22 +82,23 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
         <ScreenHeader
           title={adding ? "친구 및 그룹 추가" : "친구 및 그룹"}
           onBack={back}
-        />
-        {!adding && (
-          <View style={styles.add}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="친구 및 그룹 추가"
-              onPress={() => router.push("/friend-group/add")}
-              style={styles.action}
-            >
-              <Image
-                source={require("@/assets/images/friend-group/add-member.svg")}
+          rightElement={
+            adding ? undefined : (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="친구 및 그룹 추가"
+                onPress={() => router.push("/friend-group/add")}
+                hitSlop={10}
                 style={styles.addIcon}
-              />
-            </Pressable>
-          </View>
-        )}
+              >
+                <Image
+                  source={require("@/assets/images/friend-group/add-member.svg")}
+                  style={styles.addIcon}
+                />
+              </Pressable>
+            )
+          }
+        />
       </View>
       <ScrollView
         contentContainerStyle={styles.content}
@@ -103,7 +113,7 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
             accessibilityLabel="친구 및 그룹 검색"
             value={keyword}
             onChangeText={(value) => {
-              setOpenMenuId(null);
+              setFriendMenu(null);
               setKeyword(value);
             }}
             placeholder="검색어를 입력해 주세요"
@@ -191,8 +201,9 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
                           return;
                         }
                         setConfirmation({
-                          title: `${group.name} 그룹에 가입 요청을 보내시겠어요?`,
+                          title: `${group.name} 그룹에\n가입 요청을 보내시겠어요?`,
                           label: "보내기",
+                          confirmTone: "primary",
                           action: () =>
                             void run(
                               () => friendGroupApi.joinGroup(group.id),
@@ -248,8 +259,9 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
                         disabled={busy}
                         onPress={() =>
                           setConfirmation({
-                            title: `${member.nickname}님에게 친구 신청을 보내시겠어요?`,
+                            title: `${member.nickname}님에게\n친구 신청을 보내시겠어요?`,
                             label: "보내기",
+                            confirmTone: "primary",
                             action: () =>
                               void run(
                                 () => friendGroupApi.sendFriend(member.id),
@@ -261,54 +273,13 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
                       />
                     )}
                     {!searching && (
-                      <RowAction
-                        label="⋮"
-                        accessibilityLabel={`${member.nickname} 친구 더보기`}
+                      <FriendMoreButton
+                        name={member.nickname}
                         disabled={busy}
-                        onPress={() =>
-                          setOpenMenuId(
-                            openMenuId === member.id ? null : member.id
-                          )
-                        }
+                        onOpen={(anchor) => setFriendMenu({ member, anchor })}
                       />
                     )}
                   </ListRow>
-                  {!searching && openMenuId === member.id && (
-                    <View style={styles.friendActions}>
-                      <RowAction
-                        label="삭제하기"
-                        disabled={busy}
-                        onPress={() => {
-                          setOpenMenuId(null);
-                          setConfirmation({
-                            title: `${member.nickname}님을 친구 목록에서 삭제하시겠어요?`,
-                            label: "삭제",
-                            action: () =>
-                              void run(
-                                () => friendGroupApi.deleteFriend(member.id),
-                                "친구를 삭제했습니다.",
-                                "친구 삭제에 실패했습니다."
-                              ),
-                          });
-                        }}
-                      />
-                      <RowAction
-                        label="차단하기"
-                        disabled={busy}
-                        onPress={() => {
-                          setOpenMenuId(null);
-                          setConfirmation({
-                            title: `${member.nickname}님을 차단하시겠어요?`,
-                            description:
-                              "차단하면 친구 관계가 해제되며, 차단 목록은 계정 관리에서 확인할 수 있습니다",
-                            label: "차단",
-                            action: () =>
-                              setNotice("차단 기능을 준비 중이에요."),
-                          });
-                        }}
-                      />
-                    </View>
-                  )}
                 </View>
               ))}
               {(searching ? currentResults : lists.data) && !members.length && (
@@ -339,6 +310,38 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
             </AppText>
           )}
       </ScrollView>
+      {friendMenu && (
+        <FeedActionsMenu
+          anchor={friendMenu.anchor}
+          canReport={false}
+          onClose={() => setFriendMenu(null)}
+          onDelete={() => {
+            const { member } = friendMenu;
+            setFriendMenu(null);
+            setConfirmation({
+              title: `${member.nickname}님을 친구 목록에서\n삭제하시겠어요?`,
+              label: "삭제",
+              action: () =>
+                void run(
+                  () => friendGroupApi.deleteFriend(member.id),
+                  "친구를 삭제했습니다.",
+                  "친구 삭제에 실패했습니다."
+                ),
+            });
+          }}
+          onBlock={() => {
+            const { member } = friendMenu;
+            setFriendMenu(null);
+            setConfirmation({
+              title: `${member.nickname}님을\n차단하시겠어요?`,
+              description:
+                "차단하면 친구 관계가 해제되며,\n차단 목록은 계정 관리에서 확인할 수 있습니다",
+              label: "차단",
+              action: () => setNotice("차단 기능을 준비 중이에요."),
+            });
+          }}
+        />
+      )}
       {confirmation && (
         <ConfirmDialog
           visible
@@ -346,6 +349,7 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
           description={confirmation.description ?? ""}
           cancelLabel="돌아가기"
           confirmLabel={confirmation.label}
+          confirmTone={confirmation.confirmTone}
           confirmDisabled={busy}
           onClose={() => setConfirmation(null)}
           onConfirm={() => {
