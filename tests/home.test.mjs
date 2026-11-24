@@ -268,6 +268,40 @@ test("home loading and errors do not show fabricated quotes or the empty-feed me
   }
   globalThis.__homeSnapshot = snapshot;
 });
+test("home uses the same empty layout for friends and a selected group", () => {
+  const renderEmpty = (groupId, title) => {
+    globalThis.__homeSnapshot = {
+      ...snapshot,
+      groupId,
+      data: { ...snapshot.data, items: [] },
+    };
+    const tree = harness(HomeScreen).render();
+    const nodes = all(tree);
+    assert.equal(
+      nodes.some(
+        (node) => node.type === "Pressable" && text(node) === "친구 추가"
+      ),
+      false
+    );
+    const heading = nodes.find(
+      (node) => node.type === "AppText" && text(node) === title
+    );
+    assert.ok(heading);
+    const container = nodes.find(
+      (node) => node.type === "View" && node.props.children?.[0] === heading
+    );
+    assert.ok(container);
+    return [container.props.style, heading.props.style];
+  };
+  try {
+    assert.deepEqual(
+      renderEmpty(null, "태그할 수 있는 친구가 없어요"),
+      renderEmpty(4, "아직 함께 볼 그룹 멤버가 없어요.")
+    );
+  } finally {
+    globalThis.__homeSnapshot = snapshot;
+  }
+});
 test("home uses server data, keeps drawer profile and group changes request new data", () => {
   const { state, render } = harness(HomeScreen);
   let tree = render();

@@ -25,7 +25,7 @@ export function GroupInviteScreen({ id }: { id: number }) {
     [id]
   );
   const invitations = useFriendGroupData(loadInvitations, Boolean(isMember));
-  const isLeader = Array.isArray(invitations.data);
+  const isLeader = Boolean(isMember) && Array.isArray(invitations.data);
   const friends = useFriendGroupData(friendGroupApi.friends, isLeader);
   const [keyword, setKeyword] = useState("");
   const [target, setTarget] = useState<Member>();
@@ -34,17 +34,19 @@ export function GroupInviteScreen({ id }: { id: number }) {
     group.reload();
     invitations.reload();
   });
-  const sent = invitations.data ?? [];
+  const sent = isLeader ? (invitations.data ?? []) : [];
   const excludedIds = new Set([
     ...(group.data?.members ?? []).map((member) => member.id),
     ...sent.map((request) => request.requesterId),
   ]);
   const filter = keyword.trim().toLocaleLowerCase();
-  const available = friends.data?.filter(
-    (friend) =>
-      !excludedIds.has(friend.id) &&
-      friend.nickname.toLocaleLowerCase().includes(filter)
-  );
+  const available = isLeader
+    ? friends.data?.filter(
+        (friend) =>
+          !excludedIds.has(friend.id) &&
+          friend.nickname.toLocaleLowerCase().includes(filter)
+      )
+    : undefined;
   const full = (group.data?.memberCount ?? 0) >= 5;
   const error =
     !valid || group.status === "error"
@@ -162,7 +164,7 @@ export function GroupInviteScreen({ id }: { id: number }) {
           </Pressable>
         </View>
       )}
-      {target && (
+      {target && isLeader && (
         <ConfirmDialog
           visible
           title={`${target.nickname}님을 그룹에\n초대할까요?`}

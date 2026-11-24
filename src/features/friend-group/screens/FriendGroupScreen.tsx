@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
@@ -33,6 +33,9 @@ import { styles } from "./FriendGroupScreen.styles";
 import type { RequestConfirmation } from "../components/FriendGroupRequests";
 
 export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
+  const navigation = useNavigation<{
+    setParams: (params: { groupAction: string }) => void;
+  }>();
   const { groupAction } = useLocalSearchParams<{ groupAction?: string }>();
   const groupActionToast =
     groupAction === "left"
@@ -385,8 +388,9 @@ export function FriendGroupScreen({ adding = false }: { adding?: boolean }) {
         message={groupActionToast || notice || toast}
         errorMessage={lookupError ? "목록을 불러오지 못했어요." : ""}
         onClose={() => {
-          setNotice("");
-          closeToast();
+          if (groupActionToast) navigation.setParams({ groupAction: "" });
+          else if (notice) setNotice("");
+          else closeToast();
         }}
       />
     </SafeAreaView>
